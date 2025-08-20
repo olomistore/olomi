@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Catálogo</title>
-    <link rel="stylesheet" href="./css/style.css" />
-    <script type="module" src="./js/catalogo.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Olomi - Catálogo</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="module" src="./js/catalogo.js" defer></script>
 </head>
-
 <body>
-    <header>
-        <h1>Minha Loja</h1>
-        <nav>
-            <a href="carrinho.html">Carrinho (<span id="cart-count">0</span>)</a>
-            <a href="admin.html">Admin</a>
-        </nav>
-    </header>
-    <main>
-        <section class="filters">
-            <input id="search" placeholder="Buscar produtos..." />
-            <select id="category">
-                <option value="">Todas as categorias</option>
-            </select>
-        </section>
-        <section id="products" class="grid"></section>
-    </main>
-</body>
 
+  <!-- Cabeçalho -->
+  <header>
+    <div class="logo-area">
+      <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+      <h1>OLOMI</h1>
+    </div>
+    <nav>
+      <a href="carrinho.html">Carrinho (<span id="cart-count">0</span>)</a>
+      <!-- 🔒 Admin removido do menu público -->
+    </nav>
+  </header>
+
+  <!-- Conteúdo principal -->
+  <main>
+    <!-- Filtros -->
+    <section class="filters">
+      <input id="search" placeholder="Buscar produtos..." />
+      <select id="category">
+        <option value="">Todas as categorias</option>
+      </select>
+    </section>
+
+    <!-- Produtos -->
+    <section id="products" class="grid"></section>
+  </main>
+
+  <!-- Rodapé -->
+  <footer>
+    <p>Olomi – Artigos Africanos e Religiosos</p>
+    <p>
+      <a href="https://wa.me/5519987346984">WhatsApp</a> | 
+      <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
+    </p>
+    <p>Axé que fortalece seus rituais ✨</p>
+  </footer>
+
+</body>
 </html>
