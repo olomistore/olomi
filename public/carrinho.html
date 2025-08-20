@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Carrinho</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script type="module" src="./js/carrinho.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>Seu Carrinho</h1>
+        <nav><a href="index.html">Voltar à loja</a></nav>
+    </header>
+    <main>
+        <section id="cart-items"></section>
+        <section id="totals"></section>
+        <h2>Dados para envio</h2>
+        <form id="checkout-form">
+            <input name="name" placeholder="Nome completo" required />
+            <input name="cpfCnpj" placeholder="CPF/CNPJ (opcional)" />
+            <input name="phone" placeholder="WhatsApp do cliente" required />
+            <input name="email" type="email" placeholder="E-mail" />
+            <input name="address" placeholder="Endereço completo" required />
+            <label>Frete (R$) <input name="shipping" type="number" min="0" step="0.01" value="0" required /></label>
+            <button type="submit">Finalizar via WhatsApp</button>
+        </form>
+    </main>
+</body>
+
+</html>
