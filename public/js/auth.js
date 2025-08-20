@@ -1,8 +1,8 @@
 import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from
     "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/
-firebase - firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase - firestore.js";
+
 // Protege páginas admin
 export async function requireAdmin() {
     return new Promise((resolve, reject) => {
@@ -18,6 +18,7 @@ export async function requireAdmin() {
         });
     });
 }
+
 // Login page
 const form = document.getElementById('login-form');
 if (form) {
@@ -33,6 +34,7 @@ if (form) {
         }
     });
 }
+
 // Logout button
 const logoutBtn = document.getElementById('logout');
 if (logoutBtn) {

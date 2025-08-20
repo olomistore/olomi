@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrar na sua Conta - Olomi</title>
+    
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/login.css" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <script type="module" src="./js/cliente-auth.js" defer></script>
+</head>
+<body>
+
+    <main class="login-container">
+        <div class="login-box">
+            <a href="/"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="login-logo"></a>
+            <h1 class="login-title">Bem-vindo(a) de volta!</h1>
+            <p class="login-subtitle">Acesse sua conta para continuar.</p>
+            
+            <form id="login-cliente-form" class="login-form">
+                <input name="email" type="email" placeholder="E-mail" required />
+                <input name="password" type="password" placeholder="Senha" required />
+                <button type="submit">Entrar</button>
+            </form>
+            <a href="cadastro.html" class="back-to-store">Não tem uma conta? Cadastre-se.</a>
+        </div>
+    </main>
+
+</body>
+</html>

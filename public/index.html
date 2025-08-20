@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Olomi - Catálogo</title>
   
-  <!-- Ligação para o arquivo de estilos CSS -->
   <link rel="stylesheet" href="./css/style.css" />
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Seu script principal -->
+  <!-- Scripts principais -->
   <script type="module" src="./js/catalogo.js" defer></script>
+  <!-- SCRIPT ADICIONADO PARA AUTENTICAÇÃO DO CLIENTE -->
+  <script type="module" src="./js/cliente-auth.js" defer></script>
 </head>
 <body>
 
@@ -22,13 +22,15 @@
   <header class="site-header">
     <div class="container">
       <div class="logo-area">
-        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
-        <h1>OLOMI</h1>
+        <a href="/"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo"></a>
+        <h1><a href="/" style="text-decoration: none; color: inherit;">OLOMI</a></h1>
       </div>
       <nav>
-        <a href="carrinho.html" class="cart-link">
-          Carrinho (<span id="cart-count">0</span>)
-        </a>
+        <a href="carrinho.html" class="cart-link">Carrinho (<span id="cart-count">0</span>)</a>
+        <!-- ÁREA ADICIONADA PARA LOGIN DINÂMICO -->
+        <div id="user-navigation" style="display: inline-block; margin-left: 1rem;">
+            <!-- O conteúdo aqui (Entrar/Sair) será preenchido pelo cliente-auth.js -->
+        </div>
       </nav>
     </div>
   </header>
@@ -38,30 +40,15 @@
     <div class="container">
       <!-- Filtros -->
       <section class="filters">
-        <input id="search" placeholder="Buscar por nome do produto..." />
+        <input id="search" placeholder="Procurar por nome do produto..." />
         <select id="category">
           <option value="">Todas as categorias</option>
-          <!-- Opções de categoria serão adicionadas pelo seu JS -->
         </select>
       </section>
 
-      <!-- Grid de Produtos -->
+      <!-- Grelha de Produtos -->
       <section id="products" class="products-grid">
-        <!-- 
-          MODELO DE CARD DE PRODUTO PARA O SEU JAVASCRIPT:
-          Seu script `catalogo.js` deve criar elementos com esta estrutura e classes.
-        -->
-        <!-- 
-        <div class="product-card">
-          <img src="URL_DA_IMAGEM_DO_PRODUTO" alt="NOME_DO_PRODUTO" class="product-image">
-          <div class="card-content">
-            <h3 class="product-title">Nome do Produto</h3>
-            <p class="product-description">Descrição do produto aqui...</p>
-            <p class="product-price">R$ 99,90</p>
-            <button class="add-to-cart-btn">Adicionar ao Carrinho</button>
-          </div>
-        </div> 
-        -->
+        <!-- Os produtos são carregados aqui pelo catalogo.js -->
       </section>
     </div>
   </main>
@@ -75,7 +62,7 @@
         <span>|</span>
         <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
       </div>
-      <p class="footer-tagline">Axé que fortalece seus rituais ✨</p>
+      <p class="footer-tagline">Axé que fortalece os seus rituais ✨</p>
     </div>
   </footer>
 

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crie sua Conta - Olomi</title>
+    
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/login.css" />
+    <link rel="stylesheet" href="./css/cadastro.css" /> <!-- Novo CSS -->
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Script específico para a página de cadastro -->
+    <script type="module" src="./js/cliente-auth-cadastro.js" defer></script>
+</head>
+<body>
+
+    <main class="login-container">
+        <div class="login-box">
+            <a href="/"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="login-logo"></a>
+            <h1 class="login-title">Crie sua Conta</h1>
+            <p class="login-subtitle">Bem-vindo(a) à Olomi!</p>
+            
+            <form id="register-form" class="login-form">
+                <fieldset>
+                    <legend>Dados Pessoais</legend>
+                    <input name="name" type="text" placeholder="Nome completo" required />
+                    <input name="phone" type="tel" placeholder="Telefone com DDD" required />
+                </fieldset>
+                
+                <fieldset>
+                    <legend>Dados de Acesso</legend>
+                    <input name="email" type="email" placeholder="E-mail" required />
+                    <input name="password" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" required />
+                    <!-- CAMPO ADICIONADO -->
+                    <input name="confirmPassword" type="password" placeholder="Confirme sua senha" required />
+                </fieldset>
+
+                <fieldset>
+                    <legend>Endereço de Entrega</legend>
+                    <input name="cep" type="text" placeholder="CEP (apenas números)" required />
+                    <input name="street" type="text" placeholder="Rua / Logradouro" required />
+                    <div class="form-grid">
+                        <input name="number" type="text" placeholder="Número" required />
+                        <input name="complement" type="text" placeholder="Complemento (opcional)" />
+                    </div>
+                    <input name="neighborhood" type="text" placeholder="Bairro" required />
+                    <input name="city" type="text" placeholder="Cidade" required />
+                    <input name="state" type="text" placeholder="Estado (UF)" required />
+                </fieldset>
+
+                <button type="submit">Cadastrar</button>
+            </form>
+            <a href="login-cliente.html" class="back-to-store">Já tem uma conta? Entre aqui.</a>
+        </div>
+    </main>
+
+</body>
+</html>

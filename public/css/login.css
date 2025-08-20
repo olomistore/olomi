@@ -1,6 +1,6 @@
 /* Estilos específicos para a página de Login */
 
-/* Garante que o body ocupe a tela toda para centralizar o conteúdo */
+/* Garante que o body ocupe o ecrã todo para centralizar o conteúdo */
 body {
     display: flex;
     align-items: center;
