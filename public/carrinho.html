@@ -5,66 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Carrinho de Compras - Olomi</title>
     
-    <!-- Estilo principal do site -->
     <link rel="stylesheet" href="./css/style.css" />
-    <!-- Estilo específico da página de Carrinho -->
     <link rel="stylesheet" href="./css/carrinho.css" />
+    <link rel="stylesheet" href="./css/cadastro.css" /> <!-- Reutiliza estilos do cadastro -->
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
     <script type="module" src="./js/carrinho.js" defer></script>
 </head>
 <body>
 
-    <!-- Cabeçalho consistente -->
     <header class="site-header">
         <div class="container">
             <div class="logo-area">
-                <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
-                <h1>Meu Carrinho</h1>
+                <a href="/"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo"></a>
+                <h1><a href="/" style="text-decoration: none; color: inherit;">Meu Carrinho</a></h1>
             </div>
             <nav>
-                <a href="index.html" class="cart-link">Continuar Comprando</a>
+                <a href="index.html" class="cart-link">Continuar a Comprar</a>
             </nav>
         </div>
     </header>
 
-    <!-- Conteúdo principal -->
     <main class="site-main">
         <div class="container">
             <div id="cart-container" class="cart-layout">
                 
-                <!-- Coluna da Esquerda: Itens do Carrinho -->
                 <div class="cart-items-column">
                     <h2 class="section-title">Itens no Carrinho</h2>
-                    <div id="cart-items-list">
-                        <!-- Itens do carrinho serão inseridos aqui pelo JS -->
-                    </div>
+                    <div id="cart-items-list"></div>
                 </div>
 
-                <!-- Coluna da Direita: Resumo e Formulário -->
                 <div class="cart-summary-column">
-                    <!-- Resumo do Pedido -->
                     <div class="cart-summary">
                         <h3 class="summary-title">Resumo do Pedido</h3>
-                        <div id="totals-summary">
-                            <!-- Totais serão inseridos aqui pelo JS -->
-                        </div>
+                        <div id="totals-summary"></div>
                     </div>
 
-                    <!-- Formulário de Checkout -->
                     <div class="checkout-form-container">
                         <h3 class="section-title">Dados para Envio</h3>
-                        <form id="checkout-form" class="checkout-form">
-                            <input name="name" placeholder="Nome completo" required />
-                            <input name="cpfCnpj" placeholder="CPF/CNPJ (opcional)" />
-                            <input name="phone" placeholder="WhatsApp (DDD + Número)" required />
-                            <input name="email" type="email" placeholder="E-mail (opcional)" />
-                            <input name="address" placeholder="Endereço completo" required />
+                        <form id="checkout-form" class="checkout-form login-form">
+                            <fieldset>
+                                <legend>Dados Pessoais</legend>
+                                <input name="name" placeholder="Nome completo" required />
+                                <input name="phone" placeholder="WhatsApp (DDD + Número)" required />
+                                <input name="email" type="email" placeholder="E-mail (opcional)" />
+                            </fieldset>
+                            
+                            <fieldset>
+                                <legend>Endereço de Entrega</legend>
+                                <input name="cep" type="text" placeholder="CEP (apenas números)" required />
+                                <input name="street" type="text" placeholder="Rua / Logradouro" required />
+                                <div class="form-grid">
+                                    <input name="number" type="text" placeholder="Número" required />
+                                    <input name="complement" type="text" placeholder="Complemento (opcional)" />
+                                </div>
+                                <input name="neighborhood" type="text" placeholder="Bairro" required />
+                                <input name="city" type="text" placeholder="Cidade" required />
+                                <input name="state" type="text" placeholder="Estado (UF)" required />
+                            </fieldset>
+                            
                             <button type="submit" class="submit-btn">Finalizar via WhatsApp</button>
                         </form>
                     </div>
@@ -74,7 +76,6 @@
         </div>
     </main>
 
-    <!-- Rodapé -->
     <footer class="site-footer">
         <div class="container">
             <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
