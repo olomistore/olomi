@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login Admin - Olomi</title>
     
-    <!-- Estilo principal (para variáveis de cor/fonte) -->
+    <!-- Estilos que já está a utilizar -->
     <link rel="stylesheet" href="./css/style.css" />
-    <!-- Estilo específico da página de Login -->
     <link rel="stylesheet" href="./css/login.css" />
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
+    <!-- O seu script de autenticação do admin -->
     <script type="module" src="./js/auth.js" defer></script>
 </head>
 <body>
@@ -31,7 +29,14 @@
                 <input name="password" type="password" placeholder="Senha" required />
                 <button type="submit">Entrar</button>
             </form>
+            
             <a href="/" class="back-to-store">Voltar para a loja</a>
+            
+            <!-- LINK ADICIONADO -->
+            <!-- Lembre-se de remover o ficheiro criar-admin.html do seu site após o primeiro uso! -->
+            <a href="criar-admin.html" class="back-to-store" style="font-size: 0.8rem; margin-top: 0.75rem; color: #aaa;">
+                (Primeiro acesso? Criar conta de administrador)
+            </a>
         </div>
     </main>
 
