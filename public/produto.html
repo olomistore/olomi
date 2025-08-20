@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nome do Produto - Olomi</title>
+  
+  <!-- Estilos da página de Catálogo (para Header/Footer) -->
+  <link rel="stylesheet" href="./css/style.css" />
+  <!-- Estilos específicos da página de Produto -->
+  <link rel="stylesheet" href="./css/produto.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Script da página de produto -->
+  <script type="module" src="./js/produto.js" defer></script>
+</head>
+<body>
+
+  <!-- Cabeçalho (reutilizado do seu site) -->
+  <header class="site-header">
+    <div class="container">
+      <div class="logo-area">
+        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+        <h1>OLOMI</h1>
+      </div>
+      <nav>
+        <a href="carrinho.html" class="cart-link">
+          Carrinho (<span id="cart-count">0</span>)
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal da página do produto -->
+  <main class="site-main">
+    <div class="container">
+      <a href="index.html" class="back-link">&larr; Voltar ao catálogo</a>
+      
+      <!-- O conteúdo do produto será inserido aqui pelo JavaScript -->
+      <div id="product-detail" class="product-detail-container">
+        <!-- Exemplo de como ficará (gerado pelo JS) -->
+        <!-- 
+        <div class="product-image-gallery">
+          <img src="https://placehold.co/600x600/f39c12/fff?text=Olomi" alt="Nome do Produto">
+        </div>
+        <div class="product-info">
+          <h2 class="product-title-large">Nome do Produto</h2>
+          <p class="product-price-large">R$ 99,90</p>
+          <p class="product-description-large">
+            Descrição completa e detalhada do produto, falando sobre seus materiais,
+            significados, usos e tudo mais que for relevante para o cliente.
+          </p>
+          <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
+        </div>
+        -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Rodapé (reutilizado do seu site) -->
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
+      <div class="footer-links">
+        <a href="https://wa.me/5519987346984">WhatsApp</a>
+        <span>|</span>
+        <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
+      </div>
+      <p class="footer-tagline">Axé que fortalece seus rituais ✨</p>
+    </div>
+  </footer>
+
+</body>
+</html>

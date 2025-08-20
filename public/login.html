@@ -1,23 +1,38 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Admin - Olomi</title>
+    
+    <!-- Estilo principal (para variáveis de cor/fonte) -->
     <link rel="stylesheet" href="./css/style.css" />
+    <!-- Estilo específico da página de Login -->
+    <link rel="stylesheet" href="./css/login.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
     <script type="module" src="./js/auth.js" defer></script>
 </head>
-
 <body>
-    <main class="auth">
-        <h1>Login Admin</h1>
-        <form id="login-form">
-            <input name="email" type="email" placeholder="E-mail" required />
-            <input name="password" type="password" placeholder="Senha" required />
-            <button type="submit">Entrar</button>
-        </form>
-    </main>
-</body>
 
+    <main class="login-container">
+        <div class="login-box">
+            <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="login-logo">
+            <h1 class="login-title">Acesso Restrito</h1>
+            <p class="login-subtitle">Painel de Administração</p>
+            
+            <form id="login-form" class="login-form">
+                <input name="email" type="email" placeholder="E-mail" required />
+                <input name="password" type="password" placeholder="Senha" required />
+                <button type="submit">Entrar</button>
+            </form>
+            <a href="/" class="back-to-store">Voltar para a loja</a>
+        </div>
+    </main>
+
+</body>
 </html>

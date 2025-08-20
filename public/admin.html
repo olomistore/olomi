@@ -1,67 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin</title>
-    <link rel="stylesheet" href="./css/style.css" />
-    <script type="module" src="./js/admin.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Admin - Olomi</title>
+  
+  <!-- Estilo principal do site (para Header, Footer, etc.) -->
+  <link rel="stylesheet" href="./css/style.css" />
+  <!-- Estilo específico da página de Admin -->
+  <link rel="stylesheet" href="./css/admin.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <script type="module" src="./js/admin.js" defer></script>
 </head>
-
 <body>
-    <header>
-        <h1>Painel Admin</h1>
-        <nav>
-            <a href="index.html">Loja</a>
-            <button id="logout">Sair</button>
-        </nav>
-    </header>
-    <main class="admin">
-        <section class="new-product">
-            <h2>Novo Produto</h2>
-            <form id="product-form">
-                <input name="name" placeholder="Nome" required />
-                <textarea name="description" placeholder="Descrição"></textarea>
-                <input name="price" type="number" step="0.01" placeholder="Preço
-(R$)" required />
-                <input name="category" placeholder="Categoria" />
-                <input name="stock" type="number" placeholder="Estoque" value="0" required />
-                <input name="image" type="file" accept="image/*" />
-                <button type="submit">Salvar</button>
-            </form>
-        </section>
-        <section>
-            <h2>Produtos</h2>
-            <table id="products-table">
-                <thead>
-                    <tr>
-                        <th>Imagem</th>
-                        <th>Nome</th>
-                        <th>Preço</th>
-                        <th>Estoque</ th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-        <section>
-            <h2>Pedidos</h2>
-            <table id="orders-table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Itens</th>
-                        <th>Total</th>
-                        <th>Status</ th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-    </main>
-</body>
 
+  <!-- Cabeçalho com estilo consistente -->
+  <header class="site-header">
+    <div class="container">
+      <div class="logo-area">
+        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+        <h1>Painel Admin</h1>
+      </div>
+      <nav>
+        <a href="index.html" class="cart-link">Ver Loja</a>
+        <button id="logout" class="logout-btn">Sair</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal da página de admin -->
+  <main class="site-main">
+    <div class="container">
+      
+      <!-- Seção de Novo Produto -->
+      <section class="admin-section">
+        <h2 class="admin-section-title">Adicionar Novo Produto</h2>
+        <form id="product-form" class="admin-form">
+          <input name="name" placeholder="Nome do Produto" required />
+          <textarea name="description" placeholder="Descrição" rows="4"></textarea>
+          <div class="form-grid">
+            <input name="price" type="number" step="0.01" placeholder="Preço (R$)" required />
+            <input name="category" placeholder="Categoria" />
+            <input name="stock" type="number" placeholder="Estoque" value="0" required />
+          </div>
+          <label for="image-upload" class="file-upload-label">
+            <span>Escolher imagem do produto</span>
+            <input id="image-upload" name="image" type="file" accept="image/*" />
+          </label>
+          <button type="submit" class="submit-btn">Salvar Produto</button>
+        </form>
+      </section>
+
+      <!-- Seção de Produtos Existentes -->
+      <section class="admin-section">
+        <h2 class="admin-section-title">Produtos Cadastrados</h2>
+        <div class="table-container">
+          <table id="products-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>Imagem</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Linhas da tabela serão inseridas pelo admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Seção de Pedidos -->
+      <section class="admin-section">
+        <h2 class="admin-section-title">Pedidos Recebidos</h2>
+        <div class="table-container">
+          <table id="orders-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Itens</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Linhas da tabela serão inseridas pelo admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Rodapé consistente -->
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-title">Olomi – Painel Administrativo</p>
+    </div>
+  </footer>
+
+</body>
 </html>

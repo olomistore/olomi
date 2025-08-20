@@ -1,0 +1,151 @@
+/* Estilos específicos para a página de Administração */
+
+/* Botão de Logout no Header */
+.logout-btn {
+    background: none;
+    border: none;
+    color: var(--cor-laranja);
+    font-weight: bold;
+    font-size: 1.125rem;
+    cursor: pointer;
+    font-family: var(--fonte-corpo);
+    transition: color 0.3s ease;
+    margin-left: 1rem;
+}
+
+.logout-btn:hover {
+    color: var(--cor-branco);
+}
+
+/* Estrutura das seções do Admin */
+.admin-section {
+    background-color: var(--cor-branco);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--sombra-padrao);
+    margin-top: 2.5rem;
+}
+
+.admin-section-title {
+    font-family: var(--fonte-titulo);
+    font-size: 1.75rem;
+    color: var(--cor-preto);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--cor-laranja);
+    display: inline-block;
+}
+
+/* Estilos do Formulário */
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.admin-form input,
+.admin-form textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--fonte-corpo);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-form input:focus,
+.admin-form textarea:focus {
+    outline: none;
+    border-color: var(--cor-laranja);
+    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.3);
+}
+
+.admin-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.admin-form .file-upload-label {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.admin-form .file-upload-label:hover {
+    border-color: var(--cor-laranja);
+    background-color: #fffaf0;
+}
+
+.admin-form input[type="file"] {
+    display: none; /* Esconde o input de arquivo padrão */
+}
+
+.admin-form .submit-btn {
+    background-color: var(--cor-laranja);
+    color: var(--cor-branco);
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start; /* Alinha o botão à esquerda */
+}
+
+.admin-form .submit-btn:hover {
+    background-color: var(--cor-laranja-hover);
+}
+
+/* Estilos das Tabelas */
+.table-container {
+    overflow-x: auto; /* Adiciona scroll horizontal em telas pequenas */
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-table th {
+    font-family: var(--fonte-titulo);
+    background-color: #f9f9f9;
+}
+
+.admin-table img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.admin-table .action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    font-size: 1rem;
+    color: var(--cor-texto-claro);
+    transition: color 0.2s ease;
+}
+
+.admin-table .action-btn.edit:hover {
+    color: #3498db; /* Azul */
+}
+
+.admin-table .action-btn.delete:hover {
+    color: #e74c3c; /* Vermelho */
+}

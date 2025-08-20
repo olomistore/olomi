@@ -2,47 +2,81 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Olomi - Catálogo</title>
+  
+  <!-- Ligação para o arquivo de estilos CSS -->
   <link rel="stylesheet" href="./css/style.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Seu script principal -->
   <script type="module" src="./js/catalogo.js" defer></script>
 </head>
 <body>
 
   <!-- Cabeçalho -->
-  <header>
-    <div class="logo-area">
-      <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
-      <h1>OLOMI</h1>
+  <header class="site-header">
+    <div class="container">
+      <div class="logo-area">
+        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+        <h1>OLOMI</h1>
+      </div>
+      <nav>
+        <a href="carrinho.html" class="cart-link">
+          Carrinho (<span id="cart-count">0</span>)
+        </a>
+      </nav>
     </div>
-    <nav>
-      <a href="carrinho.html">Carrinho (<span id="cart-count">0</span>)</a>
-      <!-- 🔒 Admin removido do menu público -->
-    </nav>
   </header>
 
   <!-- Conteúdo principal -->
-  <main>
-    <!-- Filtros -->
-    <section class="filters">
-      <input id="search" placeholder="Buscar produtos..." />
-      <select id="category">
-        <option value="">Todas as categorias</option>
-      </select>
-    </section>
+  <main class="site-main">
+    <div class="container">
+      <!-- Filtros -->
+      <section class="filters">
+        <input id="search" placeholder="Buscar por nome do produto..." />
+        <select id="category">
+          <option value="">Todas as categorias</option>
+          <!-- Opções de categoria serão adicionadas pelo seu JS -->
+        </select>
+      </section>
 
-    <!-- Produtos -->
-    <section id="products" class="grid"></section>
+      <!-- Grid de Produtos -->
+      <section id="products" class="products-grid">
+        <!-- 
+          MODELO DE CARD DE PRODUTO PARA O SEU JAVASCRIPT:
+          Seu script `catalogo.js` deve criar elementos com esta estrutura e classes.
+        -->
+        <!-- 
+        <div class="product-card">
+          <img src="URL_DA_IMAGEM_DO_PRODUTO" alt="NOME_DO_PRODUTO" class="product-image">
+          <div class="card-content">
+            <h3 class="product-title">Nome do Produto</h3>
+            <p class="product-description">Descrição do produto aqui...</p>
+            <p class="product-price">R$ 99,90</p>
+            <button class="add-to-cart-btn">Adicionar ao Carrinho</button>
+          </div>
+        </div> 
+        -->
+      </section>
+    </div>
   </main>
 
   <!-- Rodapé -->
-  <footer>
-    <p>Olomi – Artigos Africanos e Religiosos</p>
-    <p>
-      <a href="https://wa.me/5519987346984">WhatsApp</a> | 
-      <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
-    </p>
-    <p>Axé que fortalece seus rituais ✨</p>
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
+      <div class="footer-links">
+        <a href="https://wa.me/5519987346984">WhatsApp</a>
+        <span>|</span>
+        <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
+      </div>
+      <p class="footer-tagline">Axé que fortalece seus rituais ✨</p>
+    </div>
   </footer>
 
 </body>
