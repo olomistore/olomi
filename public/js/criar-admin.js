@@ -1,38 +1,60 @@
 import { auth, db } from './firebase.js';
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
 const form = document.getElementById('create-admin-form');
 
 if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const submitButton = form.querySelector('button');
+        const name = form.name.value.trim();
         const email = form.email.value.trim();
         const password = form.password.value.trim();
+        const confirmPassword = form.confirmPassword.value.trim();
+
+        // Validação da senha
+        if (password !== confirmPassword) {
+            alert('As senhas não coincidem. Por favor, tente novamente.');
+            return;
+        }
 
         if (password.length < 6) {
             alert('A senha deve ter no mínimo 6 caracteres.');
             return;
         }
 
+        submitButton.disabled = true;
+        submitButton.textContent = 'A criar...';
+
         try {
             // Passo 1: Criar o utilizador no Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Passo 2: Dar a permissão de administrador no Firestore
-            // Isto cria um documento na coleção 'roles' com o ID do utilizador
+            // Passo 2: Guardar os detalhes do utilizador (incluindo o nome) na coleção 'users'
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, {
+                name: name,
+                email: email,
+                createdAt: serverTimestamp()
+            });
+
+            // Passo 3: Dar a permissão de administrador na coleção 'roles'
             const roleRef = doc(db, 'roles', user.uid);
             await setDoc(roleRef, {
                 admin: true
             });
 
-            alert(`Administrador criado com sucesso!\nE-mail: ${email}\n\nJá pode apagar o ficheiro criar-admin.html e entrar através da página de login.`);
-            form.reset();
+            alert(`Administrador ${name} criado com sucesso!\nE-mail: ${email}`);
+            window.location.href = 'login.html';
 
         } catch (err) {
             console.error("Erro ao criar administrador:", err);
             alert('Erro ao criar administrador: ' + err.message);
+            submitButton.disabled = false;
+            submitButton.textContent = 'Criar Administrador';
         }
     });
 }
