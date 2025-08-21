@@ -10,10 +10,16 @@ const neighborhoodInput = registerForm.neighborhood;
 const cityInput = registerForm.city;
 const stateInput = registerForm.state;
 const numberInput = registerForm.number;
+const phoneInput = registerForm.phone; // Campo de telefone
 
-// --- FUNÇÃO DE BUSCA DE ENDEREÇO (VIA VIACEP) ---
+// --- FUNÇÕES ---
+
+/**
+ * Procura um endereço através da API ViaCEP e preenche os campos do formulário.
+ * @param {string} cep - O CEP a ser procurado.
+ */
 const fetchAddress = async (cep) => {
-    // Limpa os campos e mostra feedback de carregamento
+    // Limpa os campos e mostra um feedback de carregamento
     streetInput.value = 'A procurar...';
     neighborhoodInput.value = 'A procurar...';
     cityInput.value = 'A procurar...';
@@ -47,9 +53,24 @@ const fetchAddress = async (cep) => {
     }
 };
 
+/**
+ * Aplica uma máscara de telefone (ex: (XX) XXXXX-XXXX) a um campo de input.
+ */
+const maskPhone = (event) => {
+    let input = event.target;
+    input.value = phoneMask(input.value);
+}
+
+const phoneMask = (value) => {
+    if (!value) return ""
+    value = value.replace(/\D/g,'')
+    value = value.replace(/(\d{2})(\d)/,"($1) $2")
+    value = value.replace(/(\d)(\d{4})$/,"$1-$2")
+    return value
+}
+
 // --- EVENT LISTENERS ---
 
-// Adiciona o evento para procurar o CEP quando o utilizador sai do campo
 cepInput.addEventListener('blur', () => {
     const cep = cepInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
     if (cep.length === 8) {
@@ -57,28 +78,25 @@ cepInput.addEventListener('blur', () => {
     }
 });
 
-// Evento de submit do formulário de cadastro
+// Adiciona o evento de máscara ao campo de telefone
+phoneInput.addEventListener('keyup', maskPhone);
+
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(registerForm).entries());
 
-    // --- VALIDAÇÃO DA SENHA ADICIONADA ---
     if (data.password !== data.confirmPassword) {
         alert('As senhas não coincidem. Por favor, tente novamente.');
-        return; // Interrompe a execução se as senhas forem diferentes
-    }
-
-    if (data.password.length < 6) {
-        alert('A senha deve ter no mínimo 6 caracteres.');
         return;
     }
 
+    // A validação de minlength e pattern já é feita pelo HTML5,
+    // mas mantemos a verificação de senha aqui.
+
     try {
-        // 1. Cria o utilizador no Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
         const user = userCredential.user;
 
-        // 2. Guarda as informações completas no Firestore
         await setDoc(doc(db, "users", user.uid), {
             name: data.name,
             email: data.email,

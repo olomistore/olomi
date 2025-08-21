@@ -239,3 +239,96 @@ main {
         font-size: 2rem; /* 32px */
     }
 }
+
+/* 7. UTILITÁRIOS */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: var(--cor-laranja);
+    margin: 2rem auto;
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ... (todo o seu CSS existente) ... */
+
+/* ESTILOS ADICIONADOS NO FINAL DO FICHEIRO */
+
+/* Botão de Sair */
+.logout-btn {
+    background: none;
+    border: none;
+    color: var(--cor-laranja); /* Cor laranja para se destacar */
+    font-weight: bold;
+    font-size: 1.125rem;
+    cursor: pointer;
+    font-family: var(--fonte-corpo);
+    transition: color 0.3s ease;
+    padding: 0;
+    margin-left: 1rem;
+}
+
+.logout-btn:hover {
+    color: var(--cor-branco);
+}
+
+/* Link para o Painel de Administração */
+.admin-link {
+    padding: 0.3rem 0.8rem;
+    background-color: var(--cor-laranja);
+    color: var(--cor-branco);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+    text-decoration: none;
+}
+
+.admin-link:hover {
+    background-color: var(--cor-laranja-hover);
+    color: var(--cor-branco);
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: var(--cor-laranja); /* Cor laranja para se destacar */
+    font-weight: bold;
+    font-size: 1.125rem;
+    cursor: pointer;
+    font-family: var(--fonte-corpo);
+    transition: color 0.3s ease;
+    padding: 0;
+    margin-left: 1rem;
+}
+
+.logout-btn:hover {
+    color: var(--cor-branco);
+}
+
+/* Link para o Painel de Administração */
+.admin-link {
+    padding: 0.3rem 0.8rem;
+    background-color: var(--cor-laranja);
+    color: var(--cor-branco);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+.admin-link:hover {
+    background-color: var(--cor-laranja-hover);
+    color: var(--cor-branco);
+}
+

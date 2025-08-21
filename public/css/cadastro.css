@@ -1,4 +1,4 @@
-/* Estilos específicos para o formulário de cadastro */
+/* Estilos específicos para o formulário de registo */
 
 .login-form fieldset {
     border: none;
@@ -23,8 +23,15 @@
     gap: 1rem;
 }
 
-/* Deixa os campos de endereço preenchidos pela API com aparência de "desabilitado" */
 .login-form input:read-only {
     background-color: #f0f0f0;
     cursor: not-allowed;
+}
+
+/* --- ESTILOS DE VALIDAÇÃO ADICIONADOS --- */
+
+/* Estilo para campos que são obrigatórios e foram preenchidos incorretamente */
+.login-form input:invalid:required {
+    border-color: #e74c3c; /* Vermelho */
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
 }
