@@ -7,7 +7,7 @@
     
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/carrinho.css" />
-    <link rel="stylesheet" href="./css/cadastro.css" /> <!-- Reutiliza estilos do cadastro -->
+    <link rel="stylesheet" href="./css/cadastro.css" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,18 +32,15 @@
     <main class="site-main">
         <div class="container">
             <div id="cart-container" class="cart-layout">
-                
                 <div class="cart-items-column">
                     <h2 class="section-title">Itens no Carrinho</h2>
                     <div id="cart-items-list"></div>
                 </div>
-
                 <div class="cart-summary-column">
                     <div class="cart-summary">
                         <h3 class="summary-title">Resumo do Pedido</h3>
                         <div id="totals-summary"></div>
                     </div>
-
                     <div class="checkout-form-container">
                         <h3 class="section-title">Dados para Envio</h3>
                         <form id="checkout-form" class="checkout-form login-form">
@@ -53,7 +50,6 @@
                                 <input name="phone" placeholder="WhatsApp (DDD + Número)" required />
                                 <input name="email" type="email" placeholder="E-mail (opcional)" />
                             </fieldset>
-                            
                             <fieldset>
                                 <legend>Endereço de Entrega</legend>
                                 <input name="cep" type="text" placeholder="CEP (apenas números)" required />
@@ -66,12 +62,10 @@
                                 <input name="city" type="text" placeholder="Cidade" required />
                                 <input name="state" type="text" placeholder="Estado (UF)" required />
                             </fieldset>
-                            
                             <button type="submit" class="submit-btn">Finalizar via WhatsApp</button>
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>

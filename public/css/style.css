@@ -15,17 +15,8 @@
     --sombra-padrao: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-/* Reset básico e estilos do Body */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
     background-color: var(--cor-fundo);
     font-family: var(--fonte-corpo);
@@ -35,300 +26,58 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
-
-.container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem; /* 24px */
-}
-
-main {
-    flex-grow: 1;
-}
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+main { flex-grow: 1; }
 
 /* 2. CABEÇALHO (HEADER) */
-.site-header {
-    background-color: var(--cor-preto);
-    padding: 1rem 0;
-    box-shadow: var(--sombra-padrao);
-}
-
-.site-header .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo-area {
-    display: flex;
-    align-items: center;
-    gap: 1rem; /* 16px */
-}
-
-.logo-area .logo {
-    height: 48px;
-    width: 48px;
-    border-radius: 50%;
-    border: 2px solid var(--cor-laranja);
-}
-
-.logo-area h1 {
-    font-size: 1.75rem; /* 28px */
-    color: var(--cor-branco);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.cart-link {
-    color: var(--cor-laranja);
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 1.125rem; /* 18px */
-    transition: color 0.3s ease;
-}
-
-.cart-link:hover {
-    color: var(--cor-branco);
-}
+.site-header { background-color: var(--cor-preto); padding: 1rem 0; box-shadow: var(--sombra-padrao); }
+.site-header .container { display: flex; justify-content: space-between; align-items: center; }
+.logo-area { display: flex; align-items: center; gap: 1rem; }
+.logo-area .logo { height: 48px; width: 48px; border-radius: 50%; border: 2px solid var(--cor-laranja); }
+.logo-area h1 { font-family: var(--fonte-logo); font-size: 2.25rem; color: var(--cor-branco); text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
+nav a { color: var(--cor-texto-claro); text-decoration: none; transition: color 0.3s ease; }
+nav a:hover { color: var(--cor-branco); }
+.cart-link { color: var(--cor-laranja); font-weight: bold; font-size: 1.125rem; margin-left: 1rem; }
+.cart-link:hover { color: var(--cor-branco); }
 
 /* 3. FILTROS */
-.filters {
-    margin: 2.5rem 0;
-    padding: 1.5rem;
-    background-color: var(--cor-branco);
-    border-radius: 8px;
-    box-shadow: var(--sombra-padrao);
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-}
-
-.filters input,
-.filters select {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.filters input:focus,
-.filters select:focus {
-    outline: none;
-    border-color: var(--cor-laranja);
-    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.3);
-}
+.filters { margin: 2.5rem 0; padding: 1.5rem; background-color: var(--cor-branco); border-radius: 8px; box-shadow: var(--sombra-padrao); display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+.filters input, .filters select { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+.filters input:focus, .filters select:focus { outline: none; border-color: var(--cor-laranja); box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.3); }
 
 /* 4. GRID DE PRODUTOS */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem; /* 32px */
-}
-
-.product-card {
-    background-color: var(--cor-branco);
-    border-radius: 8px;
-    box-shadow: var(--sombra-padrao);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
-.product-image {
-    width: 100%;
-    height: 224px; /* 14rem */
-    object-fit: cover;
-}
-
-.card-content {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-.product-title {
-    font-size: 1.25rem; /* 20px */
-    color: var(--cor-preto);
-    margin-bottom: 0.5rem;
-}
-
-.product-description {
-    color: var(--cor-texto-claro);
-    margin-bottom: 1rem;
-    flex-grow: 1; /* Faz a descrição ocupar o espaço disponível */
-}
-
-.product-price {
-    font-size: 1.5rem; /* 24px */
-    font-weight: bold;
-    color: var(--cor-preto);
-    margin-bottom: 1rem;
-}
-
-.add-to-cart-btn {
-    background-color: var(--cor-laranja);
-    color: var(--cor-branco);
-    font-weight: bold;
-    font-size: 1rem;
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: auto; /* Empurra o botão para o final do card */
-    transition: background-color 0.3s ease;
-}
-
-.add-to-cart-btn:hover {
-    background-color: var(--cor-laranja-hover);
-}
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+.product-card { background-color: var(--cor-branco); border-radius: 8px; box-shadow: var(--sombra-padrao); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+.product-image { width: 100%; height: 224px; object-fit: cover; }
+.card-content { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
+.product-title { font-family: var(--fonte-titulo); font-size: 1.25rem; color: var(--cor-preto); margin-bottom: 0.5rem; }
+.product-description { color: var(--cor-texto-claro); margin-bottom: 1rem; flex-grow: 1; }
+.product-price { font-family: var(--fonte-titulo); font-size: 1.5rem; font-weight: bold; color: var(--cor-preto); margin-bottom: 1rem; }
+.add-to-cart-btn { background-color: var(--cor-laranja); color: var(--cor-branco); font-weight: bold; font-size: 1rem; padding: 0.75rem 1rem; border: none; border-radius: 8px; cursor: pointer; margin-top: auto; transition: background-color 0.3s ease; }
+.add-to-cart-btn:hover { background-color: var(--cor-laranja-hover); }
 
 /* 5. RODAPÉ (FOOTER) */
-.site-footer {
-    background-color: var(--cor-preto);
-    margin-top: 3rem;
-    padding: 2rem 0;
-    text-align: center;
-    color: #a0aec0; /* cinza claro */
-}
-
-.footer-title {
-    font-weight: bold;
-    font-size: 1.125rem;
-    color: var(--cor-branco);
-}
-
-.footer-links {
-    margin: 1rem 0;
-}
-
-.footer-links a {
-    color: var(--cor-laranja);
-    text-decoration: none;
-    margin: 0 0.5rem;
-    transition: text-decoration 0.2s ease;
-}
-
-.footer-links a:hover {
-    text-decoration: underline;
-}
-
-.footer-links span {
-    color: #4a5568; /* cinza mais escuro */
-}
-
-.footer-tagline {
-    color: #cbd5e0; /* cinza bem claro */
-}
+.site-footer { background-color: var(--cor-preto); margin-top: 3rem; padding: 2rem 0; text-align: center; color: #a0aec0; }
+.footer-title { font-family: var(--fonte-titulo); font-weight: bold; font-size: 1.125rem; color: var(--cor-branco); }
+.footer-links { margin: 1rem 0; }
+.footer-links a { color: var(--cor-laranja); text-decoration: none; margin: 0 0.5rem; transition: text-decoration 0.2s ease; }
+.footer-links a:hover { text-decoration: underline; }
+.footer-links span { color: #4a5568; }
+.footer-tagline { color: #cbd5e0; }
 
 /* 6. RESPONSIVIDADE */
 @media (min-width: 768px) {
-    .filters {
-        grid-template-columns: 1fr 1fr;
-    }
-    .logo-area h1 {
-        font-size: 2rem; /* 32px */
-    }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .logo-area h1 { font-size: 2.5rem; }
 }
 
 /* 7. UTILITÁRIOS */
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border-left-color: var(--cor-laranja);
-    margin: 2rem auto;
-    animation: spin 1s ease infinite;
-}
+.spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: var(--cor-laranja); margin: 2rem auto; animation: spin 1s ease infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* ... (todo o seu CSS existente) ... */
-
-/* ESTILOS ADICIONADOS NO FINAL DO FICHEIRO */
-
-/* Botão de Sair */
-.logout-btn {
-    background: none;
-    border: none;
-    color: var(--cor-laranja); /* Cor laranja para se destacar */
-    font-weight: bold;
-    font-size: 1.125rem;
-    cursor: pointer;
-    font-family: var(--fonte-corpo);
-    transition: color 0.3s ease;
-    padding: 0;
-    margin-left: 1rem;
-}
-
-.logout-btn:hover {
-    color: var(--cor-branco);
-}
-
-/* Link para o Painel de Administração */
-.admin-link {
-    padding: 0.3rem 0.8rem;
-    background-color: var(--cor-laranja);
-    color: var(--cor-branco);
-    border-radius: 20px;
-    font-size: 0.9rem;
-    margin-right: 1rem;
-    text-decoration: none;
-}
-
-.admin-link:hover {
-    background-color: var(--cor-laranja-hover);
-    color: var(--cor-branco);
-}
-
-.logout-btn {
-    background: none;
-    border: none;
-    color: var(--cor-laranja); /* Cor laranja para se destacar */
-    font-weight: bold;
-    font-size: 1.125rem;
-    cursor: pointer;
-    font-family: var(--fonte-corpo);
-    transition: color 0.3s ease;
-    padding: 0;
-    margin-left: 1rem;
-}
-
-.logout-btn:hover {
-    color: var(--cor-branco);
-}
-
-/* Link para o Painel de Administração */
-.admin-link {
-    padding: 0.3rem 0.8rem;
-    background-color: var(--cor-laranja);
-    color: var(--cor-branco);
-    border-radius: 20px;
-    font-size: 0.9rem;
-    margin-right: 1rem;
-    text-decoration: none;
-    font-weight: normal;
-}
-
-.admin-link:hover {
-    background-color: var(--cor-laranja-hover);
-    color: var(--cor-branco);
-}
-
+/* Botão de Sair e Link de Admin */
+.logout-btn { background: none; border: none; color: var(--cor-laranja); font-weight: bold; font-size: 1.125rem; cursor: pointer; font-family: var(--fonte-corpo); transition: color 0.3s ease; padding: 0; }
+.logout-btn:hover { color: var(--cor-branco); }
+.admin-link { padding: 0.3rem 0.8rem; background-color: var(--cor-laranja); color: var(--cor-branco); border-radius: 20px; font-size: 0.9rem; margin-right: 1rem; text-decoration: none; font-weight: normal; }
+.admin-link:hover { background-color: var(--cor-laranja-hover); color: var(--cor-branco); }

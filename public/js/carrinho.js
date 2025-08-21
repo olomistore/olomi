@@ -1,5 +1,6 @@
-import { db, auth } from './firebase.js'; // Importa o 'auth'
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { db, auth } from './firebase.js';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { BRL, cartStore } from './utils.js';
 
 // --- SELEÇÃO DOS ELEMENTOS ---
@@ -8,8 +9,39 @@ const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
 
-// --- FUNÇÕES DO CARRINHO ---
+// --- FUNÇÕES ---
 
+/**
+ * Preenche o formulário de checkout com os dados do utilizador autenticado.
+ * @param {object} user - O objeto do utilizador do Firebase Auth.
+ */
+async function populateFormWithUserData(user) {
+    if (!user || !form) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+        const userData = docSnap.data();
+        form.name.value = userData.name || '';
+        form.phone.value = userData.phone || '';
+        form.email.value = userData.email || '';
+
+        if (userData.address) {
+            form.cep.value = userData.address.cep || '';
+            form.street.value = userData.address.street || '';
+            form.number.value = userData.address.number || '';
+            form.complement.value = userData.address.complement || '';
+            form.neighborhood.value = userData.address.neighborhood || '';
+            form.city.value = userData.address.city || '';
+            form.state.value = userData.address.state || '';
+        }
+    }
+}
+
+/**
+ * Renderiza todos os elementos do carrinho na tela.
+ */
 function renderCart() {
     const cart = cartStore.get();
 
@@ -18,10 +50,10 @@ function renderCart() {
     if (cart.length === 0) {
         if (cartContainer) {
             cartContainer.innerHTML = `
-                <div class="cart-empty" style="text-align: center; padding: 2rem;">
+                <div class="cart-empty">
                     <h2>O seu carrinho está vazio.</h2>
-                    <p style="margin: 1rem 0;">Adicione produtos do nosso catálogo para os ver aqui.</p>
-                    <a href="/" style="display: inline-block; padding: 0.8rem 1.5rem; background-color: var(--cor-laranja); color: white; text-decoration: none; border-radius: 8px;">Voltar ao Catálogo</a>
+                    <p>Adicione produtos do nosso catálogo para os ver aqui.</p>
+                    <a href="/" class="back-to-store-btn">Voltar ao Catálogo</a>
                 </div>
             `;
         }
@@ -76,6 +108,11 @@ function renderCart() {
     `;
 }
 
+/**
+ * Atualiza a quantidade de um item ou remove-o do carrinho.
+ * @param {string} productId - O ID do produto.
+ * @param {'increase'|'decrease'|'remove'} action - A ação a ser executada.
+ */
 function updateCart(productId, action) {
     const cart = cartStore.get();
     const itemIndex = cart.findIndex(i => i.id === productId);
@@ -85,17 +122,23 @@ function updateCart(productId, action) {
         cart[itemIndex].qty++;
     } else if (action === 'decrease') {
         cart[itemIndex].qty--;
-        if (cart[itemIndex].qty <= 0) cart.splice(itemIndex, 1);
+        if (cart[itemIndex].qty <= 0) {
+            cart.splice(itemIndex, 1); // Remove se a quantidade for 0 ou menos
+        }
     } else if (action === 'remove') {
-        cart.splice(itemIndex, 1);
+        cart.splice(itemIndex, 1); // Remove o item
     }
 
     cartStore.set(cart);
     renderCart();
 }
 
-// --- FUNÇÕES DE CHECKOUT ---
-
+/**
+ * Constrói a mensagem formatada para o WhatsApp.
+ * @param {string} orderId - O ID do pedido gerado pelo Firebase.
+ * @param {object} order - O objeto do pedido.
+ * @returns {string} A mensagem formatada.
+ */
 function buildWhatsappMessage(orderId, order) {
     const lines = [];
     lines.push('🛍️ *Novo Pedido Olomi* 🛍️');
@@ -109,40 +152,35 @@ function buildWhatsappMessage(orderId, order) {
     lines.push('*Dados do Cliente:*');
     lines.push(`*Nome:* ${c.name}`);
     if (c.phone) lines.push(`*WhatsApp:* ${c.phone}`);
-    lines.push(`*Endereço:* ${c.address}`);
+    lines.push(`*Endereço:* ${c.fullAddress}`);
     lines.push('\nObrigado pela preferência! ✨');
     return lines.join('\n');
 }
 
-function openWhatsapp(targetNumber, text) {
-    const encoded = encodeURIComponent(text);
-    const url = `https://wa.me/${targetNumber}?text=${encoded}`;
-    window.open(url, '_blank');
-}
-
 // --- EVENT LISTENERS ---
 
+// Delegação de eventos para os botões de quantidade e remoção
 if (itemsListEl) {
     itemsListEl.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
         const { id, action } = button.dataset;
-        if (id && action) updateCart(id, action);
+        if (id && action) {
+            updateCart(id, action);
+        }
     });
 }
 
+// Evento de submit do formulário de checkout
 form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // --- NOVA VERIFICAÇÃO DE LOGIN ---
     const user = auth.currentUser;
     if (!user) {
         alert('Você precisa de estar autenticado para finalizar a compra.');
-        // Redireciona para o login, guardando a página atual para voltar depois
         window.location.href = `login-cliente.html?redirect=carrinho.html`;
         return;
     }
-    // --- FIM DA VERIFICAÇÃO ---
 
     const cart = cartStore.get();
     if (cart.length === 0) {
@@ -151,12 +189,19 @@ form?.addEventListener('submit', async (e) => {
     }
 
     const data = Object.fromEntries(new FormData(form).entries());
+    const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
     const order = {
-        userId: user.uid, // Guarda o ID do utilizador que fez a encomenda
+        userId: user.uid,
         items: cart,
         total: subtotal,
-        customer: { name: data.name, phone: data.phone, address: data.address },
+        customer: {
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+            fullAddress: fullAddress,
+            address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
+        },
         status: 'pending',
         createdAt: serverTimestamp(),
     };
@@ -165,7 +210,7 @@ form?.addEventListener('submit', async (e) => {
         const ref = await addDoc(collection(db, 'orders'), order);
         const lojaNumero = '5519987346984'; // Substitua pelo seu número
         const msg = buildWhatsappMessage(ref.id, order);
-        openWhatsapp(lojaNumero, msg);
+        window.open(`https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`, '_blank');
         
         alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
         cartStore.clear();
@@ -177,5 +222,17 @@ form?.addEventListener('submit', async (e) => {
     }
 });
 
+/**
+ * Função de inicialização da página.
+ */
+function init() {
+    renderCart();
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            populateFormWithUserData(user);
+        }
+    });
+}
+
 // --- INICIALIZAÇÃO ---
-renderCart();
+init();

@@ -10,7 +10,7 @@ const neighborhoodInput = registerForm.neighborhood;
 const cityInput = registerForm.city;
 const stateInput = registerForm.state;
 const numberInput = registerForm.number;
-const phoneInput = registerForm.phone; // Campo de telefone
+const phoneInput = registerForm.phone;
 
 // --- FUNÇÕES ---
 

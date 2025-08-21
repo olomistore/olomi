@@ -1,6 +1,5 @@
 /* Estilos para a página de detalhes do produto */
 
-/* Link de "Voltar" */
 .back-link {
     display: inline-block;
     margin-bottom: 2rem;
@@ -14,10 +13,9 @@
     color: var(--cor-laranja-hover);
 }
 
-/* Container principal do produto */
 .product-detail-container {
     display: grid;
-    grid-template-columns: 1fr; /* Começa com uma coluna para mobile */
+    grid-template-columns: 1fr;
     gap: 2rem;
     background-color: var(--cor-branco);
     padding: 2rem;
@@ -25,7 +23,6 @@
     box-shadow: var(--sombra-padrao);
 }
 
-/* Galeria de imagem do produto */
 .product-image-gallery img {
     width: 100%;
     max-width: 500px;
@@ -35,7 +32,6 @@
     display: block;
 }
 
-/* Informações do produto */
 .product-info {
     display: flex;
     flex-direction: column;
@@ -83,10 +79,9 @@
     transform: scale(1.02);
 }
 
-/* Responsividade para telas maiores */
 @media (min-width: 768px) {
     .product-detail-container {
-        grid-template-columns: 1fr 1.2fr; /* Duas colunas em telas maiores */
+        grid-template-columns: 1fr 1.2fr;
         gap: 3rem;
         align-items: flex-start;
     }

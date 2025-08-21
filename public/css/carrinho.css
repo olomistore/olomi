@@ -7,7 +7,6 @@
     margin-bottom: 1.5rem;
 }
 
-/* Layout principal */
 .cart-layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -15,7 +14,6 @@
     margin-top: 2.5rem;
 }
 
-/* Coluna de Itens */
 .cart-items-column {
     background-color: var(--cor-branco);
     padding: 2rem;
@@ -27,7 +25,6 @@
     border-bottom: 1px solid #eee;
 }
 
-/* Estilo de cada item no carrinho */
 .cart-item {
     display: grid;
     grid-template-columns: 80px 1fr auto;
@@ -82,7 +79,6 @@
     text-align: right;
 }
 
-/* Coluna de Resumo e Formulário */
 .cart-summary-column {
     display: flex;
     flex-direction: column;
@@ -117,7 +113,6 @@
     border-top: 1px solid #eee;
 }
 
-/* Formulário de Checkout */
 .checkout-form {
     display: flex;
     flex-direction: column;
@@ -145,7 +140,23 @@
     background-color: var(--cor-laranja-hover);
 }
 
-/* Responsividade */
+.cart-empty {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--cor-branco);
+    border-radius: 8px;
+    box-shadow: var(--sombra-padrao);
+}
+.back-to-store-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.8rem 1.5rem;
+    background-color: var(--cor-laranja);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
 @media (min-width: 992px) {
     .cart-layout {
         grid-template-columns: 2fr 1fr;

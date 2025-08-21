@@ -5,43 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel Admin - Olomi</title>
   
-  <!-- Estilo principal do site (para Header, Footer, etc.) -->
   <link rel="stylesheet" href="./css/style.css" />
-  <!-- Estilo específico da página de Admin -->
   <link rel="stylesheet" href="./css/admin.css" />
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <script type="module" src="./js/admin.js" defer></script>
 </head>
 <body>
 
-<header class="site-header">
+  <header class="site-header">
     <div class="container">
-        <div class="logo-area">
-            <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
-            <h1>Painel Admin</h1>
-        </div>
-        <nav>
-            <a href="index.html" class="cart-link">Ver Loja</a>
-            <!-- CLASSE ADICIONADA AQUI -->
-            <button id="logout" class="logout-btn">Sair</button>
-        </nav>
+      <div class="logo-area">
+        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+        <h1>Painel Admin</h1>
+      </div>
+      <nav>
+        <a href="index.html" class="cart-link">Ver Loja</a>
+        <button id="logout" class="logout-btn">Sair</button>
+      </nav>
     </div>
-</header>
+  </header>
 
-  <!-- Conteúdo principal da página de admin -->
   <main class="site-main">
     <div class="container">
-      
-      <!-- Seção de Novo Produto -->
       <section class="admin-section">
         <h2 class="admin-section-title">Adicionar Novo Produto</h2>
-        <form id="product-form" class="admin-form">
+        <form id="product-form" class="admin-form" method="POST">
           <input name="name" placeholder="Nome do Produto" required />
           <textarea name="description" placeholder="Descrição" rows="4"></textarea>
           <div class="form-grid">
@@ -56,8 +48,6 @@
           <button type="submit" class="submit-btn">Salvar Produto</button>
         </form>
       </section>
-
-      <!-- Seção de Produtos Existentes -->
       <section class="admin-section">
         <h2 class="admin-section-title">Produtos Cadastrados</h2>
         <div class="table-container">
@@ -71,14 +61,10 @@
                 <th>Ações</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Linhas da tabela serão inseridas pelo admin.js -->
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </section>
-
-      <!-- Seção de Pedidos -->
       <section class="admin-section">
         <h2 class="admin-section-title">Pedidos Recebidos</h2>
         <div class="table-container">
@@ -92,17 +78,13 @@
                 <th>Ações</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Linhas da tabela serão inseridas pelo admin.js -->
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </section>
-
     </div>
   </main>
 
-  <!-- Rodapé consistente -->
   <footer class="site-footer">
     <div class="container">
       <p class="footer-title">Olomi – Painel Administrativo</p>

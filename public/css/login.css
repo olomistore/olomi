@@ -1,7 +1,6 @@
 /* Estilos específicos para a página de Login */
 
-/* Garante que o body ocupe o ecrã todo para centralizar o conteúdo */
-body {
+body.login-page {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -45,7 +44,6 @@ body {
     margin-bottom: 2rem;
 }
 
-/* Estilos do Formulário de Login */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -85,7 +83,6 @@ body {
     background-color: var(--cor-laranja-hover);
 }
 
-/* --- NOVOS ESTILOS PARA OS LINKS --- */
 .login-links {
     display: flex;
     flex-direction: column;
@@ -94,14 +91,14 @@ body {
     margin-top: 1.5rem;
 }
 
-.login-link {
+.login-link, .back-to-store {
     color: var(--cor-texto-claro);
     font-size: 0.9rem;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
-.login-link:hover {
+.login-link:hover, .back-to-store:hover {
     color: var(--cor-laranja);
     text-decoration: underline;
 }

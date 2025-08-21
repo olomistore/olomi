@@ -7,7 +7,6 @@
     margin-top: 2.5rem;
 }
 
-/* Estilos para a lista de encomendas */
 .order-item {
     padding: 1.5rem;
     border: 1px solid #eee;
@@ -41,13 +40,13 @@
 }
 
 .order-status.pending {
-    background-color: #fef3c7; /* Amarelo claro */
-    color: #92400e; /* Amarelo escuro */
+    background-color: #fef3c7;
+    color: #92400e;
 }
 
 .order-status.sent {
-    background-color: #d1fae5; /* Verde claro */
-    color: #065f46; /* Verde escuro */
+    background-color: #d1fae5;
+    color: #065f46;
 }
 
 .order-details p {
@@ -64,7 +63,6 @@
     color: var(--cor-texto-claro);
 }
 
-/* Responsividade */
 @media (min-width: 768px) {
     .account-layout {
         grid-template-columns: 1fr 1fr;

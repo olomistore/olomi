@@ -1,44 +1,129 @@
-import { db, auth } from './firebase.js'; // Importa o 'auth'
-import { collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { db, auth } from './firebase.js';
+import { collection, getDocs, query, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { BRL, cartStore } from './utils.js';
 
-// --- SELEÇÃO DOS ELEMENTOS ---
 const listEl = document.getElementById('products');
-// ... (outros elementos)
+const searchEl = document.getElementById('search');
+const catEl = document.getElementById('category');
+const cartCount = document.getElementById('cart-count');
 
-// --- NOVO: LÓGICA DO LINK DE ADMINISTRAÇÃO ---
-async function setupAdminLink() {
-    onAuthStateChanged(auth, async (user) => {
-        const container = document.getElementById('admin-link-container');
-        if (!container) return;
+let products = [];
 
-        if (user) {
-            const roleRef = doc(db, 'roles', user.uid);
-            const snap = await getDoc(roleRef);
-            if (snap.exists() && snap.data().admin) {
-                container.innerHTML = `<a href="admin.html" class="cart-link" style="font-weight: bold;">Painel Admin</a>`;
-            } else {
-                container.innerHTML = '';
-            }
-        } else {
-            container.innerHTML = '';
-        }
+function render(list) {
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (list.length === 0) {
+        listEl.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Nenhum produto encontrado.</p>';
+        return;
+    }
+
+    list.forEach(p => {
+        const link = document.createElement('a');
+        link.href = `produto.html?id=${p.id}`;
+        link.style.textDecoration = 'none';
+        link.style.color = 'inherit';
+
+        link.innerHTML = `
+          <div class="product-card">
+            <img src="${p.imageUrl || 'https://placehold.co/400x400/f39c12/fff?text=Olomi'}" alt="${p.name}" class="product-image">
+            <div class="card-content">
+              <h3 class="product-title">${p.name}</h3>
+              <p class="product-description">${p.description?.slice(0, 100) || 'Sem descrição.'}</p>
+              <p class="product-price">${BRL(p.price)}</p>
+              <button type="button" class="add-to-cart-btn" data-id="${p.id}">Adicionar ao Carrinho</button>
+            </div>
+          </div>
+        `;
+        
+        link.querySelector('button').addEventListener('click', (event) => {
+            event.preventDefault();
+            addToCart(p, event.target);
+        });
+
+        listEl.appendChild(link);
     });
 }
 
-
-// --- FUNÇÃO DE INICIALIZAÇÃO ATUALIZADA ---
-async function init() {
-    // ... (código existente para carregar produtos, etc.)
-
-    // Chama a nova função para configurar o link de administração
-    setupAdminLink(); 
+function loadCategories() {
+    if (!catEl) return;
+    const categories = new Set(products.map(p => p.category).filter(Boolean));
+    categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        catEl.appendChild(opt);
+    });
 }
 
-// --- INICIALIZAÇÃO ---
-init();
+function filter() {
+    const term = (searchEl?.value || '').toLowerCase();
+    const cat = catEl?.value || '';
 
-// O restante do seu código (render, filter, addToCart, etc.) permanece o mesmo...
-// ...
+    const filteredList = products.filter(p => {
+        const matchesCategory = !cat || p.category === cat;
+        const matchesTerm = !term || 
+                            p.name.toLowerCase().includes(term) ||
+                            (p.description || '').toLowerCase().includes(term);
+        return matchesCategory && matchesTerm;
+    });
+
+    render(filteredList);
+}
+
+function addToCart(p, buttonEl) {
+    const cart = cartStore.get();
+    const itemIndex = cart.findIndex(i => i.id === p.id);
+
+    if (itemIndex >= 0) {
+        cart[itemIndex].qty += 1;
+    } else {
+        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 });
+    }
+
+    cartStore.set(cart);
+    updateCartCount();
+
+    buttonEl.textContent = 'Adicionado ✓';
+    buttonEl.style.backgroundColor = '#27ae60';
+    setTimeout(() => {
+        buttonEl.textContent = 'Adicionar ao Carrinho';
+        buttonEl.style.backgroundColor = '';
+    }, 2000);
+}
+
+function updateCartCount() {
+    if (!cartCount) return;
+    const cart = cartStore.get();
+    const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+    cartCount.textContent = totalItems;
+}
+
+async function init() {
+    if (listEl) listEl.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const productsCollection = collection(db, 'products');
+        const qy = query(productsCollection);
+        const snapshot = await getDocs(qy);
+
+        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        products.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+        render(products);
+        loadCategories();
+        updateCartCount();
+    } catch (error) {
+        console.error("Erro ao procurar produtos:", error);
+        if (listEl) listEl.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: red;">Não foi possível carregar os produtos.</p>';
+    }
+}
+
+[searchEl, catEl].forEach(el => {
+    if (el) {
+        el.addEventListener('input', filter);
+    }
+});
+
+init();

@@ -1,15 +1,38 @@
 import { auth, db } from './firebase.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-// O seu código de login e registo de cliente permanece aqui...
+// --- FORMULÁRIO DE LOGIN DO CLIENTE ---
+const loginClienteForm = document.getElementById('login-cliente-form');
+if (loginClienteForm) {
+    loginClienteForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = loginClienteForm.email.value.trim();
+        const password = loginClienteForm.password.value.trim();
+        
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            
+            // Lógica de redirecionamento: se veio do carrinho, volta para lá.
+            const params = new URLSearchParams(window.location.search);
+            const redirectUrl = params.get('redirect');
+            
+            window.location.href = redirectUrl || 'index.html';
 
+        } catch (err) {
+            console.error("Erro ao entrar:", err);
+            alert('Erro ao entrar: Verifique o seu e-mail e senha.');
+        }
+    });
+}
+
+// --- LÓGICA PARA ATUALIZAR A NAVEGAÇÃO DO UTILIZADOR (CABEÇALHO) ---
 async function updateUserNav() {
     onAuthStateChanged(auth, async (user) => {
         const userNav = document.getElementById('user-navigation');
         const adminLinkContainer = document.getElementById('admin-link-container');
 
-        // Limpa os links antes de os recriar
+        // Limpa sempre os contentores antes de adicionar os links
         if (adminLinkContainer) adminLinkContainer.innerHTML = '';
         if (userNav) userNav.innerHTML = '';
 
@@ -27,7 +50,11 @@ async function updateUserNav() {
                     <a href="minha-conta.html" class="cart-link">Minha Conta</a>
                     <button id="logout-cliente" class="logout-btn">Sair</button>
                 `;
-                document.getElementById('logout-cliente')?.addEventListener('click', () => signOut(auth));
+                document.getElementById('logout-cliente')?.addEventListener('click', () => {
+                    signOut(auth).then(() => {
+                        window.location.href = 'index.html';
+                    });
+                });
             }
         } else {
             // Mostra os links de login/registo se não houver utilizador
@@ -41,5 +68,5 @@ async function updateUserNav() {
     });
 }
 
-// Chame a função em todas as páginas que usam este script
+// Chama a função para garantir que a navegação seja atualizada em todas as páginas
 updateUserNav();

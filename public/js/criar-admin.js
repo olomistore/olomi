@@ -19,7 +19,6 @@ if (form) {
             alert('As senhas não coincidem. Por favor, tente novamente.');
             return;
         }
-
         if (password.length < 6) {
             alert('A senha deve ter no mínimo 6 caracteres.');
             return;
@@ -34,20 +33,18 @@ if (form) {
             const user = userCredential.user;
 
             // Passo 2: Guardar os detalhes do utilizador (incluindo o nome) na coleção 'users'
-            const userRef = doc(db, 'users', user.uid);
-            await setDoc(userRef, {
+            await setDoc(doc(db, 'users', user.uid), {
                 name: name,
                 email: email,
                 createdAt: serverTimestamp()
             });
 
             // Passo 3: Dar a permissão de administrador na coleção 'roles'
-            const roleRef = doc(db, 'roles', user.uid);
-            await setDoc(roleRef, {
+            await setDoc(doc(db, 'roles', user.uid), {
                 admin: true
             });
 
-            alert(`Administrador ${name} criado com sucesso!\nE-mail: ${email}`);
+            alert(`Administrador ${name} criado com sucesso!`);
             window.location.href = 'login.html';
 
         } catch (err) {

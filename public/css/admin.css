@@ -1,23 +1,5 @@
 /* Estilos específicos para a página de Administração */
 
-/* Botão de Logout no Header */
-.logout-btn {
-    background: none;
-    border: none;
-    color: var(--cor-laranja);
-    font-weight: bold;
-    font-size: 1.125rem;
-    cursor: pointer;
-    font-family: var(--fonte-corpo);
-    transition: color 0.3s ease;
-    margin-left: 1rem;
-}
-
-.logout-btn:hover {
-    color: var(--cor-branco);
-}
-
-/* Estrutura das seções do Admin */
 .admin-section {
     background-color: var(--cor-branco);
     padding: 2rem;
@@ -36,7 +18,6 @@
     display: inline-block;
 }
 
-/* Estilos do Formulário */
 .admin-form {
     display: flex;
     flex-direction: column;
@@ -82,7 +63,7 @@
 }
 
 .admin-form input[type="file"] {
-    display: none; /* Esconde o input de arquivo padrão */
+    display: none;
 }
 
 .admin-form .submit-btn {
@@ -95,16 +76,15 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    align-self: flex-start; /* Alinha o botão à esquerda */
+    align-self: flex-start;
 }
 
 .admin-form .submit-btn:hover {
     background-color: var(--cor-laranja-hover);
 }
 
-/* Estilos das Tabelas */
 .table-container {
-    overflow-x: auto; /* Adiciona scroll horizontal em telas pequenas */
+    overflow-x: auto;
 }
 
 .admin-table {
@@ -143,9 +123,9 @@
 }
 
 .admin-table .action-btn.edit:hover {
-    color: #3498db; /* Azul */
+    color: #3498db;
 }
 
 .admin-table .action-btn.delete:hover {
-    color: #e74c3c; /* Vermelho */
+    color: #e74c3c;
 }

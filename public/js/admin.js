@@ -1,10 +1,10 @@
-import { requireAdmin } from './auth.js';
+import { requireAdmin } from './auth.js'; // Importa a função de segurança
 import { db, storage } from './firebase.js';
-// CAMINHOS DE IMPORTAÇÃO CORRIGIDOS
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, toCents } from './utils.js';
 
+// A LINHA MAIS IMPORTANTE: Bloqueia o acesso imediato se não for administrador
 await requireAdmin();
 
 const form = document.getElementById('product-form');

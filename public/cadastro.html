@@ -23,20 +23,18 @@
             <h1 class="login-title">Crie sua Conta</h1>
             <p class="login-subtitle">Bem-vindo(a) à Olomi!</p>
             
-            <form id="register-form" class="login-form" method="post">
+            <form id="register-form" class="login-form" method="POST">
                 <fieldset>
                     <legend>Dados Pessoais</legend>
                     <input name="name" type="text" placeholder="Nome completo" required minlength="3" />
                     <input name="phone" type="tel" placeholder="Telefone com DDD" required pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato esperado: (XX) XXXXX-XXXX" />
                 </fieldset>
-                
                 <fieldset>
                     <legend>Dados de Acesso</legend>
                     <input name="email" type="email" placeholder="E-mail" required />
                     <input name="password" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" required minlength="6" />
                     <input name="confirmPassword" type="password" placeholder="Confirme sua senha" required />
                 </fieldset>
-
                 <fieldset>
                     <legend>Endereço de Entrega</legend>
                     <input name="cep" type="text" placeholder="CEP (apenas números)" required pattern="[0-9]{8}" title="Digite os 8 dígitos do CEP" />
@@ -49,7 +47,6 @@
                     <input name="city" type="text" placeholder="Cidade" required />
                     <input name="state" type="text" placeholder="Estado (UF)" required />
                 </fieldset>
-
                 <button type="submit">Registar</button>
             </form>
             <a href="login-cliente.html" class="back-to-store">Já tem uma conta? Entre aqui.</a>
