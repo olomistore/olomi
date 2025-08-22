@@ -7,7 +7,6 @@
     
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/carrinho.css" />
-    <link rel="stylesheet" href="./css/cadastro.css" /> <!-- Reutiliza estilos do registo -->
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,48 +31,32 @@
     <main class="site-main">
         <div class="container">
             <div id="cart-container" class="cart-layout">
-                
-                <!-- Coluna da Esquerda: Itens do Carrinho -->
                 <div class="cart-items-column">
                     <h2 class="section-title">Itens no Carrinho</h2>
-                    <div id="cart-items-list">
-                        <!-- Itens do carrinho serão inseridos aqui pelo JS -->
-                    </div>
+                    <div id="cart-items-list"></div>
                 </div>
-
-                <!-- Coluna da Direita: Resumo e Formulário -->
                 <div class="cart-summary-column">
-                    <!-- Resumo do Pedido -->
                     <div class="cart-summary">
                         <h3 class="summary-title">Resumo do Pedido</h3>
-                        <div id="totals-summary">
-                            <!-- Os totais serão inseridos aqui pelo JS -->
-                        </div>
-
-                        <!-- Secção de Frete Adicionada -->
+                        <div id="totals-summary"></div>
                         <div class="shipping-calculator">
                             <h4 class="shipping-title">Calcular Frete</h4>
                             <div class="shipping-input-group">
                                 <input type="text" id="cep-input" placeholder="Digite o seu CEP" />
                                 <button id="calculate-shipping-btn">Calcular</button>
                             </div>
-                            <div id="shipping-result">
-                                <!-- O resultado do frete aparecerá aqui -->
-                            </div>
+                            <div id="shipping-result"></div>
                         </div>
                     </div>
-
-                    <!-- Formulário de Checkout -->
                     <div class="checkout-form-container">
                         <h3 class="section-title">Dados para Envio</h3>
-                        <form id="checkout-form" class="checkout-form login-form">
+                        <form id="checkout-form" class="checkout-form login-form" method="POST">
                             <fieldset>
                                 <legend>Dados Pessoais</legend>
                                 <input name="name" placeholder="Nome completo" required />
                                 <input name="phone" placeholder="WhatsApp (DDD + Número)" required />
                                 <input name="email" type="email" placeholder="E-mail (opcional)" />
                             </fieldset>
-                            
                             <fieldset>
                                 <legend>Endereço de Entrega</legend>
                                 <input name="cep" type="text" placeholder="CEP (apenas números)" required />
@@ -86,12 +69,10 @@
                                 <input name="city" type="text" placeholder="Cidade" required />
                                 <input name="state" type="text" placeholder="Estado (UF)" required />
                             </fieldset>
-                            
                             <button type="submit" class="submit-btn">Finalizar via WhatsApp</button>
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
