@@ -1,5 +1,6 @@
 import { db, auth } from './firebase.js';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+// Módulos adicionados: writeBatch, doc, increment
+import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { BRL, cartStore } from './utils.js';
 
@@ -171,10 +172,8 @@ if (itemsListEl) {
     });
 }
 
-// Evento de submit do formulário de checkout
 form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const user = auth.currentUser;
     if (!user) {
         alert('Você precisa de estar autenticado para finalizar a compra.');
@@ -188,6 +187,10 @@ form?.addEventListener('submit', async (e) => {
         return;
     }
 
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'A finalizar...';
+
     const data = Object.fromEntries(new FormData(form).entries());
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -196,10 +199,7 @@ form?.addEventListener('submit', async (e) => {
         items: cart,
         total: subtotal,
         customer: {
-            name: data.name,
-            phone: data.phone,
-            email: data.email,
-            fullAddress: fullAddress,
+            name: data.name, phone: data.phone, email: data.email, fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
         },
         status: 'pending',
@@ -207,8 +207,22 @@ form?.addEventListener('submit', async (e) => {
     };
 
     try {
+        // Passo 1: Guardar a encomenda
         const ref = await addDoc(collection(db, 'orders'), order);
-        const lojaNumero = '5519987346984'; // Substitua pelo seu número
+        
+        // --- NOVO: ATUALIZAÇÃO DO STOCK ---
+        // Cria um "lote" de escritas para garantir que todas aconteçam ou nenhuma aconteça
+        const batch = writeBatch(db);
+        order.items.forEach(item => {
+            const productRef = doc(db, "products", item.id);
+            // Adiciona uma operação ao lote para diminuir o stock
+            batch.update(productRef, { stock: increment(-item.qty) });
+        });
+        // Executa todas as atualizações de stock de uma vez
+        await batch.commit();
+        // --- FIM DA ATUALIZAÇÃO DE STOCK ---
+
+        const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
         window.open(`https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`, '_blank');
         
@@ -219,6 +233,8 @@ form?.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
         alert('Erro ao finalizar o pedido: ' + err.message);
+        submitButton.disabled = false;
+        submitButton.textContent = 'Finalizar via WhatsApp';
     }
 });
 

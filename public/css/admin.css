@@ -5,7 +5,7 @@
     padding: 2rem;
     border-radius: 8px;
     box-shadow: var(--sombra-padrao);
-    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
 }
 
 .admin-section-title {
@@ -98,6 +98,7 @@
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #eee;
+    vertical-align: middle;
 }
 
 .admin-table th {
@@ -112,20 +113,68 @@
     border-radius: 4px;
 }
 
+/* --- ESTILOS ATUALIZADOS E NOVOS --- */
+
+/* Badge de Status do Pedido */
+.order-status-badge {
+    font-weight: bold;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--cor-branco);
+    text-align: center;
+    display: inline-block;
+}
+
+.status-pending { background-color: #f39c12; } /* Laranja */
+.status-sent { background-color: #27ae60; }    /* Verde */
+.status-canceled { background-color: #95a5a6; } /* Cinza */
+
+/* Célula de Ações */
+.actions-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Botões de Ação Genéricos */
 .admin-table .action-btn {
     background: none;
     border: none;
     cursor: pointer;
-    margin-right: 0.5rem;
-    font-size: 1rem;
-    color: var(--cor-texto-claro);
-    transition: color 0.2s ease;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--cor-branco);
+    transition: opacity 0.2s ease;
 }
 
-.admin-table .action-btn.edit:hover {
-    color: #3498db;
+.admin-table .action-btn:hover {
+    opacity: 0.8;
 }
 
-.admin-table .action-btn.delete:hover {
-    color: #e74c3c;
+/* Botões de Ação Específicos */
+.admin-table .action-btn.edit { color: #3498db; background-color: transparent; }
+.admin-table .action-btn.delete { color: #e74c3c; background-color: transparent; }
+.admin-table .action-btn.sent { background-color: #27ae60; }
+.admin-table .action-btn.cancel { background-color: #e74c3c; }
+
+/* Estilo para o botão de cancelar edição */
+.admin-form .cancel-btn {
+    background-color: #7f8c8d; /* Cinza */
+    color: var(--cor-branco);
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+    margin-left: 1rem;
+}
+
+.admin-form .cancel-btn:hover {
+    background-color: #95a5a6;
 }
