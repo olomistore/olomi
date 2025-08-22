@@ -54,7 +54,7 @@ function renderCart() {
                 <div class="cart-empty">
                     <h2>O seu carrinho está vazio.</h2>
                     <p>Adicione produtos do nosso catálogo para os ver aqui.</p>
-                    <a href="/" class="back-to-store-btn">Voltar ao Catálogo</a>
+                    <a href="../index.html" class="back-to-store-btn">Voltar ao Catálogo</a>
                 </div>
             `;
         }
