@@ -1,32 +1,69 @@
+// Importa as ferramentas necessárias para a Cloud Function
+const functions = require("firebase-functions");
+const axios = require("axios"); // Para fazer chamadas a outras APIs
+const xml2js = require("xml2js"); // Para converter a resposta dos Correios de XML para JSON
+
 /**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * Cloud Function que pode ser chamada para calcular o frete dos Correios.
+ * @param {object} data - Objeto enviado do frontend, deve conter a propriedade 'cep'.
+ * @param {object} context - Informações de autenticação do utilizador que fez a chamada.
+ * @returns {Promise<object>} Uma promessa que resolve com o preço e o prazo do frete.
  */
+exports.calculateShipping = functions.https.onCall(async (data, context) => {
+  // Pega no CEP de destino enviado pelo seu carrinho.js
+  const destinationCep = data.cep;
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+  // Validação para garantir que o CEP foi enviado
+  if (!destinationCep) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "O CEP de destino é obrigatório."
+    );
+  }
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+  // --- CONFIGURAÇÕES DO SEU ENVIO ---
+  // TODO: Altere estas informações para corresponderem aos seus dados
+  const originCep = "21371121"; // CEP de origem (o seu CEP)
+  const packageWeight = "1"; // Peso médio do pacote em KG
+  const packageLength = "20"; // Comprimento médio em cm
+  const packageHeight = "10"; // Altura média em cm
+  const packageWidth = "15"; // Largura média em cm
+  // --- FIM DAS CONFIGURAÇÕES ---
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+  // Monta a URL da API dos Correios com os parâmetros necessários
+  // 04510 = PAC sem contrato
+  const correiosUrl = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx?nCdEmpresa=&sDsSenha=&sCepOrigem=${originCep}&sCepDestino=${destinationCep}&nVlPeso=${packageWeight}&nCdFormato=1&nVlComprimento=${packageLength}&nVlAltura=${packageHeight}&nVlLargura=${packageWidth}&sCdMaoPropria=n&nVlValorDeclarado=0&sCdAvisoRecebimento=n&nCdServico=04510&nVlDiametro=0&StrRetorno=xml&nIndicaCalculo=3`;
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+  try {
+    // Faz a chamada à API dos Correios
+    const response = await axios.get(correiosUrl);
+    const xml = response.data;
+
+    // Converte a resposta (que é em XML) para um objeto JavaScript
+    const parser = new xml2js.Parser();
+    const result = await parser.parseStringPromise(xml);
+
+    const service = result.Servicos.cServico[0];
+    const shippingValue = service.Valor[0].replace(",", ".");
+    const deliveryTime = service.PrazoEntrega[0];
+
+    // Verifica se houve algum erro na resposta dos Correios (código de erro diferente de '0')
+    if (service.Erro[0] !== "0") {
+      // Se houver um erro, lança uma exceção com a mensagem de erro dos Correios
+      throw new Error(service.MsgErro[0]);
+    }
+
+    // Devolve o resultado formatado para o seu site
+    return {
+      price: parseFloat(shippingValue),
+      deadline: parseInt(deliveryTime),
+    };
+  } catch (error) {
+    console.error("Erro ao calcular o frete:", error);
+    // Em caso de erro, lança uma HttpsError para que o frontend possa lidar com ela
+    throw new functions.https.HttpsError(
+      "internal",
+      "Não foi possível calcular o frete. Tente novamente."
+    );
+  }
+});
