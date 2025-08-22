@@ -1,5 +1,4 @@
 import { db, auth } from './firebase.js';
-// Módulos adicionados: writeBatch, doc, increment
 import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { BRL, cartStore } from './utils.js';
@@ -9,8 +8,61 @@ const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
+const cepInput = document.getElementById('cep-input');
+const calculateShippingBtn = document.getElementById('calculate-shipping-btn');
+const shippingResultEl = document.getElementById('shipping-result');
 
-// --- FUNÇÕES ---
+let shippingCost = 0; // Guarda o custo do frete em cêntimos
+
+// --- LÓGICA DE FRETE ---
+calculateShippingBtn?.addEventListener('click', async () => {
+    const cep = cepInput.value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+        alert('Por favor, digite um CEP válido com 8 dígitos.');
+        return;
+    }
+
+    shippingResultEl.innerHTML = '<div class="spinner"></div>';
+    calculateShippingBtn.disabled = true;
+
+    try {
+        // TODO: Substitua 'olomi-7816a' pelo ID do seu projeto Firebase
+        const projectId = 'olomi-7816a'; 
+        const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/calculateShipping`;
+
+        const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: { cep: cep } }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro na resposta do servidor.');
+        }
+
+        const result = await response.json();
+        const shippingData = result.data;
+
+        shippingCost = shippingData.price * 100; // Converte para cêntimos
+        shippingResultEl.innerHTML = `
+            <p><strong>PAC:</strong> ${BRL(shippingCost)} (aprox. ${shippingData.deadline} dias úteis)</p>
+        `;
+        renderCart();
+    } catch (error) {
+        console.error("Erro no frete:", error);
+        shippingResultEl.innerHTML = `<p class="error">Não foi possível calcular o frete para este CEP.</p>`;
+        shippingCost = 0;
+        renderCart();
+    } finally {
+        calculateShippingBtn.disabled = false;
+    }
+});
+
+
+// --- FUNÇÕES DO CARRINHO ---
 
 /**
  * Preenche o formulário de checkout com os dados do utilizador autenticado.
@@ -54,7 +106,7 @@ function renderCart() {
                 <div class="cart-empty">
                     <h2>O seu carrinho está vazio.</h2>
                     <p>Adicione produtos do nosso catálogo para os ver aqui.</p>
-                    <a href="../index.html" class="back-to-store-btn">Voltar ao Catálogo</a>
+                    <a href="/" class="back-to-store-btn">Voltar ao Catálogo</a>
                 </div>
             `;
         }
@@ -63,10 +115,9 @@ function renderCart() {
 
     itemsListEl.innerHTML = '';
     totalsEl.innerHTML = '';
-    let subtotal = 0;
+    let subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
     cart.forEach(item => {
-        subtotal += item.price * item.qty;
         const itemEl = document.createElement('div');
         itemEl.className = 'cart-item';
         itemEl.innerHTML = `
@@ -91,21 +142,11 @@ function renderCart() {
         itemsListEl.appendChild(itemEl);
     });
 
-    const shipping = 0;
-    const total = subtotal + shipping;
+    const total = subtotal + shippingCost;
     totalsEl.innerHTML = `
-        <div class="summary-row">
-            <span>Subtotal</span>
-            <span>${BRL(subtotal)}</span>
-        </div>
-        <div class="summary-row">
-            <span>Frete</span>
-            <span>${BRL(shipping)}</span>
-        </div>
-        <div class="summary-row total">
-            <span>Total</span>
-            <span>${BRL(total)}</span>
-        </div>
+        <div class="summary-row"><span>Subtotal</span><span>${BRL(subtotal)}</span></div>
+        <div class="summary-row"><span>Frete</span><span>${BRL(shippingCost)}</span></div>
+        <div class="summary-row total"><span>Total</span><span>${BRL(total)}</span></div>
     `;
 }
 
@@ -124,10 +165,10 @@ function updateCart(productId, action) {
     } else if (action === 'decrease') {
         cart[itemIndex].qty--;
         if (cart[itemIndex].qty <= 0) {
-            cart.splice(itemIndex, 1); // Remove se a quantidade for 0 ou menos
+            cart.splice(itemIndex, 1);
         }
     } else if (action === 'remove') {
-        cart.splice(itemIndex, 1); // Remove o item
+        cart.splice(itemIndex, 1);
     }
 
     cartStore.set(cart);
@@ -136,9 +177,6 @@ function updateCart(productId, action) {
 
 /**
  * Constrói a mensagem formatada para o WhatsApp.
- * @param {string} orderId - O ID do pedido gerado pelo Firebase.
- * @param {object} order - O objeto do pedido.
- * @returns {string} A mensagem formatada.
  */
 function buildWhatsappMessage(orderId, order) {
     const lines = [];
@@ -147,6 +185,8 @@ function buildWhatsappMessage(orderId, order) {
     lines.push('--------------------------');
     order.items.forEach(it => lines.push(`${it.qty}x ${it.name} – ${BRL(it.price * it.qty)}`));
     lines.push('--------------------------');
+    lines.push(`*Subtotal:* ${BRL(order.subtotal)}`);
+    lines.push(`*Frete:* ${BRL(order.shipping)}`);
     lines.push(`*Total:* *${BRL(order.total)}*`);
     lines.push('--------------------------');
     const c = order.customer;
@@ -160,7 +200,6 @@ function buildWhatsappMessage(orderId, order) {
 
 // --- EVENT LISTENERS ---
 
-// Delegação de eventos para os botões de quantidade e remoção
 if (itemsListEl) {
     itemsListEl.addEventListener('click', (event) => {
         const button = event.target.closest('button');
@@ -194,10 +233,13 @@ form?.addEventListener('submit', async (e) => {
     const data = Object.fromEntries(new FormData(form).entries());
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const total = subtotal + shippingCost;
     const order = {
         userId: user.uid,
         items: cart,
-        total: subtotal,
+        subtotal,
+        shipping: shippingCost,
+        total,
         customer: {
             name: data.name, phone: data.phone, email: data.email, fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
@@ -207,20 +249,14 @@ form?.addEventListener('submit', async (e) => {
     };
 
     try {
-        // Passo 1: Guardar a encomenda
         const ref = await addDoc(collection(db, 'orders'), order);
         
-        // --- NOVO: ATUALIZAÇÃO DO STOCK ---
-        // Cria um "lote" de escritas para garantir que todas aconteçam ou nenhuma aconteça
         const batch = writeBatch(db);
         order.items.forEach(item => {
             const productRef = doc(db, "products", item.id);
-            // Adiciona uma operação ao lote para diminuir o stock
             batch.update(productRef, { stock: increment(-item.qty) });
         });
-        // Executa todas as atualizações de stock de uma vez
         await batch.commit();
-        // --- FIM DA ATUALIZAÇÃO DE STOCK ---
 
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
