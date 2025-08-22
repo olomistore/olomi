@@ -1,18 +1,24 @@
-import { db, auth } from './firebase.js';
-import { collection, getDocs, query, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { db } from './firebase.js';
+import { collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { BRL, cartStore } from './utils.js';
 
+// --- SELEÇÃO DOS ELEMENTOS ---
 const listEl = document.getElementById('products');
 const searchEl = document.getElementById('search');
 const catEl = document.getElementById('category');
 const cartCount = document.getElementById('cart-count');
 
-let products = [];
+let products = []; // Array para guardar todos os produtos da base de dados
 
+// --- FUNÇÕES ---
+
+/**
+ * Renderiza a lista de produtos no ecrã com o design final.
+ * @param {Array} list - A lista de produtos a ser exibida.
+ */
 function render(list) {
     if (!listEl) return;
-    listEl.innerHTML = '';
+    listEl.innerHTML = ''; // Limpa a lista antes de renderizar
 
     if (list.length === 0) {
         listEl.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Nenhum produto encontrado.</p>';
@@ -46,6 +52,9 @@ function render(list) {
     });
 }
 
+/**
+ * Carrega as categorias de produtos de forma única no <select>.
+ */
 function loadCategories() {
     if (!catEl) return;
     const categories = new Set(products.map(p => p.category).filter(Boolean));
@@ -57,6 +66,9 @@ function loadCategories() {
     });
 }
 
+/**
+ * Filtra os produtos com base na procura e na categoria selecionada.
+ */
 function filter() {
     const term = (searchEl?.value || '').toLowerCase();
     const cat = catEl?.value || '';
@@ -72,6 +84,9 @@ function filter() {
     render(filteredList);
 }
 
+/**
+ * Adiciona um produto ao carrinho e atualiza o contador.
+ */
 function addToCart(p, buttonEl) {
     const cart = cartStore.get();
     const itemIndex = cart.findIndex(i => i.id === p.id);
@@ -93,6 +108,9 @@ function addToCart(p, buttonEl) {
     }, 2000);
 }
 
+/**
+ * Atualiza o número de itens exibido no ícone do carrinho.
+ */
 function updateCartCount() {
     if (!cartCount) return;
     const cart = cartStore.get();
@@ -100,15 +118,21 @@ function updateCartCount() {
     cartCount.textContent = totalItems;
 }
 
+/**
+ * Função principal de inicialização.
+ */
 async function init() {
     if (listEl) listEl.innerHTML = '<div class="spinner"></div>';
     
     try {
         const productsCollection = collection(db, 'products');
+        // ALTERAÇÃO CRÍTICA: A ordenação foi removida da consulta
         const qy = query(productsCollection);
         const snapshot = await getDocs(qy);
 
         products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // A ordenação é feita aqui, no código, o que é mais seguro e não requer índices
         products.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
         render(products);
@@ -116,14 +140,16 @@ async function init() {
         updateCartCount();
     } catch (error) {
         console.error("Erro ao procurar produtos:", error);
-        if (listEl) listEl.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: red;">Não foi possível carregar os produtos.</p>';
+        if (listEl) listEl.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: red;">Não foi possível carregar os produtos. Verifique as regras do Firestore.</p>';
     }
 }
 
+// --- EVENT LISTENERS ---
 [searchEl, catEl].forEach(el => {
     if (el) {
         el.addEventListener('input', filter);
     }
 });
 
+// --- INICIALIZAÇÃO ---
 init();
