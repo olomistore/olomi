@@ -1,0 +1,47 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  businessName: String!
+  email: String
+  photoUrl: String
+  phoneNumber: String
+  businessDescription: String
+}
+
+type Catalog @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  isPublished: Boolean!
+  description: String
+  lastViewedAt: Timestamp
+}
+
+type Category @table {
+  catalog: Catalog!
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  orderIndex: Int
+}
+
+type Product @table {
+  catalog: Catalog!
+  category: Category
+  name: String!
+  price: Float!
+  createdAt: Timestamp!
+  isAvailable: Boolean!
+  description: String
+  imageUrl: String
+  sku: String
+  quantity: Int
+}
+
+type ProductImage @table {
+  product: Product!
+  imageUrl: String!
+  createdAt: Timestamp!
+  caption: String
+  orderIndex: Int
+}

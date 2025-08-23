@@ -9,7 +9,7 @@
   },
   "firestore": {
     "database": "(default)",
-    "location": "southamerica-west1",
+    "location": "southamerica-east1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
@@ -31,5 +31,13 @@
   },
   "database": {
     "rules": "database.rules.json"
+  },
+  "emulators": {
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData"
+    }
+  },
+  "dataconnect": {
+    "source": "dataconnect"
   }
 }

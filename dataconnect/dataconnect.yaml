@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "7816a"
+location: "southamerica-east1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "no"
+      cloudSql:
+        instanceId: "no"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]
