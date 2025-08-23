@@ -3,7 +3,7 @@ import {
     signInWithEmailAndPassword, 
     onAuthStateChanged, 
     signOut,
-    sendPasswordResetEmail // Módulo importado para redefinição de senha
+    sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
@@ -14,26 +14,21 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase
 export async function requireAdmin() {
     return new Promise((resolve) => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            unsubscribe(); // Executa a verificação apenas uma vez para evitar memory leaks
+            unsubscribe(); // Executa apenas uma vez
             if (!user) {
-                // Se não houver utilizador, redireciona para o login
                 window.location.href = 'login.html';
                 return;
             }
             
-            // Se houver utilizador, verifica se ele tem a permissão de admin
             const roleRef = doc(db, 'roles', user.uid);
             const snap = await getDoc(roleRef);
             
             if (!snap.exists() || !snap.data().admin) {
-                // Se não for admin, exibe um alerta e redireciona para a loja
                 alert('Você não tem acesso de administrador.');
                 window.location.href = 'index.html';
                 return;
             }
-            
-            // Se for admin, a promessa é resolvida e a página pode continuar a carregar
-            resolve(user);
+            resolve(user); // Prossegue se for administrador
         });
     });
 }
@@ -64,22 +59,16 @@ if (logoutBtn) {
     });
 }
 
-// --- NOVO: Lógica de Redefinição de Senha ---
+// Lógica de redefinição de senha
 const resetLink = document.getElementById('reset-password-link');
 if (resetLink) {
     resetLink.addEventListener('click', (e) => {
         e.preventDefault();
         const email = prompt("Por favor, insira o seu e-mail para redefinir a senha:");
-        
         if (email) {
             sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    alert("E-mail de redefinição de senha enviado! Verifique a sua caixa de entrada.");
-                })
-                .catch((error) => {
-                    console.error("Erro ao enviar e-mail de redefinição:", error);
-                    alert("Erro ao enviar e-mail: " + error.message);
-                });
+                .then(() => alert("E-mail de redefinição de senha enviado!"))
+                .catch((error) => alert("Erro ao enviar e-mail: " + error.message));
         }
     });
 }
