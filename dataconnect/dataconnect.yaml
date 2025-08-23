@@ -1,12 +1,12 @@
 specVersion: "v1"
-serviceId: "7816a"
-location: "southamerica-east1"
+serviceId: "olomi"
+location: "southamerica-west1"
 schema:
   source: "./schema"
   datasource:
     postgresql:
-      database: "no"
+      database: "fdcdb"
       cloudSql:
-        instanceId: "no"
+        instanceId: "olomi-fdc"
       # schemaValidation: "COMPATIBLE"
-connectorDirs: ["./connector"]
+connectorDirs: ["./example"]
