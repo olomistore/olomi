@@ -22,7 +22,7 @@ calculateShippingBtn?.addEventListener('click', async () => {
     shippingResultEl.innerHTML = '<div class="spinner"></div>';
     calculateShippingBtn.disabled = true;
     try {
-        const projectId = 'olomi-7816a'; 
+        const projectId = 'olomi-7816a';
         const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/calculateShipping`;
         const response = await fetch(functionUrl, {
             method: 'POST',
@@ -30,20 +30,26 @@ calculateShippingBtn?.addEventListener('click', async () => {
             body: JSON.stringify({ data: { cep: cep } }),
         });
         if (!response.ok) {
-            const errorData = await response.json();
+            // Tenta extrair uma mensagem de erro mais detalhada do corpo da resposta
+            const errorData = await response.json().catch(() => ({ error: `Erro ${response.status}: ${response.statusText}` }));
             throw new Error(errorData.error || 'Erro na resposta do servidor.');
         }
         const result = await response.json();
-        const shippingData = result.data;
+        
+        // Verifica se a estrutura de dados esperada foi retornada
+        if (!result.data || typeof result.data.price === 'undefined' || typeof result.data.deadline === 'undefined') {
+            throw new Error('A resposta do servidor de frete não tem o formato esperado.');
+        }
 
-        // ✅ Correção: não multiplicar por 100, já vem em reais
-        shippingCost = shippingData.price; 
+        const shippingData = result.data;
+        shippingCost = shippingData.price;
 
         shippingResultEl.innerHTML = `<p><strong>PAC:</strong> ${BRL(shippingCost)} (aprox. ${shippingData.deadline} dias úteis)</p>`;
         renderCart();
     } catch (error) {
-        console.error("Erro no frete:", error);
-        shippingResultEl.innerHTML = `<p class="error">Não foi possível calcular o frete para este CEP.</p>`;
+        // ✅ CORREÇÃO FRETE: Log de erro mais detalhado para ajudar a diagnosticar o problema (ex: CORS)
+        console.error("Erro detalhado ao calcular o frete:", error);
+        shippingResultEl.innerHTML = `<p class="error">Não foi possível calcular o frete. Verifique o CEP ou tente mais tarde.</p>`;
         shippingCost = 0;
         renderCart();
     } finally {
@@ -190,12 +196,34 @@ form?.addEventListener('submit', async (e) => {
             batch.update(productRef, { stock: increment(-item.qty) });
         });
         await batch.commit();
+
+        // ✅ CORREÇÃO WHATSAPP: Altera a UI para o usuário clicar no botão, evitando o bloqueio de pop-up.
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
-        window.open(`https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`, '_blank');
-        alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
+        const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
+
         cartStore.clear();
-        window.location.href = 'index.html';
+
+        const formContainer = document.querySelector('.checkout-form-container');
+        if (formContainer) {
+            formContainer.innerHTML = `
+                <h3 class="section-title">Pedido Recebido!</h3>
+                <p>Seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
+                <a href="${whatsappUrl}" target="_blank" class="submit-btn" id="whatsapp-redirect-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
+            `;
+            
+            document.getElementById('whatsapp-redirect-btn').addEventListener('click', () => {
+                 setTimeout(() => {
+                    window.location.href = 'index.html';
+                 }, 1500);
+            });
+        } else {
+             // Fallback caso o container do formulário não seja encontrado
+             alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
+             window.open(whatsappUrl, '_blank');
+             window.location.href = 'index.html';
+        }
+
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
         alert('Erro ao finalizar o pedido: ' + err.message);
