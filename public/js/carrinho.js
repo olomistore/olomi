@@ -29,33 +29,36 @@ calculateShippingBtn?.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: { cep: cep } }),
         });
+        
+        // ✅ CORREÇÃO: Tratamento de erro mais robusto
         if (!response.ok) {
-            // Tenta extrair uma mensagem de erro mais detalhada do corpo da resposta
-            const errorData = await response.json().catch(() => ({ error: `Erro ${response.status}: ${response.statusText}` }));
-            throw new Error(errorData.error || 'Erro na resposta do servidor.');
+            // Tenta extrair a mensagem de erro específica enviada pelo backend
+            const errorData = await response.json().catch(() => ({ error: `Erro HTTP ${response.status}` }));
+            throw new Error(errorData.error || 'Não foi possível conectar ao servidor de frete.');
         }
+        
         const result = await response.json();
         
-        // Verifica se a estrutura de dados esperada foi retornada
-        if (!result.data || typeof result.data.price === 'undefined' || typeof result.data.deadline === 'undefined') {
-            throw new Error('A resposta do servidor de frete não tem o formato esperado.');
+        if (!result.data || typeof result.data.price === 'undefined') {
+            throw new Error('A resposta do servidor de frete é inválida.');
         }
 
         const shippingData = result.data;
-        shippingCost = shippingData.price;
+        shippingCost = shippingData.price; // O valor já vem em Reais
 
         shippingResultEl.innerHTML = `<p><strong>PAC:</strong> ${BRL(shippingCost)} (aprox. ${shippingData.deadline} dias úteis)</p>`;
         renderCart();
     } catch (error) {
-        // ✅ CORREÇÃO FRETE: Log de erro mais detalhado para ajudar a diagnosticar o problema (ex: CORS)
-        console.error("Erro detalhado ao calcular o frete:", error);
-        shippingResultEl.innerHTML = `<p class="error">Não foi possível calcular o frete. Verifique o CEP ou tente mais tarde.</p>`;
+        // ✅ CORREÇÃO: Exibe a mensagem de erro específica no HTML
+        console.error("Erro ao calcular o frete:", error);
+        shippingResultEl.innerHTML = `<p class="error">${error.message}</p>`;
         shippingCost = 0;
         renderCart();
     } finally {
         calculateShippingBtn.disabled = false;
     }
 });
+
 
 async function populateFormWithUserData(user) {
     if (!user || !form) return;
@@ -218,7 +221,6 @@ form?.addEventListener('submit', async (e) => {
                  }, 1500);
             });
         } else {
-             // Fallback caso o container do formulário não seja encontrado
              alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
              window.open(whatsappUrl, '_blank');
              window.location.href = 'index.html';
