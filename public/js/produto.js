@@ -11,34 +11,61 @@ function renderProduct(p) {
     if (!productDetailEl) return;
     document.title = `${p.name} - Olomi`;
 
-    productDetailEl.innerHTML = `
-        <div class="product-image-gallery">
-          <img src="${p.imageUrl || 'https://placehold.co/600x600/f39c12/fff?text=Olomi'}" alt="${p.name}">
-        </div>
-        <div class="product-info">
-          <h2 class="product-title-large">${p.name}</h2>
-          <p class="product-price-large">${BRL(p.price)}</p>
-          <p class="product-description-large">${p.description || 'Descrição não disponível.'}</p>
-          <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
-        </div>
+    const productInfoEl = productDetailEl.querySelector('.product-info');
+    const mainImageEl = document.getElementById('main-product-image');
+    const thumbnailContainerEl = document.getElementById('thumbnail-container');
+
+    // Preenche as informações do produto
+    productInfoEl.innerHTML = `
+        <h2 class="product-title-large">${p.name}</h2>
+        <p class="product-price-large">${BRL(p.price)}</p>
+        <p class="product-description-large">${p.description || 'Descrição não disponível.'}</p>
+        <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
     `;
 
-    const button = productDetailEl.querySelector('.add-to-cart-btn-large');
+    // Constrói a galeria de imagens
+    if (p.imageUrls && p.imageUrls.length > 0) {
+        mainImageEl.src = p.imageUrls[0];
+        mainImageEl.alt = p.name;
+        thumbnailContainerEl.innerHTML = '';
+
+        p.imageUrls.forEach((url, index) => {
+            const thumb = document.createElement('img');
+            thumb.src = url;
+            thumb.alt = `Imagem ${index + 1} de ${p.name}`;
+            if (index === 0) {
+                thumb.classList.add('active');
+            }
+            thumb.addEventListener('click', () => {
+                mainImageEl.src = url;
+                // Atualiza a classe 'active' na miniatura
+                thumbnailContainerEl.querySelector('.active')?.classList.remove('active');
+                thumb.classList.add('active');
+            });
+            thumbnailContainerEl.appendChild(thumb);
+        });
+    }
+
+    const button = productInfoEl.querySelector('.add-to-cart-btn-large');
     button.addEventListener('click', (event) => {
         addToCart(p, event.target);
     });
 }
 
-function addToCart(p, buttonEl) {
+function addToCart(product, buttonEl) {
     const cart = cartStore.get();
-    const itemIndex = cart.findIndex(i => i.id === p.id);
-
-    if (itemIndex >= 0) {
-        cart[itemIndex].qty += 1;
+    const item = cart.find(i => i.id === product.id);
+    if (item) {
+        item.qty++;
     } else {
-        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 });
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            imageUrl: product.imageUrls[0], // Usa a primeira imagem
+            qty: 1
+        });
     }
-
     cartStore.set(cart);
     updateCartCount();
 
@@ -82,7 +109,7 @@ async function init() {
         console.error("Erro ao procurar o produto:", error);
         productDetailEl.innerHTML = '<p>Ocorreu um erro ao carregar o produto.</p>';
     }
-    
+
     updateCartCount();
 }
 

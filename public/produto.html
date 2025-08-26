@@ -33,9 +33,20 @@
 
   <main class="site-main">
     <div class="container">
-      <a href="/" class="back-link">&larr; Voltar ao catálogo</a>
+      <a href="/" class="back-link">&larr; Voltar ao Catálogo</a>
       <div id="product-detail" class="product-detail-container">
-        <!-- Conteúdo do produto carregado aqui -->
+        <!-- ✅ NOVO: Estrutura da Galeria de Imagens -->
+        <div class="product-image-gallery">
+          <div class="main-image-container">
+            <img id="main-product-image" src="https://placehold.co/600x600/f39c12/fff?text=Olomi" alt="Imagem principal do produto">
+          </div>
+          <div id="thumbnail-container" class="thumbnail-container">
+            <!-- Miniaturas serão inseridas aqui pelo JS -->
+          </div>
+        </div>
+        <div class="product-info">
+          <!-- Informações do produto serão inseridas aqui pelo JS -->
+        </div>
       </div>
     </div>
   </main>
