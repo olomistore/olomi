@@ -110,7 +110,6 @@ async function loadOrderHistory(user) {
             orderEl.innerHTML = `
                 <div class="order-item-header">
                     <span class="order-id">Pedido #${order.id.substring(0, 6)}</span>
-                    // ✅ CORREÇÃO: Agora usa o objeto para encontrar o texto certo
                     <span class="order-status ${order.status}">${statusText[order.status] || 'Pendente'}</span>
                 </div>
                 <div class="order-details">
