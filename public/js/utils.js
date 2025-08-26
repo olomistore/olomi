@@ -31,30 +31,20 @@ export const cartStore = {
     }
 };
 
-
-/**
- * ✅ NOVO: Configura a procura automática de endereço via CEP para um formulário.
- * @param {HTMLFormElement} formElement - O elemento do formulário que contém os campos de endereço.
- */
 export function setupCepLookup(formElement) {
     const cepInput = formElement.querySelector('[name="cep"]');
-    if (!cepInput) return; // Não faz nada se o campo CEP não existir
+    if (!cepInput) return;
 
     cepInput.addEventListener('blur', async (e) => {
-        const cep = e.target.value.replace(/\D/g, ''); // Remove tudo o que não for dígito
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length !== 8) return;
 
-        if (cep.length !== 8) {
-            return; // Não faz a procura se o CEP não tiver 8 dígitos
-        }
-
-        // Seleciona os campos de endereço dentro do formulário específico
         const streetInput = formElement.querySelector('[name="street"]');
         const neighborhoodInput = formElement.querySelector('[name="neighborhood"]');
         const cityInput = formElement.querySelector('[name="city"]');
         const stateInput = formElement.querySelector('[name="state"]');
         const numberInput = formElement.querySelector('[name="number"]');
 
-        // Mostra um feedback de carregamento
         streetInput.value = 'A procurar...';
         neighborhoodInput.value = 'A procurar...';
         cityInput.value = 'A procurar...';
@@ -65,28 +55,48 @@ export function setupCepLookup(formElement) {
             if (!response.ok) throw new Error('Não foi possível procurar o CEP.');
             
             const data = await response.json();
+            if (data.erro) throw new Error('CEP não encontrado.');
 
-            if (data.erro) {
-                throw new Error('CEP não encontrado.');
-            }
-
-            // Preenche os campos com os dados recebidos
             streetInput.value = data.logradouro;
             neighborhoodInput.value = data.bairro;
             cityInput.value = data.localidade;
             stateInput.value = data.uf;
-
-            // Foca no campo de número, que é o próximo a ser preenchido
             numberInput.focus();
 
         } catch (error) {
             console.error("Erro ao procurar CEP:", error);
-            // Limpa os campos em caso de erro para que o utilizador possa preencher manualmente
             streetInput.value = '';
             neighborhoodInput.value = '';
             cityInput.value = '';
             stateInput.value = '';
-            alert(error.message);
+            // ✅ ALTERAÇÃO: Usa a nova função de notificação
+            showNotification(error.message, 'error');
         }
     });
+}
+
+/**
+ * ✅ NOVO: Mostra uma notificação "toast" no ecrã.
+ * @param {string} message - A mensagem a ser exibida.
+ * @param {string} type - O tipo de notificação ('success' ou 'error').
+ */
+export function showNotification(message, type = 'success') {
+    let container = document.getElementById('notification-container');
+    // Cria o container se ele não existir
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        document.body.appendChild(container);
+    }
+
+    const notification = document.createElement('div');
+    notification.className = `toast-notification ${type}`;
+    notification.textContent = message;
+
+    container.appendChild(notification);
+
+    // Remove a notificação após a animação de fadeOut terminar (5 segundos no total)
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
 }

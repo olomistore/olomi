@@ -2,7 +2,7 @@ import { requireAdmin } from './auth.js';
 import { db, storage } from './firebase.js';
 import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-import { BRL, toCents } from './utils.js';
+import { BRL, toCents, showNotification } from './utils.js'; // Importa a nova função
 
 await requireAdmin();
 
@@ -14,10 +14,9 @@ const imageInput = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 
 let editingProductId = null;
-let existingImageUrls = []; // Guarda os URLs das imagens existentes ao editar
-let selectedFiles = []; // Guarda os novos ficheiros selecionados
+let existingImageUrls = [];
+let selectedFiles = [];
 
-// --- LÓGICA DE EDIÇÃO ---
 const hiddenIdInput = document.createElement('input');
 hiddenIdInput.type = 'hidden';
 hiddenIdInput.name = 'productId';
@@ -41,8 +40,6 @@ cancelEditButton.addEventListener('click', () => {
     selectedFiles = [];
 });
 
-// --- LÓGICA DE UPLOAD E PRÉ-VISUALIZAÇÃO DE IMAGENS ---
-
 imageInput.addEventListener('change', (e) => {
     selectedFiles = Array.from(e.target.files);
     renderImagePreviews();
@@ -50,28 +47,18 @@ imageInput.addEventListener('change', (e) => {
 
 function renderImagePreviews() {
     imagePreviewContainer.innerHTML = '';
-
-    // Pré-visualização das imagens já existentes (no modo de edição)
     existingImageUrls.forEach((url, index) => {
         const previewItem = document.createElement('div');
         previewItem.className = 'image-preview-item';
-        previewItem.innerHTML = `
-            <img src="${url}" alt="Pré-visualização da imagem ${index + 1}">
-            <button type="button" class="remove-img-btn" data-url="${url}">&times;</button>
-        `;
+        previewItem.innerHTML = `<img src="${url}" alt="Pré-visualização da imagem ${index + 1}"><button type="button" class="remove-img-btn" data-url="${url}">&times;</button>`;
         imagePreviewContainer.appendChild(previewItem);
     });
-
-    // Pré-visualização dos novos ficheiros selecionados
     selectedFiles.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const previewItem = document.createElement('div');
             previewItem.className = 'image-preview-item';
-            previewItem.innerHTML = `
-                <img src="${e.target.result}" alt="Pré-visualização de ${file.name}">
-                <button type="button" class="remove-img-btn" data-index="${index}">&times;</button>
-            `;
+            previewItem.innerHTML = `<img src="${e.target.result}" alt="Pré-visualização de ${file.name}"><button type="button" class="remove-img-btn" data-index="${index}">&times;</button>`;
             imagePreviewContainer.appendChild(previewItem);
         };
         reader.readAsDataURL(file);
@@ -82,18 +69,11 @@ imagePreviewContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-img-btn')) {
         const url = e.target.dataset.url;
         const index = e.target.dataset.index;
-
-        if (url) { // Remove uma imagem existente
-            existingImageUrls = existingImageUrls.filter(imageUrl => imageUrl !== url);
-        }
-        if (index) { // Remove um novo ficheiro selecionado
-            selectedFiles.splice(parseInt(index), 1);
-        }
+        if (url) existingImageUrls = existingImageUrls.filter(imageUrl => imageUrl !== url);
+        if (index) selectedFiles.splice(parseInt(index), 1);
         renderImagePreviews();
     }
 });
-
-// --- LÓGICA DO FORMULÁRIO (CRIAR/ATUALIZAR PRODUTO) ---
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -102,55 +82,48 @@ form.addEventListener('submit', async (e) => {
     submitButton.textContent = 'A guardar...';
 
     try {
-        // 1. Fazer upload das novas imagens
         const uploadPromises = selectedFiles.map(file => {
             const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
             return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
         });
         const newImageUrls = await Promise.all(uploadPromises);
-
-        // 2. Combinar URLs novas e existentes
         const allImageUrls = [...existingImageUrls, ...newImageUrls];
         if (allImageUrls.length === 0) {
-            alert('Por favor, adicione pelo menos uma imagem ao produto.');
+            showNotification('Por favor, adicione pelo menos uma imagem ao produto.', 'error');
             throw new Error('Nenhuma imagem fornecida.');
         }
 
-        // 3. Preparar os dados para o Firestore
         const productData = {
             name: form.name.value,
             description: form.description.value,
             price: toCents(form.price.value),
             stock: parseInt(form.stock.value),
             category: form.category.value,
-            imageUrls: allImageUrls, // ✅ Guarda um array de URLs
+            imageUrls: allImageUrls,
             updatedAt: serverTimestamp(),
         };
 
         if (editingProductId) {
-            // Atualizar produto existente
             const productRef = doc(db, 'products', editingProductId);
             await updateDoc(productRef, productData);
         } else {
-            // Criar novo produto
             productData.createdAt = serverTimestamp();
             await addDoc(collection(db, 'products'), productData);
         }
 
-        alert(`Produto ${editingProductId ? 'atualizado' : 'criado'} com sucesso!`);
-        cancelEditButton.click(); // Reseta o formulário
+        showNotification(`Produto ${editingProductId ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+        cancelEditButton.click();
 
     } catch (err) {
         console.error("Erro ao guardar o produto:", err);
-        alert('Ocorreu um erro ao guardar o produto.');
+        if (err.message !== 'Nenhuma imagem fornecida.') {
+            showNotification('Ocorreu um erro ao guardar o produto.', 'error');
+        }
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Salvar Produto';
     }
 });
-
-
-// --- RENDERIZAR PRODUTOS NA TABELA ---
 
 function renderProducts() {
     const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
@@ -174,12 +147,9 @@ function renderProducts() {
     });
 }
 
-// --- AÇÕES DA TABELA DE PRODUTOS (EDITAR/EXCLUIR) ---
-
 tableBody.addEventListener('click', async (e) => {
     const button = e.target.closest('button');
     if (!button) return;
-
     const id = button.dataset.id;
     const productRef = doc(db, 'products', id);
 
@@ -197,7 +167,6 @@ tableBody.addEventListener('click', async (e) => {
             existingImageUrls = product.imageUrls || [];
             selectedFiles = [];
             renderImagePreviews();
-
             formTitle.textContent = 'A Editar Produto';
             cancelEditButton.style.display = 'inline-block';
             window.scrollTo(0, 0);
@@ -205,20 +174,16 @@ tableBody.addEventListener('click', async (e) => {
     } else if (button.classList.contains('delete')) {
         if (confirm('Tem a certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
             try {
-                // Opcional: Excluir imagens do Storage (mais complexo, omitido para simplicidade)
                 await deleteDoc(productRef);
-                alert('Produto excluído com sucesso.');
+                showNotification('Produto excluído com sucesso.', 'success');
             } catch (err) {
                 console.error("Erro ao excluir produto:", err);
-                alert('Ocorreu um erro ao excluir o produto.');
+                showNotification('Ocorreu um erro ao excluir o produto.', 'error');
             }
         }
     }
 });
 
-
-// --- RENDERIZAR PEDIDOS NA TABELA ---
-// (Esta função permanece a mesma)
 function renderOrders() {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     onSnapshot(q, (snapshot) => {
@@ -227,14 +192,12 @@ function renderOrders() {
             const o = { id: doc.id, ...doc.data() };
             const tr = document.createElement('tr');
             const itemsTxt = o.items.map(i => `${i.qty}x ${i.name}`).join('<br>');
-            
             const statusMap = {
                 pending: { text: 'Pendente', class: 'pending' },
                 sent: { text: 'Enviado', class: 'sent' },
                 canceled: { text: 'Cancelado', class: 'canceled' }
             };
             const currentStatus = statusMap[o.status] || { text: o.status, class: '' };
-
             tr.innerHTML = `
                 <td>${o.customer?.name || 'N/A'}</td>
                 <td>${itemsTxt}</td>
@@ -245,7 +208,6 @@ function renderOrders() {
                     <button class="action-btn cancel" data-act="cancel" data-id="${o.id}">Cancelar</button>
                 </td>
             `;
-
             tr.querySelector('.actions-cell').addEventListener('click', async (ev) => {
                 const btn = ev.target.closest('button');
                 if (!btn) return;

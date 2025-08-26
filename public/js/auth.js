@@ -6,6 +6,7 @@ import {
     sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { showNotification } from './utils.js'; // Importa a nova função
 
 /**
  * Protege uma página, exigindo que o utilizador seja um administrador.
@@ -24,7 +25,7 @@ export async function requireAdmin() {
             const snap = await getDoc(roleRef);
             
             if (!snap.exists() || !snap.data().admin) {
-                alert('Você não tem acesso de administrador.');
+                showNotification('Você não tem acesso de administrador.', 'error');
                 window.location.href = 'index.html';
                 return;
             }
@@ -44,7 +45,7 @@ if (form) {
             await signInWithEmailAndPassword(auth, email, password);
             window.location.href = 'admin.html';
         } catch (err) {
-            alert('Erro ao entrar: ' + err.message);
+            showNotification('Erro ao entrar: ' + err.message, 'error');
         }
     });
 }
@@ -67,8 +68,8 @@ if (resetLink) {
         const email = prompt("Por favor, insira o seu e-mail para redefinir a senha:");
         if (email) {
             sendPasswordResetEmail(auth, email)
-                .then(() => alert("E-mail de redefinição de senha enviado!"))
-                .catch((error) => alert("Erro ao enviar e-mail: " + error.message));
+                .then(() => showNotification("E-mail de redefinição de senha enviado!", 'success'))
+                .catch((error) => showNotification("Erro ao enviar e-mail: " + error.message, 'error'));
         }
     });
 }
