@@ -40,7 +40,7 @@ async function loadUserData(user) {
                     <input name="city" type="text" value="${data.address?.city || ''}" required />
                     <input name="state" type="text" value="${data.address?.state || ''}" required />
                 </fieldset>
-                <button type="submit">Guardar Alterações</button>
+                <button type="submit">Salvar Alterações</button>
             </form>
         `;
 

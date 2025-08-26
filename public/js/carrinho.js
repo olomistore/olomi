@@ -1,7 +1,7 @@
 import { db, auth } from './firebase.js';
 import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { BRL, cartStore } from './utils.js';
+import { BRL, cartStore, setupCepLookup } from './utils.js'; // ✅ NOVO: Importa a função
 
 const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
@@ -64,7 +64,7 @@ function renderCart() {
         itemsListEl.appendChild(itemEl);
     });
 
-    const total = subtotal; // O total agora é apenas o subtotal
+    const total = subtotal;
     totalsEl.innerHTML = `
         <div class="summary-row"><span>Subtotal</span><span>${BRL(subtotal)}</span></div>
         <div class="summary-row total"><span>Total</span><span>${BRL(total)}</span></div>
@@ -133,7 +133,7 @@ form?.addEventListener('submit', async (e) => {
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const total = subtotal; // Garante que o total não inclua frete
+    const total = subtotal;
     
     const order = {
         userId: user.uid, items: cart, subtotal, shipping: shippingCost, total,
@@ -190,6 +190,10 @@ function init() {
     onAuthStateChanged(auth, (user) => {
         if (user) populateFormWithUserData(user);
     });
+    // ✅ NOVO: Ativa a procura de CEP para o formulário do carrinho
+    if (form) {
+        setupCepLookup(form);
+    }
 }
 
 init();
