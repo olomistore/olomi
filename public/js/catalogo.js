@@ -24,9 +24,13 @@ function render(list) {
         link.style.textDecoration = 'none';
         link.style.color = 'inherit';
 
-        const imageUrl = (p.imageUrls && p.imageUrls.length > 0) 
-            ? p.imageUrls[0] 
-            : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
+        // ✅ CORREÇÃO: Lógica melhorada para ser compatível com produtos antigos e novos.
+        let imageUrl = 'https://placehold.co/400x400/f39c12/fff?text=Olomi'; // Imagem de substituição padrão
+        if (p.imageUrls && p.imageUrls.length > 0) {
+            imageUrl = p.imageUrls[0]; // Usa o novo sistema de array de imagens, se existir
+        } else if (p.imageUrl) {
+            imageUrl = p.imageUrl; // Se não, usa o sistema antigo de imagem única
+        }
 
         link.innerHTML = `
           <div class="product-card">
@@ -71,32 +75,23 @@ function updateCartCount() {
 }
 
 async function init() {
-    console.log("DEBUG: A iniciar o carregamento do catálogo...");
     if (listEl) listEl.innerHTML = '<div class="spinner"></div>';
     
     try {
         const productsCollection = collection(db, 'products');
         const qy = query(productsCollection);
         
-        console.log("DEBUG: A executar a consulta ao Firestore...");
         const snapshot = await getDocs(qy);
-        console.log(`DEBUG: Consulta concluída. Encontrados ${snapshot.docs.length} documentos.`);
-
-        if (snapshot.empty) {
-            console.warn("DEBUG: A coleção 'products' está vazia ou as regras de segurança estão a bloquear a leitura.");
-        }
 
         products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         products.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         
-        console.log("DEBUG: Produtos mapeados e ordenados. A renderizar a lista...");
         render(products);
         loadCategories();
         updateCartCount();
-        console.log("DEBUG: Catálogo renderizado com sucesso.");
 
     } catch (error) {
-        console.error("DEBUG: Ocorreu um erro CRÍTICO ao carregar os produtos:", error);
+        console.error("Ocorreu um erro ao carregar os produtos:", error);
         if (listEl) listEl.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: red;">Não foi possível carregar os produtos. Verifique a consola para mais detalhes (F12).</p>`;
     }
 }
