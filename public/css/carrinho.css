@@ -113,53 +113,6 @@
     border-top: 1px solid #eee;
 }
 
-/* Estilos para a calculadora de frete */
-.shipping-calculator {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #eee;
-}
-
-.shipping-title {
-    font-family: var(--fonte-titulo);
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.shipping-input-group {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.shipping-input-group input {
-    flex-grow: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-.shipping-input-group button {
-    background-color: var(--cor-laranja);
-    color: var(--cor-branco);
-    border: none;
-    padding: 0 1.5rem;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#shipping-result {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: var(--cor-texto-claro);
-}
-
-#shipping-result .error {
-    color: #e74c3c;
-}
-
-
 .checkout-form {
     display: flex;
     flex-direction: column;

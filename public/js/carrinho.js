@@ -7,58 +7,8 @@ const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
-const cepInput = document.getElementById('cep-input');
-const calculateShippingBtn = document.getElementById('calculate-shipping-btn');
-const shippingResultEl = document.getElementById('shipping-result');
 
 let shippingCost = 0;
-
-calculateShippingBtn?.addEventListener('click', async () => {
-    const cep = cepInput.value.replace(/\D/g, '');
-    if (cep.length !== 8) {
-        alert('Por favor, digite um CEP válido com 8 dígitos.');
-        return;
-    }
-    shippingResultEl.innerHTML = '<div class="spinner"></div>';
-    calculateShippingBtn.disabled = true;
-    try {
-        const projectId = 'olomi-7816a';
-        const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/calculateShipping`;
-        const response = await fetch(functionUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: { cep: cep } }),
-        });
-        
-        // ✅ CORREÇÃO: Tratamento de erro mais robusto
-        if (!response.ok) {
-            // Tenta extrair a mensagem de erro específica enviada pelo backend
-            const errorData = await response.json().catch(() => ({ error: `Erro HTTP ${response.status}` }));
-            throw new Error(errorData.error || 'Não foi possível conectar ao servidor de frete.');
-        }
-        
-        const result = await response.json();
-        
-        if (!result.data || typeof result.data.price === 'undefined') {
-            throw new Error('A resposta do servidor de frete é inválida.');
-        }
-
-        const shippingData = result.data;
-        shippingCost = shippingData.price; // O valor já vem em Reais
-
-        shippingResultEl.innerHTML = `<p><strong>PAC:</strong> ${BRL(shippingCost)} (aprox. ${shippingData.deadline} dias úteis)</p>`;
-        renderCart();
-    } catch (error) {
-        // ✅ CORREÇÃO: Exibe a mensagem de erro específica no HTML
-        console.error("Erro ao calcular o frete:", error);
-        shippingResultEl.innerHTML = `<p class="error">${error.message}</p>`;
-        shippingCost = 0;
-        renderCart();
-    } finally {
-        calculateShippingBtn.disabled = false;
-    }
-});
-
 
 async function populateFormWithUserData(user) {
     if (!user || !form) return;
@@ -113,10 +63,10 @@ function renderCart() {
         `;
         itemsListEl.appendChild(itemEl);
     });
-    const total = subtotal + shippingCost;
+
+    const total = subtotal; // O total agora é apenas o subtotal
     totalsEl.innerHTML = `
         <div class="summary-row"><span>Subtotal</span><span>${BRL(subtotal)}</span></div>
-        <div class="summary-row"><span>Frete</span><span>${BRL(shippingCost)}</span></div>
         <div class="summary-row total"><span>Total</span><span>${BRL(total)}</span></div>
     `;
 }
@@ -142,7 +92,6 @@ function buildWhatsappMessage(orderId, order) {
     order.items.forEach(it => lines.push(`${it.qty}x ${it.name} – ${BRL(it.price * it.qty)}`));
     lines.push('--------------------------');
     lines.push(`*Subtotal:* ${BRL(order.subtotal)}`);
-    lines.push(`*Frete:* ${BRL(order.shipping)}`);
     lines.push(`*Total:* *${BRL(order.total)}*`);
     lines.push('--------------------------');
     const c = order.customer;
@@ -181,8 +130,10 @@ form?.addEventListener('submit', async (e) => {
     submitButton.textContent = 'A finalizar...';
     const data = Object.fromEntries(new FormData(form).entries());
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
+    
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const total = subtotal + shippingCost;
+    const total = subtotal; // Garante que o total não inclua frete
+    
     const order = {
         userId: user.uid, items: cart, subtotal, shipping: shippingCost, total,
         customer: {
@@ -200,7 +151,6 @@ form?.addEventListener('submit', async (e) => {
         });
         await batch.commit();
 
-        // ✅ CORREÇÃO WHATSAPP: Altera a UI para o usuário clicar no botão, evitando o bloqueio de pop-up.
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
