@@ -1,7 +1,7 @@
 import { requireAdmin } from './auth.js';
 import { db, storage } from './firebase.js';
 import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, toCents, showNotification } from './utils.js';
 
 await requireAdmin();
@@ -132,13 +132,12 @@ function renderProducts() {
         snapshot.forEach(docSnap => {
             const p = { id: docSnap.id, ...docSnap.data() };
             const tr = document.createElement('tr');
-
-            // ✅ CORREÇÃO: Lógica melhorada para ser compatível com produtos antigos e novos.
-            let imageUrl = 'https://placehold.co/50x50'; // Imagem de substituição padrão
+            
+            let imageUrl = 'https://placehold.co/50x50';
             if (p.imageUrls && p.imageUrls.length > 0) {
-                imageUrl = p.imageUrls[0]; // Usa o novo sistema de array de imagens, se existir
+                imageUrl = p.imageUrls[0];
             } else if (p.imageUrl) {
-                imageUrl = p.imageUrl; // Se não, usa o sistema antigo de imagem única
+                imageUrl = p.imageUrl;
             }
 
             tr.innerHTML = `
@@ -156,9 +155,11 @@ function renderProducts() {
     });
 }
 
+// ✅ CORREÇÃO: Usa delegação de eventos para os botões da tabela de produtos
 tableBody.addEventListener('click', async (e) => {
-    const button = e.target.closest('button');
+    const button = e.target.closest('button.action-btn');
     if (!button) return;
+
     const id = button.dataset.id;
     const productRef = doc(db, 'products', id);
 
@@ -219,21 +220,31 @@ function renderOrders() {
                     <button class="action-btn cancel" data-act="cancel" data-id="${o.id}">Cancelar</button>
                 </td>
             `;
-            
-            tr.querySelector('.actions-cell').addEventListener('click', async (ev) => {
-                const btn = ev.target.closest('button');
-                if (!btn) return;
-                const id = btn.dataset.id;
-                const action = btn.dataset.act;
-                const status = action === 'sent' ? 'enviado' : 'cancelado';
-                if (confirm(`Tem a certeza que deseja marcar este pedido como ${status.toUpperCase()}?`)) {
-                    await updateDoc(doc(db, 'orders', id), { status: action });
-                }
-            });
             ordersBody.appendChild(tr);
         });
     });
 }
+
+// ✅ CORREÇÃO: Usa delegação de eventos para os botões da tabela de pedidos
+ordersBody.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('button.action-btn');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const action = btn.dataset.act;
+    const newStatus = action === 'sent' ? 'sent' : 'canceled';
+    const statusText = action === 'sent' ? 'enviado' : 'cancelado';
+
+    if (confirm(`Tem a certeza que deseja marcar este pedido como ${statusText.toUpperCase()}?`)) {
+        try {
+            await updateDoc(doc(db, 'orders', id), { status: newStatus });
+            showNotification('Status do pedido atualizado com sucesso!', 'success');
+        } catch (error) {
+            console.error("Erro ao atualizar status do pedido:", error);
+            showNotification('Ocorreu um erro ao atualizar o status.', 'error');
+        }
+    }
+});
 
 renderProducts();
 renderOrders();
