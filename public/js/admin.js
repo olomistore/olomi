@@ -132,9 +132,17 @@ function renderProducts() {
         snapshot.forEach(docSnap => {
             const p = { id: docSnap.id, ...docSnap.data() };
             const tr = document.createElement('tr');
+
+            // ✅ CORREÇÃO: Lógica melhorada para ser compatível com produtos antigos e novos.
+            let imageUrl = 'https://placehold.co/50x50'; // Imagem de substituição padrão
+            if (p.imageUrls && p.imageUrls.length > 0) {
+                imageUrl = p.imageUrls[0]; // Usa o novo sistema de array de imagens, se existir
+            } else if (p.imageUrl) {
+                imageUrl = p.imageUrl; // Se não, usa o sistema antigo de imagem única
+            }
+
             tr.innerHTML = `
-                <!-- ✅ OTIMIZAÇÃO: Adicionado loading="lazy" para a miniatura -->
-                <td><img src="${p.imageUrls?.[0] || 'https://placehold.co/50x50'}" alt="${p.name}" loading="lazy"></td>
+                <td><img src="${imageUrl}" alt="${p.name}" loading="lazy"></td>
                 <td>${p.name}</td>
                 <td>${BRL(p.price)}</td>
                 <td>${p.stock}</td>
@@ -199,7 +207,9 @@ function renderOrders() {
                 canceled: { text: 'Cancelado', class: 'canceled' }
             };
             const currentStatus = statusMap[o.status] || { text: o.status, class: '' };
+            
             tr.innerHTML = `
+                <td>#${o.id.substring(0, 6).toUpperCase()}</td>
                 <td>${o.customer?.name || 'N/A'}</td>
                 <td>${itemsTxt}</td>
                 <td>${BRL(o.total)}</td>
@@ -209,6 +219,7 @@ function renderOrders() {
                     <button class="action-btn cancel" data-act="cancel" data-id="${o.id}">Cancelar</button>
                 </td>
             `;
+            
             tr.querySelector('.actions-cell').addEventListener('click', async (ev) => {
                 const btn = ev.target.closest('button');
                 if (!btn) return;
