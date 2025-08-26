@@ -6,6 +6,7 @@ import { BRL, toCents, showNotification } from './utils.js';
 
 await requireAdmin();
 
+// --- ELEMENTOS DO DOM ---
 const form = document.getElementById('product-form');
 const formTitle = document.querySelector('.admin-section-title');
 const tableBody = document.querySelector('#products-table tbody');
@@ -13,10 +14,12 @@ const ordersBody = document.querySelector('#orders-table tbody');
 const imageInput = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 
+// --- ESTADO DO FORMULÁRIO ---
 let editingProductId = null;
 let existingImageUrls = [];
 let selectedFiles = [];
 
+// --- CONFIGURAÇÃO INICIAL DO FORMULÁRIO ---
 const hiddenIdInput = document.createElement('input');
 hiddenIdInput.type = 'hidden';
 hiddenIdInput.name = 'productId';
@@ -40,6 +43,7 @@ cancelEditButton.addEventListener('click', () => {
     selectedFiles = [];
 });
 
+// --- LÓGICA DE IMAGENS ---
 imageInput.addEventListener('change', (e) => {
     selectedFiles = Array.from(e.target.files);
     renderImagePreviews();
@@ -50,7 +54,7 @@ function renderImagePreviews() {
     existingImageUrls.forEach((url, index) => {
         const previewItem = document.createElement('div');
         previewItem.className = 'image-preview-item';
-        previewItem.innerHTML = `<img src="${url}" alt="Pré-visualização da imagem ${index + 1}"><button type="button" class="remove-img-btn" data-url="${url}">&times;</button>`;
+        previewItem.innerHTML = `<img src="${url}" alt="Pré-visualização ${index + 1}"><button type="button" class="remove-img-btn" data-url="${url}">&times;</button>`;
         imagePreviewContainer.appendChild(previewItem);
     });
     selectedFiles.forEach((file, index) => {
@@ -58,7 +62,7 @@ function renderImagePreviews() {
         reader.onload = (e) => {
             const previewItem = document.createElement('div');
             previewItem.className = 'image-preview-item';
-            previewItem.innerHTML = `<img src="${e.target.result}" alt="Pré-visualização de ${file.name}"><button type="button" class="remove-img-btn" data-index="${index}">&times;</button>`;
+            previewItem.innerHTML = `<img src="${e.target.result}" alt="${file.name}"><button type="button" class="remove-img-btn" data-index="${index}">&times;</button>`;
             imagePreviewContainer.appendChild(previewItem);
         };
         reader.readAsDataURL(file);
@@ -75,6 +79,7 @@ imagePreviewContainer.addEventListener('click', (e) => {
     }
 });
 
+// --- SUBMISSÃO DO FORMULÁRIO DE PRODUTO ---
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = form.querySelector('button[type="submit"]');
@@ -89,33 +94,27 @@ form.addEventListener('submit', async (e) => {
         const newImageUrls = await Promise.all(uploadPromises);
         const allImageUrls = [...existingImageUrls, ...newImageUrls];
         if (allImageUrls.length === 0) {
-            showNotification('Por favor, adicione pelo menos uma imagem ao produto.', 'error');
+            showNotification('Por favor, adicione pelo menos uma imagem.', 'error');
             throw new Error('Nenhuma imagem fornecida.');
         }
 
         const productData = {
-            name: form.name.value,
-            description: form.description.value,
-            price: toCents(form.price.value),
-            stock: parseInt(form.stock.value),
-            category: form.category.value,
-            imageUrls: allImageUrls,
+            name: form.name.value, description: form.description.value,
+            price: toCents(form.price.value), stock: parseInt(form.stock.value),
+            category: form.category.value, imageUrls: allImageUrls,
             updatedAt: serverTimestamp(),
         };
 
         if (editingProductId) {
-            const productRef = doc(db, 'products', editingProductId);
-            await updateDoc(productRef, productData);
+            await updateDoc(doc(db, 'products', editingProductId), productData);
         } else {
             productData.createdAt = serverTimestamp();
             await addDoc(collection(db, 'products'), productData);
         }
-
-        showNotification(`Produto ${editingProductId ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+        showNotification(`Produto ${editingProductId ? 'atualizado' : 'criado'}!`, 'success');
         cancelEditButton.click();
-
     } catch (err) {
-        console.error("Erro ao guardar o produto:", err);
+        console.error("Erro ao guardar produto:", err);
         if (err.message !== 'Nenhuma imagem fornecida.') {
             showNotification('Ocorreu um erro ao guardar o produto.', 'error');
         }
@@ -125,6 +124,7 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
+// --- RENDERIZAÇÃO DAS TABELAS ---
 function renderProducts() {
     const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
     onSnapshot(q, (snapshot) => {
@@ -132,67 +132,18 @@ function renderProducts() {
         snapshot.forEach(docSnap => {
             const p = { id: docSnap.id, ...docSnap.data() };
             const tr = document.createElement('tr');
-            
-            let imageUrl = 'https://placehold.co/50x50';
-            if (p.imageUrls && p.imageUrls.length > 0) {
-                imageUrl = p.imageUrls[0];
-            } else if (p.imageUrl) {
-                imageUrl = p.imageUrl;
-            }
-
+            let imageUrl = p.imageUrls?.[0] || p.imageUrl || 'https://placehold.co/50x50';
             tr.innerHTML = `
                 <td><img src="${imageUrl}" alt="${p.name}" loading="lazy"></td>
-                <td>${p.name}</td>
-                <td>${BRL(p.price)}</td>
-                <td>${p.stock}</td>
+                <td>${p.name}</td> <td>${BRL(p.price)}</td> <td>${p.stock}</td>
                 <td class="actions-cell">
                     <button class="action-btn edit" data-id="${p.id}">Editar</button>
                     <button class="action-btn delete" data-id="${p.id}">Excluir</button>
-                </td>
-            `;
+                </td>`;
             tableBody.appendChild(tr);
         });
     });
 }
-
-// ✅ CORREÇÃO: Usa delegação de eventos para os botões da tabela de produtos
-tableBody.addEventListener('click', async (e) => {
-    const button = e.target.closest('button.action-btn');
-    if (!button) return;
-
-    const id = button.dataset.id;
-    const productRef = doc(db, 'products', id);
-
-    if (button.classList.contains('edit')) {
-        const docSnap = await getDoc(productRef);
-        if (docSnap.exists()) {
-            const product = docSnap.data();
-            form.name.value = product.name;
-            form.description.value = product.description;
-            form.price.value = (product.price / 100).toFixed(2).replace('.', ',');
-            form.stock.value = product.stock;
-            form.category.value = product.category;
-            hiddenIdInput.value = id;
-            editingProductId = id;
-            existingImageUrls = product.imageUrls || [];
-            selectedFiles = [];
-            renderImagePreviews();
-            formTitle.textContent = 'A Editar Produto';
-            cancelEditButton.style.display = 'inline-block';
-            window.scrollTo(0, 0);
-        }
-    } else if (button.classList.contains('delete')) {
-        if (confirm('Tem a certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
-            try {
-                await deleteDoc(productRef);
-                showNotification('Produto excluído com sucesso.', 'success');
-            } catch (err) {
-                console.error("Erro ao excluir produto:", err);
-                showNotification('Ocorreu um erro ao excluir o produto.', 'error');
-            }
-        }
-    }
-});
 
 function renderOrders() {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
@@ -208,43 +159,75 @@ function renderOrders() {
                 canceled: { text: 'Cancelado', class: 'canceled' }
             };
             const currentStatus = statusMap[o.status] || { text: o.status, class: '' };
-            
             tr.innerHTML = `
                 <td>#${o.id.substring(0, 6).toUpperCase()}</td>
-                <td>${o.customer?.name || 'N/A'}</td>
-                <td>${itemsTxt}</td>
-                <td>${BRL(o.total)}</td>
+                <td>${o.customer?.name || 'N/A'}</td> <td>${itemsTxt}</td> <td>${BRL(o.total)}</td>
                 <td><span class="order-status-badge status-${currentStatus.class}">${currentStatus.text}</span></td>
                 <td class="actions-cell">
                     <button class="action-btn sent" data-act="sent" data-id="${o.id}">Marcar Enviado</button>
                     <button class="action-btn cancel" data-act="cancel" data-id="${o.id}">Cancelar</button>
-                </td>
-            `;
+                </td>`;
             ordersBody.appendChild(tr);
         });
     });
 }
 
-// ✅ CORREÇÃO: Usa delegação de eventos para os botões da tabela de pedidos
-ordersBody.addEventListener('click', async (ev) => {
-    const btn = ev.target.closest('button.action-btn');
-    if (!btn) return;
+// ✅ CORREÇÃO DEFINITIVA: Delegação de Eventos para a tabela de PRODUTOS
+tableBody.addEventListener('click', async (e) => {
+    const button = e.target.closest('button.action-btn');
+    if (!button) return;
 
-    const id = btn.dataset.id;
-    const action = btn.dataset.act;
+    const id = button.dataset.id;
+    if (button.classList.contains('edit')) {
+        const docSnap = await getDoc(doc(db, 'products', id));
+        if (docSnap.exists()) {
+            const product = docSnap.data();
+            form.name.value = product.name;
+            form.description.value = product.description;
+            form.price.value = (product.price / 100).toFixed(2).replace('.', ',');
+            form.stock.value = product.stock;
+            form.category.value = product.category;
+            hiddenIdInput.value = id;
+            editingProductId = id;
+            existingImageUrls = product.imageUrls || (product.imageUrl ? [product.imageUrl] : []);
+            selectedFiles = [];
+            renderImagePreviews();
+            formTitle.textContent = 'A Editar Produto';
+            cancelEditButton.style.display = 'inline-block';
+            window.scrollTo(0, 0);
+        }
+    } else if (button.classList.contains('delete')) {
+        if (confirm('Tem a certeza que deseja excluir este produto?')) {
+            try {
+                await deleteDoc(doc(db, 'products', id));
+                showNotification('Produto excluído com sucesso.', 'success');
+            } catch (err) {
+                showNotification('Ocorreu um erro ao excluir o produto.', 'error');
+            }
+        }
+    }
+});
+
+// ✅ CORREÇÃO DEFINITIVA: Delegação de Eventos para a tabela de PEDIDOS
+ordersBody.addEventListener('click', async (e) => {
+    const button = e.target.closest('button.action-btn');
+    if (!button) return;
+
+    const id = button.dataset.id;
+    const action = button.dataset.act;
     const newStatus = action === 'sent' ? 'sent' : 'canceled';
     const statusText = action === 'sent' ? 'enviado' : 'cancelado';
 
     if (confirm(`Tem a certeza que deseja marcar este pedido como ${statusText.toUpperCase()}?`)) {
         try {
             await updateDoc(doc(db, 'orders', id), { status: newStatus });
-            showNotification('Status do pedido atualizado com sucesso!', 'success');
+            showNotification('Status do pedido atualizado!', 'success');
         } catch (error) {
-            console.error("Erro ao atualizar status do pedido:", error);
-            showNotification('Ocorreu um erro ao atualizar o status.', 'error');
+            showNotification('Erro ao atualizar o status.', 'error');
         }
     }
 });
 
+// --- INICIALIZAÇÃO ---
 renderProducts();
 renderOrders();
