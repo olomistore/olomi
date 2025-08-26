@@ -3,7 +3,7 @@ name: Deploy to Firebase Preview Channel
 on:
   push:
     branches:
-      - teste # Dispara o workflow quando há um push para a branch 'teste'
+      - teste
 
 jobs:
   build_and_deploy:
