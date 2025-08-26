@@ -2,7 +2,7 @@ import { requireAdmin } from './auth.js';
 import { db, storage } from './firebase.js';
 import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-import { BRL, toCents, showNotification } from './utils.js'; // Importa a nova função
+import { BRL, toCents, showNotification } from './utils.js';
 
 await requireAdmin();
 
@@ -133,7 +133,8 @@ function renderProducts() {
             const p = { id: docSnap.id, ...docSnap.data() };
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><img src="${p.imageUrls?.[0] || 'https://placehold.co/50x50'}" alt="${p.name}"></td>
+                <!-- ✅ OTIMIZAÇÃO: Adicionado loading="lazy" para a miniatura -->
+                <td><img src="${p.imageUrls?.[0] || 'https://placehold.co/50x50'}" alt="${p.name}" loading="lazy"></td>
                 <td>${p.name}</td>
                 <td>${BRL(p.price)}</td>
                 <td>${p.stock}</td>

@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { BRL, cartStore } from './utils.js';
+import { BRL, cartStore, showNotification } from './utils.js';
 
 const productDetailEl = document.getElementById('product-detail');
 const cartCountEl = document.getElementById('cart-count');
@@ -15,7 +15,6 @@ function renderProduct(p) {
     const mainImageEl = document.getElementById('main-product-image');
     const thumbnailContainerEl = document.getElementById('thumbnail-container');
 
-    // Preenche as informações do produto
     productInfoEl.innerHTML = `
         <h2 class="product-title-large">${p.name}</h2>
         <p class="product-price-large">${BRL(p.price)}</p>
@@ -23,7 +22,6 @@ function renderProduct(p) {
         <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
     `;
 
-    // Constrói a galeria de imagens
     if (p.imageUrls && p.imageUrls.length > 0) {
         mainImageEl.src = p.imageUrls[0];
         mainImageEl.alt = p.name;
@@ -33,12 +31,13 @@ function renderProduct(p) {
             const thumb = document.createElement('img');
             thumb.src = url;
             thumb.alt = `Imagem ${index + 1} de ${p.name}`;
+            thumb.loading = 'lazy'; // OTIMIZAÇÃO: Adiciona carregamento lento às miniaturas
+            
             if (index === 0) {
                 thumb.classList.add('active');
             }
             thumb.addEventListener('click', () => {
                 mainImageEl.src = url;
-                // Atualiza a classe 'active' na miniatura
                 thumbnailContainerEl.querySelector('.active')?.classList.remove('active');
                 thumb.classList.add('active');
             });
@@ -47,12 +46,12 @@ function renderProduct(p) {
     }
 
     const button = productInfoEl.querySelector('.add-to-cart-btn-large');
-    button.addEventListener('click', (event) => {
-        addToCart(p, event.target);
+    button.addEventListener('click', () => {
+        addToCart(p);
     });
 }
 
-function addToCart(product, buttonEl) {
+function addToCart(product) {
     const cart = cartStore.get();
     const item = cart.find(i => i.id === product.id);
     if (item) {
@@ -62,19 +61,13 @@ function addToCart(product, buttonEl) {
             id: product.id,
             name: product.name,
             price: product.price,
-            imageUrl: product.imageUrls[0], // Usa a primeira imagem
+            imageUrl: product.imageUrls[0],
             qty: 1
         });
     }
     cartStore.set(cart);
     updateCartCount();
-
-    buttonEl.textContent = 'Adicionado ✓';
-    buttonEl.style.backgroundColor = '#27ae60';
-    setTimeout(() => {
-        buttonEl.textContent = 'Adicionar ao Carrinho';
-        buttonEl.style.backgroundColor = '';
-    }, 2000);
+    showNotification(`${product.name} adicionado ao carrinho!`, 'success');
 }
 
 function updateCartCount() {

@@ -24,14 +24,14 @@ function render(list) {
         link.style.textDecoration = 'none';
         link.style.color = 'inherit';
 
-        // ✅ CORREÇÃO: Usa a primeira imagem do array `imageUrls`
         const imageUrl = (p.imageUrls && p.imageUrls.length > 0) 
             ? p.imageUrls[0] 
             : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
 
         link.innerHTML = `
           <div class="product-card">
-            <img src="${imageUrl}" alt="${p.name}" class="product-image">
+            <!-- ✅ OTIMIZAÇÃO: Adicionado loading="lazy" para carregamento lento -->
+            <img src="${imageUrl}" alt="${p.name}" class="product-image" loading="lazy">
             <div class="product-info-card">
               <h3 class="product-title">${p.name}</h3>
               <p class="product-price">${BRL(p.price)}</p>
@@ -62,31 +62,6 @@ function filterProducts() {
         return matchesSearch && matchesCategory;
     });
     render(filtered);
-}
-
-function addToCart(product, buttonEl) {
-    const cart = cartStore.get();
-    const item = cart.find(i => i.id === product.id);
-    if (item) {
-        item.qty++;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            imageUrl: product.imageUrls[0], // Usa a primeira imagem
-            qty: 1
-        });
-    }
-    cartStore.set(cart);
-    updateCartCount();
-
-    buttonEl.textContent = 'Adicionado ✓';
-    buttonEl.style.backgroundColor = '#27ae60';
-    setTimeout(() => {
-        buttonEl.textContent = 'Adicionar ao Carrinho';
-        buttonEl.style.backgroundColor = '';
-    }, 2000);
 }
 
 function updateCartCount() {
