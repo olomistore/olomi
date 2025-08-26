@@ -163,3 +163,15 @@
         align-items: flex-start;
     }
 }
+
+/* Estilo para a mensagem de informação do frete */
+.shipping-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    text-align: center;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}

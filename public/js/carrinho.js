@@ -132,7 +132,12 @@ form?.addEventListener('submit', async (e) => {
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const total = subtotal; // Garante que o total não inclua frete
+    const total = subtotal;
+    totalsEl.innerHTML = `
+    <div class="summary-row"><span>Subtotal</span><span>${BRL(subtotal)}</span></div>
+    <div class="summary-row total"><span>Total</span><span>${BRL(total)}</span></div>
+    <div class="shipping-info">O frete será calculado via WhatsApp na finalização do pedido.</div>
+`;
     
     const order = {
         userId: user.uid, items: cart, subtotal, shipping: shippingCost, total,
