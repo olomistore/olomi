@@ -1,176 +1,44 @@
-.admin-section {
-    background-color: var(--cor-branco);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: var(--sombra-padrao);
-    margin-bottom: 2.5rem;
-}
+/* Estilos específicos para a página de Administração */
+.admin-section { background-color: var(--cor-branco); padding: 1.5rem; border-radius: 8px; box-shadow: var(--sombra-padrao); margin-bottom: 2rem; }
+.admin-section-title { font-family: var(--fonte-titulo); font-size: 1.5rem; color: var(--cor-preto); margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cor-laranja); display: inline-block; }
+.admin-form { display: flex; flex-direction: column; gap: 1rem; }
+.admin-form .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.admin-form input, .admin-form textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: var(--fonte-corpo); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+.admin-form input:focus, .admin-form textarea:focus { outline: none; border-color: var(--cor-laranja); box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.3); }
+.admin-form .file-upload-label { display: block; padding: 0.75rem 1rem; background-color: #f0f0f0; border: 1px dashed #ccc; border-radius: 8px; text-align: center; cursor: pointer; }
+.admin-form .file-upload-label input[type="file"] { display: none; }
+.image-preview-container { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; }
+.image-preview-item { position: relative; width: 80px; height: 80px; }
+.image-preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+.image-preview-item .remove-img-btn { position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.admin-form .submit-btn, .admin-form .cancel-btn { background-color: var(--cor-laranja); color: var(--cor-branco); font-weight: bold; font-size: 1.1rem; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 1rem; }
+.admin-form .cancel-btn { background-color: #7f8c8d; }
 
-.admin-section-title {
-    font-family: var(--fonte-titulo);
-    font-size: 1.75rem;
-    color: var(--cor-preto);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--cor-laranja);
-    display: inline-block;
-}
+/* ✅ ALTERAÇÃO: Tabela de Administração agora rola horizontalmente em ecrãs pequenos */
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; min-width: 600px; /* Força a rolagem em ecrãs pequenos */ }
+.admin-table th, .admin-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; /* Impede que o texto quebre */ }
+.admin-table th { font-family: var(--fonte-titulo); font-size: 0.9rem; }
+.admin-table td img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
 
-.admin-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.admin-form .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.admin-form input,
-.admin-form textarea {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: var(--fonte-corpo);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.admin-form input:focus,
-.admin-form textarea:focus {
-    outline: none;
-    border-color: var(--cor-laranja);
-    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.3);
-}
-
-.admin-form .file-upload-label {
-    display: block;
-    padding: 0.75rem 1rem;
-    background-color: #f0f0f0;
-    border: 1px dashed #ccc;
-    border-radius: 8px;
-    text-align: center;
-    cursor: pointer;
-}
-.admin-form .file-upload-label input[type="file"] {
-    display: none;
-}
-
-/* ✅ NOVO: Estilos para a pré-visualização de imagens */
-.image-preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-.image-preview-item {
-    position: relative;
-    width: 100px;
-    height: 100px;
-}
-.image-preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-}
-.image-preview-item .remove-img-btn {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
-.admin-form .submit-btn,
-.admin-form .cancel-btn {
-    background-color: var(--cor-laranja);
-    color: var(--cor-branco);
-    font-weight: bold;
-    font-size: 1.1rem;
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 1rem;
-}
-.admin-form .cancel-btn {
-    background-color: #7f8c8d;
-}
-
-/* Tabela de Administração */
-.table-container {
-    overflow-x: auto;
-}
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-.admin-table th, .admin-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-.admin-table th {
-    font-family: var(--fonte-titulo);
-    font-size: 1rem;
-}
-.admin-table td img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-/* Status do Pedido */
-.order-status-badge {
-    color: var(--cor-branco);
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-align: center;
-    display: inline-block;
-}
+.order-status-badge { color: var(--cor-branco); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-align: center; display: inline-block; }
 .status-pending { background-color: #f39c12; }
 .status-sent { background-color: #27ae60; }
 .status-canceled { background-color: #95a5a6; }
-
-/* Célula de Ações */
-.actions-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* Botões de Ação */
-.admin-table .action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem 0.8rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    transition: opacity 0.2s ease;
-}
-.admin-table .action-btn.edit { color: #3498db; }
+.actions-cell { display: flex; flex-direction: row; gap: 0.5rem; }
+.admin-table .action-btn { background: none; border: none; cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.9rem; font-weight: bold; transition: opacity 0.2s ease; }
+.admin-table .action-btn.edit { color: #3498db; padding-left: 0; }
 .admin-table .action-btn.delete { color: #e74c3c; }
-.admin-table .action-btn.sent { background-color: #27ae60; color: white; }
-.admin-table .action-btn.cancel { background-color: #e74c3c; color: white; }
+.admin-table .action-btn.sent, .admin-table .action-btn.cancel { color: white; }
+.admin-table .action-btn.sent { background-color: #27ae60; }
+.admin-table .action-btn.cancel { background-color: #e74c3c; }
+
+/* ✅ NOVO: Media Queries para Responsividade */
+@media (min-width: 768px) {
+    .admin-section { padding: 2rem; }
+    .admin-section-title { font-size: 1.75rem; }
+    .admin-form .form-grid { grid-template-columns: 1fr 1fr; }
+    .admin-table { min-width: auto; } /* Remove a largura mínima em ecrãs maiores */
+    .admin-table td { white-space: normal; } /* Permite que o texto quebre em ecrãs maiores */
+    .actions-cell { flex-direction: column; }
+}

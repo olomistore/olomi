@@ -1,71 +1,25 @@
 /* Estilos para a página Minha Conta */
+.account-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
+.order-item { padding: 1rem; border: 1px solid #eee; border-radius: 8px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+.order-item-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+.order-id { font-family: var(--fonte-titulo); font-size: 1.1rem; }
+.order-status { font-weight: bold; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; }
+.order-status.pending { background-color: #fef3c7; color: #92400e; }
+.order-status.sent { background-color: #d1fae5; color: #065f46; }
+.order-status.canceled { background-color: #e5e7eb; color: #374151; }
+.order-details { display: flex; justify-content: space-between; }
+.order-details p { margin: 0; }
+.order-items-list strong { display: block; margin-bottom: 0.5rem; }
+.order-items-list ul { list-style: none; padding-left: 0; }
+.order-items-list li { color: var(--cor-texto-claro); font-size: 0.9rem; }
 
-.account-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-    margin-top: 2.5rem;
-}
-
-.order-item {
-    padding: 1.5rem;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-}
-
-.order-item-header {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 1rem;
-}
-
-.order-id {
-    font-family: var(--fonte-titulo);
-    font-size: 1.2rem;
-}
-
-.order-status {
-    font-weight: bold;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-}
-
-.order-status.pending {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.order-status.sent {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.order-details p {
-    margin-bottom: 0.5rem;
-}
-
-.order-details strong {
-    color: var(--cor-preto);
-}
-
-.order-items-list {
-    grid-column: 1 / -1;
-    font-size: 0.9rem;
-    color: var(--cor-texto-claro);
-}
-
+/* ✅ NOVO: Media Queries para Responsividade */
 @media (min-width: 768px) {
-    .account-layout {
-        grid-template-columns: 1fr 1fr;
-        align-items: flex-start;
-    }
+    .account-layout { grid-template-columns: 1fr 2fr; align-items: flex-start; }
+    .order-item { padding: 1.5rem; }
+    .order-id { font-size: 1.2rem; }
+}
+
+@media (min-width: 992px) {
+    .account-layout { grid-template-columns: 1fr; }
 }
