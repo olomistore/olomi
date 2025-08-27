@@ -2,19 +2,24 @@ name: Deploy to Firebase Hosting on merge
 'on':
   push:
     branches:
-      - main  # ou o nome do seu ramo principal, ex: master
+      - main
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       
-      # Passo para instalar dependências e fazer o build das Cloud Functions
+      # ✅ CORREÇÃO: Define a versão do Node.js para ser a mesma do projeto (18)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Agora o 'npm ci' vai funcionar porque as versões são consistentes
       - name: Install Function Dependencies
         run: npm ci
-        working-directory: ./functions # ✅ CORREÇÃO: Executa o comando dentro da pasta 'functions'
+        working-directory: ./functions
 
-      # Passo para fazer o deploy no Firebase
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
