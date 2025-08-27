@@ -24,4 +24,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           channelId: teste
           projectId: olomi-7816a # Substitua pelo ID do seu projeto
-          expires: 7d # Opcional: tempo para o canal expirar
+          expires: 1d # Opcional: tempo para o canal expirar
