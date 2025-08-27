@@ -2,22 +2,22 @@ name: Deploy to Firebase Hosting on merge
 'on':
   push:
     branches:
-      - main
+      - main # ou o nome do seu ramo principal, ex: master
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       
-      # ✅ CORREÇÃO: Define a versão do Node.js para ser a mesma do projeto (18)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # Agora o 'npm ci' vai funcionar porque as versões são consistentes
+      # ✅ CORREÇÃO DEFINITIVA: Trocado 'npm ci' por 'npm install'
+      # O 'npm install' é mais flexível e não falhará se o package-lock.json estiver em falta.
       - name: Install Function Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./functions
 
       - name: Deploy to Firebase
