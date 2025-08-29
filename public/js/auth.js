@@ -1,70 +1,73 @@
 import { auth, db } from './firebase.js';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { showNotification } from './utils.js'; // Importa a nova função
+import { showNotification } from './utils.js';
 
-/**
- * Protege uma página, exigindo que o utilizador seja um administrador.
- * Redireciona caso não esteja autenticado ou não seja administrador.
- */
-export async function requireAdmin() {
-    return new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            unsubscribe(); // Executa apenas uma vez
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
+// --- LÓGICA PARA ATUALIZAR A NAVEGAÇÃO DO UTILIZADOR (CABEÇALHO) ---
+function updateUserNav(user) {
+    const adminLinkContainer = document.getElementById('admin-link-container');
+    const userNav = document.getElementById('user-navigation');
+
+    // Limpa a navegação antes de a reconstruir para evitar duplicados
+    if (adminLinkContainer) adminLinkContainer.innerHTML = '';
+    if (userNav) userNav.innerHTML = '';
+
+    if (user) {
+        // Se o utilizador estiver autenticado
+        // 1. Verifica se é administrador para mostrar o link do painel
+        const roleRef = doc(db, 'roles', user.uid);
+        getDoc(roleRef).then(snap => {
+            if (snap.exists() && snap.data().admin) {
+                if (adminLinkContainer) adminLinkContainer.innerHTML = `<a href="admin.html" class="cart-link admin-link">Painel Admin</a>`;
             }
-            
-            const roleRef = doc(db, 'roles', user.uid);
-            const snap = await getDoc(roleRef);
-            
-            if (!snap.exists() || !snap.data().admin) {
-                showNotification('Você não tem acesso de administrador.', 'error');
-                window.location.href = 'index.html';
-                return;
-            }
-            resolve(user); // Prossegue se for administrador
         });
-    });
+
+        // 2. Mostra a navegação do cliente ("Minha Conta", "Sair")
+        if (userNav) {
+            userNav.innerHTML = `
+                <a href="minha-conta.html" class="cart-link">Minha Conta</a>
+                <button id="logout-cliente" class="logout-btn">Sair</button>
+            `;
+            const logoutButton = document.getElementById('logout-cliente');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    signOut(auth);
+                });
+            }
+        }
+    } else {
+        // Se o utilizador não estiver autenticado
+        // Mostra os links "Entrar" e "Registar"
+        if (userNav) {
+            userNav.innerHTML = `
+                <a href="login-cliente.html" class="cart-link">Entrar</a>
+                <a href="cadastro.html" class="cart-link">Registar</a>
+            `;
+        }
+    }
 }
 
-// Lógica da página de login do administrador
-const form = document.getElementById('login-form');
-if (form) {
-    form.addEventListener('submit', async (e) => {
+// Configura o "ouvinte" de autenticação que atualiza o cabeçalho sempre que o estado de login muda
+onAuthStateChanged(auth, (user) => {
+    updateUserNav(user);
+});
+
+
+// --- LÓGICA PARA A PÁGINA DE LOGIN DO CLIENTE ---
+const loginClienteForm = document.getElementById('login-cliente-form');
+if (loginClienteForm) {
+    loginClienteForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = form.email.value.trim();
-        const password = form.password.value.trim();
+        const email = loginClienteForm.email.value.trim();
+        const password = loginClienteForm.password.value.trim();
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = 'admin.html';
+            const params = new URLSearchParams(window.location.search);
+            const redirectUrl = params.get('redirect');
+            window.location.href = redirectUrl || 'index.html';
         } catch (err) {
-            showNotification('Erro ao entrar: ' + err.message, 'error');
-        }
-    });
-}
-
-// Botão de Logout no painel de administração
-const logoutBtn = document.getElementById('logout');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            window.location.href = 'index.html';
-        });
-    });
-}
-
-// Lógica de redefinição de senha
-const resetLink = document.getElementById('reset-password-link');
-if (resetLink) {
-    resetLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        const email = prompt("Por favor, insira o seu e-mail para redefinir a senha:");
-        if (email) {
-            sendPasswordResetEmail(auth, email)
-                .then(() => showNotification("E-mail de redefinição de senha enviado!", 'success'))
-                .catch((error) => showNotification("Erro ao enviar e-mail: " + error.message, 'error'));
+            console.error("Erro ao entrar:", err);
+            showNotification('Erro ao entrar: Verifique o seu e-mail e senha.', 'error');
         }
     });
 }
