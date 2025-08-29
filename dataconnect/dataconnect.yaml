@@ -5,7 +5,7 @@ schema:
   source: "./schema"
   datasource:
     postgresql:
-      database: "fdcdb"
+      database: "fdcdb-2"
       cloudSql:
         instanceId: "olomi-fdc"
       # schemaValidation: "COMPATIBLE"
