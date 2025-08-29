@@ -11,17 +11,26 @@ function renderProduct(p) {
     if (!productDetailEl) return;
     document.title = `${p.name} - Olomi`;
 
-    const productInfoEl = productDetailEl.querySelector('.product-info');
+    // ✅ CORREÇÃO: Cria a estrutura HTML completa antes de tentar aceder a elementos internos
+    productDetailEl.innerHTML = `
+        <div class="product-image-gallery">
+          <div class="main-image-container">
+            <img id="main-product-image" src="https://placehold.co/600x600/f39c12/fff?text=Olomi" alt="Imagem principal do produto">
+          </div>
+          <div id="thumbnail-container" class="thumbnail-container"></div>
+        </div>
+        <div class="product-info">
+          <h2 class="product-title-large">${p.name}</h2>
+          <p class="product-price-large">${BRL(p.price)}</p>
+          <p class="product-description-large">${p.description || 'Descrição não disponível.'}</p>
+          <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
+        </div>
+    `;
+
     const mainImageEl = document.getElementById('main-product-image');
     const thumbnailContainerEl = document.getElementById('thumbnail-container');
 
-    productInfoEl.innerHTML = `
-        <h2 class="product-title-large">${p.name}</h2>
-        <p class="product-price-large">${BRL(p.price)}</p>
-        <p class="product-description-large">${p.description || 'Descrição não disponível.'}</p>
-        <button class="add-to-cart-btn-large">Adicionar ao Carrinho</button>
-    `;
-
+    // Constrói a galeria de imagens
     if (p.imageUrls && p.imageUrls.length > 0) {
         mainImageEl.src = p.imageUrls[0];
         mainImageEl.alt = p.name;
@@ -31,8 +40,7 @@ function renderProduct(p) {
             const thumb = document.createElement('img');
             thumb.src = url;
             thumb.alt = `Imagem ${index + 1} de ${p.name}`;
-            thumb.loading = 'lazy'; // OTIMIZAÇÃO: Adiciona carregamento lento às miniaturas
-            
+            thumb.loading = 'lazy';
             if (index === 0) {
                 thumb.classList.add('active');
             }
@@ -45,7 +53,7 @@ function renderProduct(p) {
         });
     }
 
-    const button = productInfoEl.querySelector('.add-to-cart-btn-large');
+    const button = productDetailEl.querySelector('.add-to-cart-btn-large');
     button.addEventListener('click', () => {
         addToCart(p);
     });
@@ -61,7 +69,7 @@ function addToCart(product) {
             id: product.id,
             name: product.name,
             price: product.price,
-            imageUrl: product.imageUrls[0],
+            imageUrl: product.imageUrls?.[0] || product.imageUrl,
             qty: 1
         });
     }
