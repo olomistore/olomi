@@ -1,7 +1,7 @@
 import { db, auth } from './firebase.js';
 import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { BRL, cartStore, setupCepLookup } from './utils.js'; // ✅ NOVO: Importa a função
+import { BRL, cartStore, setupCepLookup, showNotification } from './utils.js';
 
 const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
@@ -117,13 +117,13 @@ form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) {
-        alert('Você precisa de estar autenticado para finalizar a compra.');
+        showNotification('Você precisa de estar autenticado para finalizar a compra.', 'error');
         window.location.href = `login-cliente.html?redirect=carrinho.html`;
         return;
     }
     const cart = cartStore.get();
     if (cart.length === 0) {
-        alert('O seu carrinho está vazio.');
+        showNotification('O seu carrinho está vazio.', 'error');
         return;
     }
     const submitButton = form.querySelector('button[type="submit"]');
@@ -144,13 +144,8 @@ form?.addEventListener('submit', async (e) => {
         status: 'pending', createdAt: serverTimestamp(),
     };
     try {
+        // ✅ CORREÇÃO: A lógica de atualização de stock foi removida daqui.
         const ref = await addDoc(collection(db, 'orders'), order);
-        const batch = writeBatch(db);
-        order.items.forEach(item => {
-            const productRef = doc(db, "products", item.id);
-            batch.update(productRef, { stock: increment(-item.qty) });
-        });
-        await batch.commit();
 
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
@@ -162,24 +157,15 @@ form?.addEventListener('submit', async (e) => {
         if (formContainer) {
             formContainer.innerHTML = `
                 <h3 class="section-title">Pedido Recebido!</h3>
-                <p>Seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
-                <a href="${whatsappUrl}" target="_blank" class="submit-btn" id="whatsapp-redirect-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
+                <p>O seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
+                <a href="${whatsappUrl}" target="_blank" class="submit-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
+                <a href="/" class="back-to-store-btn" style="text-align: center; text-decoration: none; display: block; margin-top: 1rem; background-color: #7f8c8d;">Voltar ao Início</a>
             `;
-            
-            document.getElementById('whatsapp-redirect-btn').addEventListener('click', () => {
-                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                 }, 1500);
-            });
-        } else {
-             alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
-             window.open(whatsappUrl, '_blank');
-             window.location.href = 'index.html';
         }
 
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
-        alert('Erro ao finalizar o pedido: ' + err.message);
+        showNotification('Erro ao finalizar o pedido: ' + err.message, 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Finalizar via WhatsApp';
     }
@@ -190,7 +176,6 @@ function init() {
     onAuthStateChanged(auth, (user) => {
         if (user) populateFormWithUserData(user);
     });
-    // ✅ NOVO: Ativa a procura de CEP para o formulário do carrinho
     if (form) {
         setupCepLookup(form);
     }
