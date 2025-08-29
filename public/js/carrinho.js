@@ -1,14 +1,12 @@
 import { db, auth } from './firebase.js';
-import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { BRL, cartStore, setupCepLookup, showNotification } from './utils.js';
+import { BRL, cartStore, showNotification, setupCepLookup } from './utils.js';
 
 const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
-
-let shippingCost = 0;
 
 async function populateFormWithUserData(user) {
     if (!user || !form) return;
@@ -104,21 +102,21 @@ function buildWhatsappMessage(orderId, order) {
     return lines.join('\n');
 }
 
-if (itemsListEl) {
-    itemsListEl.addEventListener('click', (event) => {
-        const button = event.target.closest('button');
-        if (!button) return;
-        const { id, action } = button.dataset;
-        if (id && action) updateCart(id, action);
-    });
-}
+itemsListEl?.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const { id, action } = button.dataset;
+    if (id && action) updateCart(id, action);
+});
 
 form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) {
-        showNotification('Você precisa de estar autenticado para finalizar a compra.', 'error');
-        window.location.href = `login-cliente.html?redirect=carrinho.html`;
+        showNotification('Você precisa estar autenticado para finalizar a compra.', 'error');
+        setTimeout(() => {
+            window.location.href = `login-cliente.html?redirect=carrinho.html`;
+        }, 1500);
         return;
     }
     const cart = cartStore.get();
@@ -129,6 +127,7 @@ form?.addEventListener('submit', async (e) => {
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
     submitButton.textContent = 'A finalizar...';
+
     const data = Object.fromEntries(new FormData(form).entries());
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     
@@ -136,18 +135,19 @@ form?.addEventListener('submit', async (e) => {
     const total = subtotal;
     
     const order = {
-        userId: user.uid, items: cart, subtotal, shipping: shippingCost, total,
+        userId: user.uid, items: cart, subtotal, shipping: 0, total,
         customer: {
-            name: data.name, phone: data.phone, email: data.email, fullAddress: fullAddress,
+            name: data.name, phone: data.phone, email: data.email, fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
         },
         status: 'pending', createdAt: serverTimestamp(),
     };
+
     try {
         // ✅ CORREÇÃO: A lógica de atualização de stock foi removida daqui.
         const ref = await addDoc(collection(db, 'orders'), order);
-
-        const lojaNumero = '5519987346984';
+        
+        const lojaNumero = '5519987346984'; // Substitua pelo seu número
         const msg = buildWhatsappMessage(ref.id, order);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
 
@@ -157,15 +157,13 @@ form?.addEventListener('submit', async (e) => {
         if (formContainer) {
             formContainer.innerHTML = `
                 <h3 class="section-title">Pedido Recebido!</h3>
-                <p>O seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
-                <a href="${whatsappUrl}" target="_blank" class="submit-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
-                <a href="/" class="back-to-store-btn" style="text-align: center; text-decoration: none; display: block; margin-top: 1rem; background-color: #7f8c8d;">Voltar ao Início</a>
+                <p>Seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
+                <a href="${whatsappUrl}" target="_blank" class="submit-btn" id="whatsapp-redirect-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
             `;
         }
-
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
-        showNotification('Erro ao finalizar o pedido: ' + err.message, 'error');
+        showNotification('Ocorreu um erro ao finalizar o pedido: ' + err.message, 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Finalizar via WhatsApp';
     }
