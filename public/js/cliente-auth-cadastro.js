@@ -22,11 +22,14 @@ if (registerForm) {
         submitButton.textContent = 'A registar...';
 
         try {
-            // 1. Cria o utilizador no Authentication
+            // ETAPA 1: Criar utilizador no Authentication
+            console.log("ETAPA 1: A tentar criar o utilizador no Authentication...");
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
+            console.log("SUCESSO na ETAPA 1: Utilizador criado no Authentication. UID:", user.uid);
 
-            // 2. Guarda os dados do utilizador no Firestore
+            // ETAPA 2: Guardar os dados do utilizador na coleção 'users'
+            console.log("ETAPA 2: A tentar guardar os dados na coleção 'users'...");
             await setDoc(doc(db, 'users', user.uid), {
                 name: data.name,
                 phone: data.phone,
@@ -42,28 +45,31 @@ if (registerForm) {
                 },
                 createdAt: serverTimestamp()
             });
+            console.log("SUCESSO na ETAPA 2: Dados guardados na coleção 'users'.");
 
-            // 3. Guarda a função do utilizador (cliente)
+            // ETAPA 3: Guardar a função do utilizador na coleção 'roles'
+            console.log("ETAPA 3: A tentar guardar a função na coleção 'roles'...");
             await setDoc(doc(db, 'roles', user.uid), {
                 admin: false 
             });
+            console.log("SUCESSO na ETAPA 3: Função guardada na coleção 'roles'.");
             
-            // TUDO CORREU BEM! AGORA VAMOS MOSTRAR A MENSAGEM E REDIRECIONAR
-            
+            // ETAPA FINAL: Se tudo correu bem, mostrar notificação e redirecionar
+            console.log("ETAPA FINAL: Todas as operações na base de dados foram bem-sucedidas. A mostrar notificação e a redirecionar.");
             showNotification(`Bem-vindo(a), ${data.name}! A aceder à sua conta...`, 'success');
             
-            // Redireciona o utilizador já logado para a página principal
             setTimeout(() => {
-                window.location.href = 'index.html'; // Ou 'minha-conta.html' se preferir
+                window.location.href = 'index.html';
             }, 1500);
 
         } catch (err) {
-            console.error("Erro ao criar conta:", err);
-            let errorMessage = 'Ocorreu um erro ao criar a sua conta.';
+            // Se qualquer uma das etapas acima falhar, o código virá para aqui.
+            console.error("ERRO CRÍTICO DURANTE O REGISTO:", err);
+            alert(`Ocorreu um erro crítico. Por favor, verifique a consola para mais detalhes. Mensagem: ${err.message}`);
+            
+            let errorMessage = 'Ocorreu um erro ao guardar os seus dados.';
             if (err.code === 'auth/email-already-in-use') {
                 errorMessage = 'Este e-mail já está a ser utilizado por outra conta.';
-            } else if (err.code === 'auth/weak-password') {
-                errorMessage = 'A sua senha é muito fraca. Tente uma com pelo menos 6 caracteres.';
             }
             showNotification(errorMessage, 'error');
             submitButton.disabled = false;
