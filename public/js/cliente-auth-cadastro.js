@@ -69,7 +69,6 @@ if (registerForm) {
     });
 }
 
-
 // --- ATIVA A FUNCIONALIDADE DE BUSCA DE ENDEREÇO PELO CEP ---
 // Se o formulário de registo existir na página, ativa a função de busca de CEP para ele
 if (registerForm) {
