@@ -49,11 +49,11 @@ if (registerForm) {
                 admin: false // Garante que o utilizador registado não é admin
             });
             
-            showNotification('Conta criada com sucesso! A redirecionar...', 'success');
+            showNotification('Conta criada com sucesso! A redirecionar para o login...', 'success');
             
-            // Redireciona para a página principal ou para a "minha conta" após um curto delay
+            // Redireciona para a página de login após um curto delay
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'login-cliente.html';
             }, 1500);
 
         } catch (err) {
