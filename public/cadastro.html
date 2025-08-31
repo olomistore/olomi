@@ -27,7 +27,7 @@
                 <fieldset>
                     <legend>Dados Pessoais</legend>
                     <input name="name" type="text" placeholder="Nome completo" required minlength="3" />
-                    <input name="phone" type="tel" placeholder="Telefone com DDD" required pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato esperado: (XX) XXXXX-XXXX" />
+                    <input name="phone" type="tel" placeholder="Telefone (só números, ex: 11987654321)" required pattern="[0-9]{10,11}" title="Digite um telefone válido com 10 ou 11 dígitos (apenas números)." />
                 </fieldset>
                 <fieldset>
                     <legend>Dados de Acesso</legend>

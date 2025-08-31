@@ -26,7 +26,7 @@ async function loadUserData(user) {
                 <fieldset>
                     <legend>Dados Pessoais</legend>
                     <input name="name" type="text" value="${data.name || ''}" required />
-                    <input name="phone" type="tel" value="${data.phone || ''}" required />
+                    <input name="phone" type="tel" value="${data.phone || ''}" required placeholder="Telefone (só números)" pattern="[0-9]{10,11}" title="Digite um telefone válido com 10 ou 11 dígitos (apenas números)." />
                 </fieldset>
                 <fieldset>
                     <legend>Endereço de Entrega</legend>

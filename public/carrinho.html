@@ -46,7 +46,7 @@
                             <fieldset>
                                 <legend>Dados Pessoais</legend>
                                 <input name="name" placeholder="Nome completo" required />
-                                <input name="phone" placeholder="WhatsApp (DDD + Número)" required />
+                                <input name="phone" type="tel" placeholder="Telefone (só números, ex: 11987654321)" required pattern="[0-9]{10,11}" title="Digite um telefone válido com 10 ou 11 dígitos (apenas números)." />
                                 <input name="email" type="email" placeholder="E-mail (opcional)" />
                             </fieldset>
                             <fieldset>
