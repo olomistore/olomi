@@ -9,54 +9,61 @@ if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const email = registerForm.email.value;
-        const password = registerForm.password.value;
         const submitButton = registerForm.querySelector('button');
-        
+        const formData = new FormData(registerForm);
+        const data = Object.fromEntries(formData.entries());
+
+        if (data.password !== data.confirmPassword) {
+            showNotification('As senhas não coincidem.', 'error');
+            return;
+        }
+
         submitButton.disabled = true;
-        submitButton.textContent = 'A processar...';
+        submitButton.textContent = 'A registar...';
 
         try {
-            // ETAPA 1: Criar o utilizador no Authentication
-            alert("Etapa 1: A tentar criar o utilizador...");
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            // 1. Cria o utilizador no Authentication
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
-            alert(`Etapa 1 SUCESSO: Utilizador criado com UID: ${user.uid}`);
 
-            // ETAPA 2: Teste de escrita simples no Firestore
-            alert("Etapa 2: A tentar escrever um log de teste no Firestore...");
-            
-            // Vamos tentar escrever um documento estático numa nova coleção
-            const testDocRef = doc(db, "test_logs", user.uid);
-            await setDoc(testDocRef, {
-                message: "Registo de teste bem-sucedido!",
-                timestamp: serverTimestamp()
-            });
-
-            alert("Etapa 2 SUCESSO: Log de teste escrito no Firestore!");
-
-            // Se chegámos aqui, a escrita funcionou! Agora tentamos com os dados do utilizador.
-            alert("Etapa 3: A tentar escrever os dados do utilizador...");
-            const formData = new FormData(registerForm);
-            const data = Object.fromEntries(formData.entries());
+            // 2. Guarda os dados do utilizador no Firestore
             await setDoc(doc(db, 'users', user.uid), {
                 name: data.name,
                 phone: data.phone,
                 email: data.email,
+                address: {
+                    cep: data.cep,
+                    street: data.street,
+                    number: data.number,
+                    complement: data.complement,
+                    neighborhood: data.neighborhood,
+                    city: data.city,
+                    state: data.state
+                },
                 createdAt: serverTimestamp()
             });
-            alert("Etapa 3 SUCESSO: Dados do utilizador escritos!");
 
-            showNotification('Conta criada com sucesso! A redirecionar...', 'success');
+            // 3. Guarda a função do utilizador (cliente)
+            await setDoc(doc(db, 'roles', user.uid), {
+                admin: false 
+            });
+            
+            showNotification(`Bem-vindo(a), ${data.name}! A aceder à sua conta...`, 'success');
+            
+            // Redireciona o utilizador já logado para a página principal
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
 
         } catch (err) {
-            // Se qualquer uma das etapas acima falhar, o código virá para aqui.
-            console.error("ERRO CRÍTICO NO PROCESSO DE REGISTO:", err);
-            alert(`ERRO CRÍTICO: ${err.message}\n\nPor favor, abra a consola (F12) para ver mais detalhes.`);
-            
+            console.error("Erro ao criar conta:", err);
+            let errorMessage = 'Ocorreu um erro ao criar a sua conta.';
+            if (err.code === 'auth/email-already-in-use') {
+                errorMessage = 'Este e-mail já está a ser utilizado por outra conta.';
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage = 'A sua senha é muito fraca. Tente uma com pelo menos 6 caracteres.';
+            }
+            showNotification(errorMessage, 'error');
             submitButton.disabled = false;
             submitButton.textContent = 'Registar';
         }
