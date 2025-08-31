@@ -9,69 +9,54 @@ if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        const email = registerForm.email.value;
+        const password = registerForm.password.value;
         const submitButton = registerForm.querySelector('button');
-        const formData = new FormData(registerForm);
-        const data = Object.fromEntries(formData.entries());
-
-        if (data.password !== data.confirmPassword) {
-            showNotification('As senhas não coincidem.', 'error');
-            return;
-        }
-
+        
         submitButton.disabled = true;
-        submitButton.textContent = 'A registar...';
+        submitButton.textContent = 'A processar...';
 
         try {
-            // ETAPA 1: Criar utilizador no Authentication
-            console.log("ETAPA 1: A tentar criar o utilizador no Authentication...");
-            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            // ETAPA 1: Criar o utilizador no Authentication
+            alert("Etapa 1: A tentar criar o utilizador...");
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log("SUCESSO na ETAPA 1: Utilizador criado no Authentication. UID:", user.uid);
+            alert(`Etapa 1 SUCESSO: Utilizador criado com UID: ${user.uid}`);
 
-            // ETAPA 2: Guardar os dados do utilizador na coleção 'users'
-            console.log("ETAPA 2: A tentar guardar os dados na coleção 'users'...");
+            // ETAPA 2: Teste de escrita simples no Firestore
+            alert("Etapa 2: A tentar escrever um log de teste no Firestore...");
+            
+            // Vamos tentar escrever um documento estático numa nova coleção
+            const testDocRef = doc(db, "test_logs", user.uid);
+            await setDoc(testDocRef, {
+                message: "Registo de teste bem-sucedido!",
+                timestamp: serverTimestamp()
+            });
+
+            alert("Etapa 2 SUCESSO: Log de teste escrito no Firestore!");
+
+            // Se chegámos aqui, a escrita funcionou! Agora tentamos com os dados do utilizador.
+            alert("Etapa 3: A tentar escrever os dados do utilizador...");
+            const formData = new FormData(registerForm);
+            const data = Object.fromEntries(formData.entries());
             await setDoc(doc(db, 'users', user.uid), {
                 name: data.name,
                 phone: data.phone,
                 email: data.email,
-                address: {
-                    cep: data.cep,
-                    street: data.street,
-                    number: data.number,
-                    complement: data.complement,
-                    neighborhood: data.neighborhood,
-                    city: data.city,
-                    state: data.state
-                },
                 createdAt: serverTimestamp()
             });
-            console.log("SUCESSO na ETAPA 2: Dados guardados na coleção 'users'.");
+            alert("Etapa 3 SUCESSO: Dados do utilizador escritos!");
 
-            // ETAPA 3: Guardar a função do utilizador na coleção 'roles'
-            console.log("ETAPA 3: A tentar guardar a função na coleção 'roles'...");
-            await setDoc(doc(db, 'roles', user.uid), {
-                admin: false 
-            });
-            console.log("SUCESSO na ETAPA 3: Função guardada na coleção 'roles'.");
-            
-            // ETAPA FINAL: Se tudo correu bem, mostrar notificação e redirecionar
-            console.log("ETAPA FINAL: Todas as operações na base de dados foram bem-sucedidas. A mostrar notificação e a redirecionar.");
-            showNotification(`Bem-vindo(a), ${data.name}! A aceder à sua conta...`, 'success');
-            
+            showNotification('Conta criada com sucesso! A redirecionar...', 'success');
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
 
         } catch (err) {
             // Se qualquer uma das etapas acima falhar, o código virá para aqui.
-            console.error("ERRO CRÍTICO DURANTE O REGISTO:", err);
-            alert(`Ocorreu um erro crítico. Por favor, verifique a consola para mais detalhes. Mensagem: ${err.message}`);
+            console.error("ERRO CRÍTICO NO PROCESSO DE REGISTO:", err);
+            alert(`ERRO CRÍTICO: ${err.message}\n\nPor favor, abra a consola (F12) para ver mais detalhes.`);
             
-            let errorMessage = 'Ocorreu um erro ao guardar os seus dados.';
-            if (err.code === 'auth/email-already-in-use') {
-                errorMessage = 'Este e-mail já está a ser utilizado por outra conta.';
-            }
-            showNotification(errorMessage, 'error');
             submitButton.disabled = false;
             submitButton.textContent = 'Registar';
         }
