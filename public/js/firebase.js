@@ -13,8 +13,8 @@ const firebaseConfig = {
   projectId: "olomi-7816a",
   storageBucket: "olomi-7816a.firebasestorage.app",
   messagingSenderId: "562685499782",
-  appId: "1:562685499782:web:28732864ca37c610c43407",
-  measurementId: "G-WREW35G7PM"
+  appId: "1:562685499782:web:23616d2db4738093c43407",
+  measurementId: "G-2FSC9P97MX"
 };
 
 // Initialize Firebase
