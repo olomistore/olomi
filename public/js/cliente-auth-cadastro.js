@@ -3,7 +3,6 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { showNotification, setupCepLookup } from './utils.js';
 
-// --- FORMULÁRIO DE REGISTO DO CLIENTE ---
 const registerForm = document.getElementById('register-form');
 
 if (registerForm) {
@@ -15,7 +14,7 @@ if (registerForm) {
         const data = Object.fromEntries(formData.entries());
 
         if (data.password !== data.confirmPassword) {
-            showNotification('As senhas não coincidem. Por favor, tente novamente.', 'error');
+            showNotification('As senhas não coincidem.', 'error');
             return;
         }
 
@@ -23,11 +22,11 @@ if (registerForm) {
         submitButton.textContent = 'A registar...';
 
         try {
-            // 1. Criar o utilizador no Authentication
+            // 1. Cria o utilizador no Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
 
-            // 2. Guardar os dados do utilizador no Firestore
+            // 2. Guarda os dados do utilizador no Firestore
             await setDoc(doc(db, 'users', user.uid), {
                 name: data.name,
                 phone: data.phone,
@@ -44,16 +43,18 @@ if (registerForm) {
                 createdAt: serverTimestamp()
             });
 
-            // 3. (Opcional) Guardar a função do utilizador (cliente)
+            // 3. Guarda a função do utilizador (cliente)
             await setDoc(doc(db, 'roles', user.uid), {
-                admin: false // Garante que o utilizador registado não é admin
+                admin: false 
             });
             
-            showNotification('Conta criada com sucesso! A redirecionar para o login...', 'success');
+            // TUDO CORREU BEM! AGORA VAMOS MOSTRAR A MENSAGEM E REDIRECIONAR
             
-            // Redireciona para a página de login após um curto delay
+            showNotification(`Bem-vindo(a), ${data.name}! A aceder à sua conta...`, 'success');
+            
+            // Redireciona o utilizador já logado para a página principal
             setTimeout(() => {
-                window.location.href = 'login-cliente.html';
+                window.location.href = 'index.html'; // Ou 'minha-conta.html' se preferir
             }, 1500);
 
         } catch (err) {
@@ -61,6 +62,8 @@ if (registerForm) {
             let errorMessage = 'Ocorreu um erro ao criar a sua conta.';
             if (err.code === 'auth/email-already-in-use') {
                 errorMessage = 'Este e-mail já está a ser utilizado por outra conta.';
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage = 'A sua senha é muito fraca. Tente uma com pelo menos 6 caracteres.';
             }
             showNotification(errorMessage, 'error');
             submitButton.disabled = false;
@@ -69,9 +72,7 @@ if (registerForm) {
     });
 }
 
-
-// --- ATIVA A FUNCIONALIDADE DE BUSCA DE ENDEREÇO PELO CEP ---
-// Se o formulário de registo existir na página, ativa a função de busca de CEP para ele
+// Ativa a funcionalidade de busca de CEP
 if (registerForm) {
     setupCepLookup(registerForm);
 }
