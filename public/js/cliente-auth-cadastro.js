@@ -1,123 +1,152 @@
 import { auth, db } from './firebase.js';
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { showNotification } from './utils.js';
 
-// --- ELEMENTOS DO FORMULÁRIO ---
 const registerForm = document.getElementById('register-form');
-const cepInput = registerForm.cep;
-const streetInput = registerForm.street;
-const neighborhoodInput = registerForm.neighborhood;
-const cityInput = registerForm.city;
-const stateInput = registerForm.state;
-const numberInput = registerForm.number;
-const phoneInput = registerForm.phone;
 
-// --- FUNÇÕES ---
+if (registerForm) {
+    const phoneInput = registerForm.phone;
+    const cepInput = registerForm.cep;
 
-/**
- * Procura um endereço através da API ViaCEP e preenche os campos do formulário.
- * @param {string} cep - O CEP a ser procurado.
- */
-const fetchAddress = async (cep) => {
-    // Limpa os campos e mostra um feedback de carregamento
-    streetInput.value = 'A procurar...';
-    neighborhoodInput.value = 'A procurar...';
-    cityInput.value = 'A procurar...';
-    stateInput.value = 'A procurar...';
+    // Aplica a máscara de telefone dinamicamente
+    phoneInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é número
+        value = value.substring(0, 11); // Limita a 11 dígitos
 
-    try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        if (!response.ok) throw new Error('Não foi possível procurar o CEP.');
-        
-        const data = await response.json();
-        if (data.erro) {
-            throw new Error('CEP não encontrado.');
+        let formattedValue = '';
+        if (value.length > 10) {
+            // Celular com 9º dígito: (XX) XXXXX-XXXX
+            formattedValue = value.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+        } else if (value.length > 6) {
+            // Telefone (fixo ou celular): (XX) XXXX-XXXX
+            formattedValue = value.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        } else if (value.length > 2) {
+            // Apenas DDD e início do número: (XX) XXXX
+            formattedValue = value.replace(/^(\d{2})(\d*)/, '($1) $2');
+        } else if (value.length > 0) {
+            // Apenas DDD: (XX
+            formattedValue = value.replace(/^(\d*)/, '($1');
         }
 
-        // Preenche os campos com os dados da API
-        streetInput.value = data.logradouro;
-        neighborhoodInput.value = data.bairro;
-        cityInput.value = data.localidade;
-        stateInput.value = data.uf;
+        e.target.value = formattedValue;
+    });
 
-        // Move o foco para o campo de número para o utilizador preencher
-        numberInput.focus();
+    // Lógica para buscar o CEP e preencher o endereço
+    cepInput.addEventListener('input', async (e) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        e.target.value = cep; 
 
-    } catch (error) {
-        alert(error.message);
-        // Limpa os campos em caso de erro
-        streetInput.value = '';
-        neighborhoodInput.value = '';
-        cityInput.value = '';
-        stateInput.value = '';
-    }
-};
+        if (cep.length === 8) {
+            // Mostra feedback de carregamento
+            registerForm.street.value = 'Buscando...';
+            registerForm.neighborhood.value = 'Buscando...';
+            registerForm.city.value = 'Buscando...';
+            registerForm.state.value = 'Buscando...';
 
-/**
- * Aplica uma máscara de telefone (ex: (XX) XXXXX-XXXX) a um campo de input.
- */
-const maskPhone = (event) => {
-    let input = event.target;
-    input.value = phoneMask(input.value);
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                if (!response.ok) throw new Error('CEP não encontrado.');
+                
+                const data = await response.json();
+                if (data.erro) {
+                    showNotification('CEP não localizado. Por favor, verifique o número.', 'error');
+                     // Limpa os campos se o CEP for inválido
+                    registerForm.street.value = '';
+                    registerForm.neighborhood.value = '';
+                    registerForm.city.value = '';
+                    registerForm.state.value = '';
+                    return;
+                }
+
+                registerForm.street.value = data.logradouro;
+                registerForm.neighborhood.value = data.bairro;
+                registerForm.city.value = data.localidade;
+                registerForm.state.value = data.uf;
+                
+                registerForm.number.focus(); 
+
+            } catch (error) {
+                showNotification(`Erro ao buscar CEP: ${error.message}`, 'error');
+                 // Limpa os campos em caso de erro
+                registerForm.street.value = '';
+                registerForm.neighborhood.value = '';
+                registerForm.city.value = '';
+                registerForm.state.value = '';
+            }
+        }
+    });
+
+    // Lógica para submeter o formulário de registo
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = registerForm.name.value.trim();
+        const phone = phoneInput.value.replace(/\D/g, ''); // Limpa a máscara antes de enviar
+        const email = registerForm.email.value.trim();
+        const password = registerForm.password.value;
+        const confirmPassword = registerForm.confirmPassword.value;
+        
+        const cep = cepInput.value.replace(/\D/g, '');
+        const street = registerForm.street.value.trim();
+        const number = registerForm.number.value.trim();
+        const complement = registerForm.complement.value.trim();
+        const neighborhood = registerForm.neighborhood.value.trim();
+        const city = registerForm.city.value.trim();
+        const state = registerForm.state.value.trim();
+
+        if (password !== confirmPassword) {
+            showNotification('As senhas não coincidem. Por favor, tente novamente.', 'error');
+            return;
+        }
+        
+        // Validação extra para o telefone
+        if (phone.length < 10 || phone.length > 11) {
+            showNotification('O telefone deve ter 10 ou 11 dígitos (DDD + número).', 'error');
+            return;
+        }
+        
+        // Validação extra para o CEP
+        if (cep.length !== 8) {
+            showNotification('O CEP deve ter 8 dígitos.', 'error');
+            return;
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await setDoc(doc(db, 'users', user.uid), {
+                name,
+                phone, // Salva o número limpo
+                email,
+                address: {
+                    cep,
+                    street,
+                    number,
+                    complement,
+                    neighborhood,
+                    city,
+                    state
+                }
+            });
+            
+            await setDoc(doc(db, 'roles', user.uid), { client: true });
+
+            showNotification('Conta criada com sucesso! Redirecionando...', 'success');
+            setTimeout(() => {
+                window.location.href = 'minha-conta.html';
+            }, 2000);
+
+        } catch (error) {
+            console.error("Erro no registo:", error);
+            let errorMessage = 'Ocorreu um erro ao criar a sua conta.';
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'Este e-mail já está a ser utilizado. Tente fazer login.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'A senha é muito fraca. Tente uma mais forte.';
+            }
+            showNotification(errorMessage, 'error');
+        }
+    });
 }
-
-const phoneMask = (value) => {
-    if (!value) return ""
-    value = value.replace(/\D/g,'')
-    value = value.replace(/(\d{2})(\d)/,"($1) $2")
-    value = value.replace(/(\d)(\d{4})$/,"$1-$2")
-    return value
-}
-
-// --- EVENT LISTENERS ---
-
-cepInput.addEventListener('blur', () => {
-    const cep = cepInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
-    if (cep.length === 8) {
-        fetchAddress(cep);
-    }
-});
-
-// Adiciona o evento de máscara ao campo de telefone
-phoneInput.addEventListener('keyup', maskPhone);
-
-registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(registerForm).entries());
-
-    if (data.password !== data.confirmPassword) {
-        alert('As senhas não coincidem. Por favor, tente novamente.');
-        return;
-    }
-
-    // A validação de minlength e pattern já é feita pelo HTML5,
-    // mas mantemos a verificação de senha aqui.
-
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        const user = userCredential.user;
-
-        await setDoc(doc(db, "users", user.uid), {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: {
-                cep: data.cep,
-                street: data.street,
-                number: data.number,
-                complement: data.complement || '',
-                neighborhood: data.neighborhood,
-                city: data.city,
-                state: data.state
-            },
-            createdAt: new Date()
-        });
-
-        alert('Conta criada com sucesso!');
-        window.location.href = 'index.html';
-
-    } catch (err) {
-        console.error("Erro ao registar:", err);
-        alert('Erro ao registar: ' + err.message);
-    }
-});
