@@ -2,47 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Função auxiliar para verificar se o utilizador é um administrador
     function isAdmin() {
-      // Acede ao documento de função do utilizador que faz o pedido
-      // e verifica se o campo 'admin' é verdadeiro.
       return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
     }
 
-    // Regras para os dados dos utilizadores
     match /users/{userId} {
-      // PERMITE a um utilizador criar o seu próprio documento de perfil,
-      // desde que o UID do pedido seja o mesmo que o do documento.
       allow create: if request.auth.uid == userId;
-      
-      // PERMITE a um utilizador ler ou atualizar o seu próprio perfil.
-      // Nega a outros utilizadores o acesso a esta informação.
       allow read, update: if request.auth.uid == userId;
     }
 
-    // Regras para as funções (roles) dos utilizadores
     match /roles/{userId} {
-      // PERMITE a um utilizador criar o seu próprio documento de função ao registar-se,
-      // mas APENAS se a função for 'client'. Impede que um novo utilizador se torne administrador.
-      allow create: if request.auth.uid == userId && 
-                    request.resource.data.keys().hasOnly(['client']) &&
-                    request.resource.data.client == true;
+      // PERMITE que um novo utilizador crie a sua própria função.
+      // Para o registo de clientes, o script deve enviar { client: true }.
+      // Para o registo de administradores (apenas pelo script criar-admin), deve enviar { admin: true }.
+      // ESTA REGRA TORNA CRÍTICA A REMOÇÃO DOS FICHEIROS DE CRIAÇÃO DE ADMIN APÓS A UTILIZAÇÃO.
+      allow create: if request.auth.uid == userId &&
+                     (
+                       (request.resource.data.keys().hasOnly(['client']) && request.resource.data.client == true) ||
+                       (request.resource.data.keys().hasOnly(['admin']) && request.resource.data.admin == true)
+                     );
       
-      // PERMITE a um utilizador ler a sua própria função (para a lógica da interface)
-      // E permite a administradores lerem qualquer função.
       allow read: if request.auth.uid == userId || isAdmin();
-      
-      // PERMITE a um administrador escrever (criar, atualizar, apagar) qualquer documento de função.
-      // É assim que os administradores podem promover outros utilizadores.
-      allow write: if isAdmin();
+      allow write: if isAdmin(); // Permite que um admin altere outras funções, mas não permite que um cliente se promova.
     }
 
-    // Regras para os produtos
     match /products/{productId} {
-      // PERMITE a qualquer pessoa (autenticada ou não) ler os dados dos produtos.
       allow read: if true;
-      
-      // PERMITE apenas a administradores criar, atualizar ou apagar produtos.
       allow write: if isAdmin();
     }
   }
