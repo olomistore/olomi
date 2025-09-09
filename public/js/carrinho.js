@@ -36,7 +36,7 @@ function renderCart() {
     if (!itemsListEl || !totalsEl) return;
     if (cart.length === 0) {
         if (cartContainer) {
-            cartContainer.innerHTML = `<div class="cart-empty"><h2>O seu carrinho está vazio.</h2><p>Adicione produtos do nosso catálogo para os ver aqui.</p><a href="/" class="back-to-store-btn">Voltar ao Catálogo</a></div>`;
+            cartContainer.innerHTML = `<div class="cart-empty"><h2>O seu carrinho está vazio.</h2><p>Adicione produtos do nosso catálogo para os ver aqui.</p><a href="index.html" class="back-to-store-btn">Voltar ao Catálogo</a></div>`;
         }
         return;
     }
