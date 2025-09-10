@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Olomi - Painel de Administração</title>
+  <title>Painel Admin - Olomi</title>
   
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/admin.css" />
@@ -12,7 +12,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <script type="module" src="./js/main.js" defer></script>
   <script type="module" src="./js/admin.js" defer></script>
 </head>
 <body>
@@ -20,40 +19,80 @@
   <header class="site-header">
     <div class="container">
       <div class="logo-area">
-        <a href="index.html"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo"></a>
-        <h1><a href="/" style="text-decoration: none; color: inherit;">OLOMI</a></h1>
+        <img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo">
+        <h1>Painel Admin</h1>
       </div>
       <nav>
-        <div id="admin-link-container" style="display: inline-block;"></div>
-        <a href="carrinho.html" class="cart-link">Carrinho (<span id="cart-count">0</span>)</a>
-        <div id="user-navigation" style="display: inline-block; margin-left: 1rem;"></div>
+        <a href="index.html" class="cart-link">Ver Loja</a>
+        <button id="logout" class="logout-btn">Sair</button>
       </nav>
     </div>
   </header>
 
   <main class="site-main">
     <div class="container">
-        <h2 class="page-title">Painel de Administração</h2>
-        <p class="page-subtitle">Bem-vindo, administrador. Aqui você pode gerir o conteúdo do site.</p>
-
-        <div class="admin-section">
-            <h3>Gestão de Produtos</h3>
-            <p>Em breve: Um formulário para adicionar, editar e apagar produtos do catálogo.</p>
-            <!-- O formulário de upload de produtos será implementado aqui -->
+      <section class="admin-section">
+        <h2 class="admin-section-title">Adicionar / Editar Produto</h2>
+        <form id="product-form" class="admin-form">
+          <input name="name" type="text" placeholder="Nome do Produto" required />
+          <textarea name="description" placeholder="Descrição do Produto" rows="4"></textarea>
+          <div class="form-grid">
+            <input name="price" type="text" placeholder="Preço (ex: 29,90)" required />
+            <input name="stock" type="number" placeholder="Estoque" required />
+          </div>
+          <input name="category" type="text" placeholder="Categoria" required />
+          
+          <label class="file-upload-label">
+            <span>Escolher imagens do produto</span>
+            <input id="image-upload" name="images" type="file" accept="image/*" multiple />
+          </label>
+          
+          <div id="image-preview-container" class="image-preview-container"></div>
+          
+          <button type="submit" class="submit-btn">Salvar Produto</button>
+        </form>
+      </section>
+      <section class="admin-section">
+        <h2 class="admin-section-title">Produtos Cadastrados</h2>
+        <div class="table-container">
+          <table id="products-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>Imagem</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
-
+      </section>
+      <section class="admin-section">
+        <h2 class="admin-section-title">Pedidos Recebidos</h2>
+        <div class="table-container">
+          <table id="orders-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>ID do Pedido</th>
+                <th>Cliente</th>
+                <th>Itens</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
-      <div class="footer-links">
-        <a href="https://wa.me/5519987346984">WhatsApp</a>
-        <span>|</span>
-        <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
-      </div>
-      <p class="footer-tagline">Axé que fortalece os seus rituais ✨</p>
+      <p class="footer-title">Olomi – Painel Administrativo</p>
     </div>
   </footer>
 
