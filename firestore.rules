@@ -3,51 +3,29 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     function isAdmin() {
-      // Garante que o utilizador autenticado tem a função de 'admin' no documento de 'roles'.
       return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
     }
 
-    // Regras para a coleção 'users': armazena dados públicos e privados do utilizador.
+    // Regras para a coleção 'users': [TEMPORARIAMENTE ABERTO]
     match /users/{userId} {
-      // Um utilizador só pode criar o seu próprio perfil.
-      allow create: if request.auth.uid == userId;
-      // Um utilizador só pode ler e atualizar o seu próprio perfil.
-      allow read, update: if request.auth.uid == userId;
+      // PERMITE que qualquer utilizador autenticado escreva para poder criar o primeiro admin.
+      allow read, write: if request.auth != null;
     }
 
-    // Regras para a coleção 'roles': define as permissões de cada utilizador (cliente ou admin).
+    // Regras para a coleção 'roles': [TEMPORARIAMENTE ABERTO]
     match /roles/{userId} {
-      // PERMITE que um utilizador crie a sua própria função ao se registar.
-      allow create: if request.auth.uid == userId &&
-                     (
-                       (request.resource.data.keys().hasOnly(['client']) && request.resource.data.client == true) ||
-                       (request.resource.data.keys().hasOnly(['admin']) && request.resource.data.admin == true)
-                     );
-      
-      // Um utilizador pode ler a sua própria função, e um admin pode ler qualquer função.
-      allow read: if request.auth.uid == userId || isAdmin();
-      // Apenas admins podem alterar funções.
-      allow write: if isAdmin();
+      // PERMITE que qualquer utilizador autenticado escreva para poder criar o primeiro admin.
+      allow read, write: if request.auth != null;
     }
 
-    // Regras para a coleção 'products': define o acesso aos produtos do catálogo.
     match /products/{productId} {
-      // PERMITE que qualquer pessoa (autenticada ou não) leia os produtos.
       allow get, list: if true;
-
-      // APENAS admins podem criar, atualizar ou apagar produtos.
       allow write: if isAdmin();
     }
 
-    // Regras para a coleção 'orders' (pedidos)
     match /orders/{orderId} {
-        // Um utilizador autenticado pode criar um pedido.
         allow create: if request.auth != null;
-        
-        // Um utilizador pode ler os seus próprios pedidos. Um admin pode ler todos os pedidos.
         allow read: if request.auth.uid == resource.data.userId || isAdmin();
-        
-        // Apenas um admin pode atualizar o estado de um pedido.
         allow update: if isAdmin();
     }
   }
