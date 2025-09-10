@@ -3,58 +3,99 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
 /**
- * Atualiza a barra de navegação superior com base no estado de autenticação do utilizador.
- * Mostra/oculta links de login, registo, minha conta, painel de admin e o botão de sair.
+ * Ponto de entrada principal da aplicação.
+ * Gere o estado de autenticação e delega para a lógica específica da página.
  */
-async function updateUserNav() {
+function main() {
     onAuthStateChanged(auth, async (user) => {
-        const userNav = document.getElementById('user-navigation');
-        const adminLinkContainer = document.getElementById('admin-link-container');
+        // O updateUserNav precisa de ser aguardado para garantir que a verificação de admin acontece
+        // antes de qualquer outra lógica dependente de permissões.
+        await updateUserNav(user);
 
-        if (!userNav || !adminLinkContainer) {
-            // Não exibe erro se os elementos não existirem, pois algumas páginas podem não tê-los.
-            return;
-        }
+        const path = window.location.pathname;
+        const page = path.split("/").pop() || "index.html";
 
-        adminLinkContainer.innerHTML = '';
-        userNav.innerHTML = '';
-
-        if (user) {
-            // UTILIZADOR AUTENTICADO
-            try {
-                const roleRef = doc(db, 'roles', user.uid);
-                const snap = await getDoc(roleRef);
-                if (snap.exists() && snap.data().admin) {
-                    adminLinkContainer.innerHTML = `<a href="admin.html" class="cart-link admin-link">Painel Admin</a>`;
-                }
-            } catch (error) {
-                console.error("Erro ao verificar a função de administrador:", error);
-            }
-
-            userNav.innerHTML = `
-                <a href="minha-conta.html" class="cart-link">Minha Conta</a>
-                <button id="global-logout-btn" class="logout-btn">Sair</button>
-            `;
-
-            document.getElementById('global-logout-btn')?.addEventListener('click', () => {
-                signOut(auth).then(() => {
-                    if (window.location.pathname.includes('admin.html') || window.location.pathname.includes('minha-conta.html')) {
-                        window.location.href = 'index.html';
+        switch (page) {
+            case 'minha-conta.html':
+                if (user) {
+                    try {
+                        // Importa o módulo da página da conta DINAMICAMENTE
+                        const module = await import('./minha-conta.js');
+                        module.initMinhaContaPage(user);
+                    } catch (err) {
+                        console.error('Falha ao carregar o módulo da página da conta:', err);
+                        alert('Ocorreu um erro ao carregar os dados da sua conta.');
                     }
-                }).catch(err => {
-                    console.error("Erro ao fazer logout:", err);
-                    alert("Ocorreu um erro ao tentar sair.");
-                });
-            });
+                } else {
+                    alert('Você precisa de estar autenticado para aceder a esta página.');
+                    window.location.href = 'login-cliente.html';
+                }
+                break;
 
-        } else {
-            // UTILIZADOR NÃO AUTENTICADO
-            userNav.innerHTML = `
-                <a href="login-cliente.html" class="cart-link">Entrar</a>
-                <a href="cadastro.html" class="cart-link">Registar</a>
-            `;
+            case 'admin.html':
+                // A verificação de admin já acontece no updateUserNav. Se o utilizador não for admin,
+                // o link nem aparece. Apenas como uma segunda camada de segurança, verificamos se há um utilizador.
+                if (!user) {
+                    alert('Acesso restrito.');
+                    window.location.href = 'index.html';
+                }
+                break;
+
+            // Nota: Outras páginas como 'index.html' ou 'carrinho.html' não precisam de lógica
+            // específica aqui, pois os seus scripts ('catalogo.js', 'carrinho.js') são carregados
+            // diretamente no HTML e funcionam de forma independente.
         }
     });
 }
 
-document.addEventListener('DOMContentLoaded', updateUserNav);
+/**
+ * Atualiza a barra de navegação (cabeçalho) com base no estado de login.
+ */
+async function updateUserNav(user) {
+    const userNav = document.getElementById('user-navigation');
+    const adminLinkContainer = document.getElementById('admin-link-container');
+
+    if (!userNav || !adminLinkContainer) return;
+
+    adminLinkContainer.innerHTML = '';
+
+    if (user) {
+        userNav.innerHTML = `
+            <a href="minha-conta.html" class="cart-link">Minha Conta</a>
+            <button id="global-logout-btn" class="logout-btn">Sair</button>
+        `;
+        document.getElementById('global-logout-btn')?.addEventListener('click', handleLogout);
+
+        try {
+            const roleRef = doc(db, 'roles', user.uid);
+            const snap = await getDoc(roleRef);
+            if (snap.exists() && snap.data().admin) {
+                adminLinkContainer.innerHTML = `<a href="admin.html" class="cart-link admin-link">Painel Admin</a>`;
+            }
+        } catch (error) {
+            console.error("Erro ao verificar a função de admin:", error);
+        }
+
+    } else {
+        userNav.innerHTML = `
+            <a href="login-cliente.html" class="cart-link">Entrar</a>
+            <a href="cadastro.html" class="cart-link">Registar</a>
+        `;
+    }
+}
+
+/**
+ * Gere o processo de logout.
+ */
+function handleLogout() {
+    signOut(auth).then(() => {
+        // Redireciona para a página inicial após o logout para garantir um estado limpo
+        window.location.href = '/index.html'; 
+    }).catch(err => {
+        console.error("Erro ao fazer logout:", err);
+        alert("Ocorreu um erro ao tentar sair.");
+    });
+}
+
+// Inicializa o script quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', main);
