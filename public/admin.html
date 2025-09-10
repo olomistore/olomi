@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
+  <script type="module" src="./js/main.js" defer></script>
   <script type="module" src="./js/admin.js" defer></script>
 </head>
 <body>
@@ -23,8 +24,11 @@
         <h1>Painel Admin</h1>
       </div>
       <nav>
+        <div id="admin-link-container" style="display: inline-block;"></div>
         <a href="index.html" class="cart-link">Ver Loja</a>
-        <button id="logout" class="logout-btn">Sair</button>
+        <div id="user-navigation" style="display: inline-block; margin-left: 1rem;">
+          <!-- Conteúdo dinâmico de autenticação (Sair, Minha Conta) entra aqui -->
+        </div>
       </nav>
     </div>
   </header>

@@ -1,8 +1,7 @@
 import { auth, db } from './firebase.js';
 import { 
     signInWithEmailAndPassword, 
-    onAuthStateChanged, 
-    signOut,
+    onAuthStateChanged,
     sendPasswordResetEmail 
 } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
@@ -16,7 +15,7 @@ export async function requireAdmin() {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             unsubscribe(); // Executa apenas uma vez
             if (!user) {
-                window.location.href = 'login.html';
+                window.location.href = 'login.html?redirect=admin.html';
                 return;
             }
             
@@ -46,16 +45,6 @@ if (form) {
         } catch (err) {
             alert('Erro ao entrar: ' + err.message);
         }
-    });
-}
-
-// Botão de Logout no painel de administração
-const logoutBtn = document.getElementById('logout');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            window.location.href = 'index.html';
-        });
     });
 }
 
