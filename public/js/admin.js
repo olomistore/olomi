@@ -1,225 +1,224 @@
-import { requireAdmin } from './auth.js';
-import { db, storage } from './firebase.js';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-import { BRL, toCents } from './utils.js';
+import { auth, db, storage } from './firebase.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js';
 
-await requireAdmin();
+// --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
+const productForm = document.getElementById('product-form');
+const imageUpload = document.getElementById('image-upload');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const productsTableBody = document.querySelector('#products-table tbody');
+const ordersTableBody = document.querySelector('#orders-table tbody');
+const logoutButton = document.getElementById('logout');
 
-const form = document.getElementById('product-form');
-const formTitle = document.querySelector('.admin-section-title');
-const tableBody = document.querySelector('#products-table tbody');
-const ordersBody = document.querySelector('#orders-table tbody');
-const imageInput = form.querySelector('input[name="image"]');
-let allProducts = [];
-let editingProductId = null;
+let currentEditingProductId = null; // Guarda o ID do produto em edição
+let existingImageUrls = []; // Guarda os URLs das imagens do produto em edição
 
-// --- CONFIGURAÇÃO INICIAL DO FORMULÁRIO ---
-const hiddenIdInput = document.createElement('input');
-hiddenIdInput.type = 'hidden';
-hiddenIdInput.name = 'productId';
-form.appendChild(hiddenIdInput);
+// --- FUNÇÕES AUXILIARES ---
 
-const cancelEditButton = document.createElement('button');
-cancelEditButton.type = 'button';
-cancelEditButton.textContent = 'Cancelar Edição';
-cancelEditButton.className = 'cancel-btn';
-cancelEditButton.style.display = 'none';
-form.querySelector('button[type="submit"]').insertAdjacentElement('afterend', cancelEditButton);
+// Formata o preço para exibição na tabela
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+};
 
-const imagePreview = document.createElement('img');
-imagePreview.style.cssText = 'max-width: 100px; max-height: 100px; margin-top: 10px; display: none; border-radius: 8px;';
-imageInput.parentNode.insertBefore(imagePreview, imageInput.nextSibling);
+// --- LÓGICA PRINCIPAL ---
 
-// --- LÓGICA DE PRÉ-VISUALIZAÇÃO DA IMAGEM ---
-imageInput.addEventListener('change', () => {
-    const file = imageInput.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            imagePreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        imagePreview.style.display = 'none';
+// Verifica a autenticação do utilizador e as suas permissões
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+    try {
+        const roleRef = doc(db, 'roles', user.uid);
+        const roleSnap = await getDoc(roleRef);
+        if (!roleSnap.exists() || !roleSnap.data().admin) {
+            alert('Acesso negado. Apenas administradores podem aceder a esta página.');
+            window.location.href = 'index.html';
+        } else {
+            // Utilizador é admin, carregar dados
+            loadProducts();
+            loadOrders();
+        }
+    } catch (error) {
+        console.error('Erro ao verificar permissões:', error);
+        window.location.href = 'index.html';
     }
 });
 
-// --- FUNÇÕES DE MODO DE FORMULÁRIO (CRIAR/EDITAR) ---
-function switchToEditMode(product) {
-    editingProductId = product.id;
-    hiddenIdInput.value = product.id;
+// Logout
+logoutButton.addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = 'login.html');
+});
 
-    form.name.value = product.name;
-    form.description.value = product.description;
-    form.price.value = (product.price / 100).toFixed(2);
-    form.category.value = product.category;
-    form.stock.value = product.stock;
-    
-    imagePreview.src = product.imageUrl;
-    imagePreview.style.display = product.imageUrl ? 'block' : 'none';
+// Pré-visualização de imagens
+imageUpload.addEventListener('change', (e) => {
+    imagePreviewContainer.innerHTML = ''; // Limpa as pré-visualizações
+    Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            imagePreviewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
 
-    formTitle.textContent = 'Editar Produto';
-    form.querySelector('button[type="submit"]').textContent = 'Atualizar Produto';
-    cancelEditButton.style.display = 'inline-block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+// Carregar e exibir produtos na tabela
+const loadProducts = () => {
+    const productsRef = collection(db, 'products');
+    onSnapshot(productsRef, (snapshot) => {
+        productsTableBody.innerHTML = ''; // Limpa a tabela antes de preencher
+        snapshot.forEach(docSnap => {
+            const product = docSnap.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><img src="${product.imageUrls[0]}" alt="${product.name}" width="50"></td>
+                <td>${product.name}</td>
+                <td>${formatPrice(product.price)}</td>
+                <td>${product.stock}</td>
+                <td>
+                    <button class="edit-btn" data-id="${docSnap.id}">Editar</button>
+                    <button class="delete-btn" data-id="${docSnap.id}">Apagar</button>
+                </td>
+            `;
+            productsTableBody.appendChild(tr);
+        });
+    });
+};
 
-function switchToCreateMode() {
-    editingProductId = null;
-    form.reset();
-    hiddenIdInput.value = '';
-    imagePreview.style.display = 'none';
-    formTitle.textContent = 'Adicionar Novo Produto';
-    form.querySelector('button[type="submit"]').textContent = 'Salvar Produto';
-    cancelEditButton.style.display = 'none';
-}
+// Carregar e exibir pedidos na tabela
+const loadOrders = () => {
+    const ordersRef = collection(db, 'orders');
+    onSnapshot(ordersRef, (snapshot) => {
+        ordersTableBody.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const order = docSnap.data();
+            const tr = document.createElement('tr');
+            // Simplificado - pode ser expandido com mais detalhes
+            tr.innerHTML = `
+                <td>${docSnap.id.substring(0, 8)}...</td>
+                <td>${order.userEmail || 'Não disponível'}</td>
+                <td>${order.items.length}</td>
+                <td>${formatPrice(order.total)}</td>
+                <td>${order.status}</td>
+                <td><button class="view-order-btn" data-id="${docSnap.id}">Detalhes</button></td>
+            `;
+            ordersTableBody.appendChild(tr);
+        });
+    });
+};
 
-cancelEditButton.addEventListener('click', switchToCreateMode);
+// Lidar com cliques na tabela de produtos (delegação de eventos)
+productsTableBody.addEventListener('click', async (e) => {
+    const target = e.target;
+    const id = target.getAttribute('data-id');
 
-async function handleUpload(file) {
-    if (!file) return '';
-    const fileRef = ref(storage, `product-images/${Date.now()}_${file.name}`);
-    const snap = await uploadBytes(fileRef, file);
-    return await getDownloadURL(snap.ref);
-}
+    if (target.classList.contains('delete-btn')) {
+        if (confirm('Tem a certeza de que deseja apagar este produto? Esta ação não pode ser desfeita.')) {
+            try {
+                // Apagar imagens do Storage e depois o documento do Firestore
+                const productRef = doc(db, 'products', id);
+                const productSnap = await getDoc(productRef);
+                const productData = productSnap.data();
+                for (const url of productData.imageUrls) {
+                    const imageRef = ref(storage, url);
+                    await deleteObject(imageRef);
+                }
+                await deleteDoc(productRef);
+                alert('Produto apagado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao apagar produto:', error);
+                alert('Falha ao apagar o produto.');
+            }
+        }
+    }
 
-// --- LÓGICA UNIFICADA DO FORMULÁRIO ---
-form?.addEventListener('submit', async (e) => {
+    if (target.classList.contains('edit-btn')) {
+        // Preencher o formulário com os dados do produto para edição
+        const productRef = doc(db, 'products', id);
+        const productSnap = await getDoc(productRef);
+        const product = productSnap.data();
+
+        productForm.name.value = product.name;
+        productForm.description.value = product.description;
+        productForm.price.value = product.price.toFixed(2).replace('.', ',');
+        productForm.stock.value = product.stock;
+        productForm.category.value = product.category;
+        
+        imagePreviewContainer.innerHTML = ''; // Limpar preview
+        product.imageUrls.forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            imagePreviewContainer.appendChild(img);
+        });
+        
+        currentEditingProductId = id;
+        existingImageUrls = product.imageUrls;
+        productForm.querySelector('button[type="submit"]').textContent = 'Atualizar Produto';
+        window.scrollTo(0, 0); // Rolar para o topo da página
+    }
+});
+
+// Submissão do formulário (para adicionar ou editar)
+productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const submitButton = form.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = 'A guardar...';
+    const submitButton = productForm.querySelector('button[type="submit"]');
+    const isEditing = !!currentEditingProductId;
 
-    const data = Object.fromEntries(new FormData(form).entries());
-    const productData = {
-        name: data.name,
-        description: data.description || '',
-        price: toCents(data.price),
-        category: data.category || '',
-        stock: parseInt(data.stock || '0'),
-        updatedAt: serverTimestamp(),
-    };
+    submitButton.disabled = true;
+    submitButton.textContent = isEditing ? 'A atualizar...' : 'A guardar...';
 
     try {
-        if (form.image.files[0]) {
-            productData.imageUrl = await handleUpload(form.image.files[0]);
+        let imageUrls = existingImageUrls;
+        const files = imageUpload.files;
+
+        // Se novas imagens foram selecionadas, faz o upload delas
+        if (files.length > 0) {
+            if(isEditing) { // Se está editando, apaga as imagens antigas
+                 for (const url of existingImageUrls) {
+                    await deleteObject(ref(storage, url));
+                }
+            }
+            imageUrls = []; // Zera o array para receber as novas URLs
+            for (const file of files) {
+                const imageRef = ref(storage, `products/${Date.now()}-${file.name}`);
+                await uploadBytes(imageRef, file);
+                imageUrls.push(await getDownloadURL(imageRef));
+            }
         }
 
-        if (editingProductId) {
-            const productRef = doc(db, 'products', editingProductId);
-            await updateDoc(productRef, productData);
+        const productData = {
+            name: productForm.name.value,
+            description: productForm.description.value,
+            price: parseFloat(productForm.price.value.replace(',', '.')),
+            stock: parseInt(productForm.stock.value),
+            category: productForm.category.value,
+            imageUrls: imageUrls
+        };
+
+        if (isEditing) {
+            // Atualiza o documento existente
+            await updateDoc(doc(db, 'products', currentEditingProductId), productData);
             alert('Produto atualizado com sucesso!');
         } else {
-            productData.createdAt = serverTimestamp();
-            await addDoc(collection(db, 'products'), productData);
-            alert('Produto guardado com sucesso!');
+            // Adiciona um novo documento
+            await addDoc(collection(db, 'products'), { ...productData, createdAt: new Date() });
+            alert('Produto adicionado com sucesso!');
         }
-        switchToCreateMode();
-    } catch (err) {
-        console.error("Erro ao guardar o produto:", err);
-        alert('Erro ao guardar o produto: ' + err.message);
+
+        // Limpa o estado de edição e o formulário
+        productForm.reset();
+        imagePreviewContainer.innerHTML = '';
+        currentEditingProductId = null;
+        existingImageUrls = [];
+        submitButton.textContent = 'Salvar Produto';
+
+    } catch (error) {
+        console.error('Erro ao salvar produto:', error);
+        alert(`Falha ao salvar produto: ${error.message}`);
     } finally {
         submitButton.disabled = false;
     }
 });
-
-// --- RENDERIZAÇÃO E AÇÕES DA TABELA ---
-function renderProducts() {
-    const qy = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-    onSnapshot(qy, (snap) => {
-        if (!tableBody) return;
-        tableBody.innerHTML = '';
-        allProducts = [];
-        snap.forEach(d => {
-            const p = { id: d.id, ...d.data() };
-            allProducts.push(p);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><img src="${p.imageUrl || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${p.name}"></td>
-                <td>${p.name}</td>
-                <td>${BRL(p.price)}</td>
-                <td>${p.stock}</td>
-                <td>
-                    <button class="action-btn delete" data-act="del" data-id="${p.id}">Excluir</button>
-                    <button class="action-btn edit" data-act="edit" data-id="${p.id}">Editar</button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    });
-}
-
-tableBody.addEventListener('click', async (ev) => {
-    const btn = ev.target.closest('button[data-id]');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const action = btn.dataset.act;
-
-    if (action === 'del') {
-        if (confirm('Tem a certeza que deseja excluir?')) {
-            await deleteDoc(doc(db, 'products', id));
-        }
-    } else if (action === 'edit') {
-        const productToEdit = allProducts.find(prod => prod.id === id);
-        if (productToEdit) switchToEditMode(productToEdit);
-    }
-});
-
-
-function renderOrders() {
-    const qy = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-
-    onSnapshot(qy, (snap) => {
-        if (!ordersBody) return;
-        ordersBody.innerHTML = '';
-
-        const statusMap = {
-            pending: { text: 'Pendente', class: 'pending' },
-            sent: { text: 'Enviado', class: 'sent' },
-            canceled: { text: 'Cancelado', class: 'canceled' }
-        };
-
-        snap.forEach(docu => {
-            const o = { id: docu.id, ...docu.data() };
-            const tr = document.createElement('tr');
-            const itemsTxt = o.items.map(i => `${i.qty}x ${i.name}`).join('<br>');
-            
-            const currentStatus = statusMap[o.status] || { text: o.status, class: '' };
-
-            tr.innerHTML = `
-                <td>${o.customer?.name || 'N/A'}</td>
-                <td>${itemsTxt}</td>
-                <td>${BRL(o.total)}</td>
-                <td><span class="order-status-badge status-${currentStatus.class}">${currentStatus.text}</span></td>
-                <td class="actions-cell">
-                    <button class="action-btn sent" data-act="sent" data-id="${o.id}">Marcar Enviado</button>
-                    <button class="action-btn cancel" data-act="cancel" data-id="${o.id}">Cancelar</button>
-                </td>
-            `;
-            ordersBody.appendChild(tr);
-        });
-    });
-}
-
-ordersBody.addEventListener('click', async (ev) => {
-    const btn = ev.target.closest('button[data-id]');
-    if (!btn) return;
-
-    const id = btn.dataset.id;
-    const action = btn.dataset.act;
-
-    if (action === 'sent') {
-        if (confirm('Tem a certeza que deseja marcar este pedido como ENVIADO?')) {
-            await updateDoc(doc(db, 'orders', id), { status: 'sent' });
-        }
-    } else if (action === 'cancel') {
-        if (confirm('Tem a certeza que deseja CANCELAR este pedido? Esta ação não pode ser desfeita.')) {
-            await updateDoc(doc(db, 'orders', id), { status: 'canceled' });
-        }
-    }
-});
-
-renderProducts();
-renderOrders();
