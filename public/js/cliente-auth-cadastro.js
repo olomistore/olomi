@@ -45,11 +45,11 @@ if (registerForm) {
             registerForm.state.value = 'Buscando...';
 
             try {
-                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
                 if (!response.ok) throw new Error('CEP não encontrado.');
                 
                 const data = await response.json();
-                if (data.erro) {
+                if (data.name === 'CepPromiseError') {
                     showNotification('CEP não localizado. Por favor, verifique o número.', 'error');
                      // Limpa os campos se o CEP for inválido
                     registerForm.street.value = '';
@@ -59,10 +59,10 @@ if (registerForm) {
                     return;
                 }
 
-                registerForm.street.value = data.logradouro;
-                registerForm.neighborhood.value = data.bairro;
-                registerForm.city.value = data.localidade;
-                registerForm.state.value = data.uf;
+                registerForm.street.value = data.street;
+                registerForm.neighborhood.value = data.neighborhood;
+                registerForm.city.value = data.city;
+                registerForm.state.value = data.state;
                 
                 registerForm.number.focus(); 
 
