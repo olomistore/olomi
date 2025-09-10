@@ -9,70 +9,87 @@ if (registerForm) {
     const phoneInput = registerForm.phone;
     const cepInput = registerForm.cep;
 
-    // Aplica a máscara de telefone dinamicamente
-    phoneInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é número
-        value = value.substring(0, 11); // Limita a 11 dígitos
+    // Função para formatar o telefone
+    const formatPhone = (value) => {
+        if (!value) return "";
+        value = value.replace(/\D/g, '');
+        value = value.slice(0, 11);
 
-        let formattedValue = '';
         if (value.length > 10) {
-            // Celular com 9º dígito: (XX) XXXXX-XXXX
-            formattedValue = value.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+            // (XX) XXXXX-XXXX
+            return value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
         } else if (value.length > 6) {
-            // Telefone (fixo ou celular): (XX) XXXX-XXXX
-            formattedValue = value.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+            // (XX) XXXX-XXXX
+            return value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
         } else if (value.length > 2) {
-            // Apenas DDD e início do número: (XX) XXXX
-            formattedValue = value.replace(/^(\d{2})(\d*)/, '($1) $2');
+            // (XX) XXXX...
+            return value.replace(/(\d{2})(\d+)/, '($1) $2');
         } else if (value.length > 0) {
-            // Apenas DDD: (XX
-            formattedValue = value.replace(/^(\d*)/, '($1');
+            // (XX
+            return `(${value}`;
         }
+        return value;
+    };
 
-        e.target.value = formattedValue;
+    phoneInput.addEventListener('input', (e) => {
+        e.target.value = formatPhone(e.target.value);
     });
+
+    // Função para limpar os campos de endereço
+    const clearAddressFields = () => {
+        registerForm.street.value = '';
+        registerForm.neighborhood.value = '';
+        registerForm.city.value = '';
+        registerForm.state.value = '';
+    };
 
     // Lógica para buscar o CEP e preencher o endereço
     cepInput.addEventListener('input', async (e) => {
-        const cep = e.target.value.replace(/\D/g, '');
+        let cep = e.target.value.replace(/\D/g, '');
+        cep = cep.slice(0, 8);
         e.target.value = cep; 
 
+        if (cep.length < 8) {
+            clearAddressFields();
+            return;
+        }
+
         if (cep.length === 8) {
-            // Mostra feedback de carregamento
             registerForm.street.value = 'Buscando...';
             registerForm.neighborhood.value = 'Buscando...';
             registerForm.city.value = 'Buscando...';
             registerForm.state.value = 'Buscando...';
 
             try {
+                // Usando a BrasilAPI, que é mais confiável
                 const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
-                if (!response.ok) throw new Error('CEP não encontrado.');
+                
+                if (!response.ok) {
+                    // Se a resposta não for OK (ex: 404 Not Found), lança um erro
+                    throw new Error('CEP não encontrado.');
+                }
                 
                 const data = await response.json();
-                if (data.name === 'CepPromiseError') {
+
+                // A BrasilAPI retorna um erro no corpo da resposta para CEPs mal formatados ou não encontrados
+                if (data.type === 'service_error' || data.errors) {
                     showNotification('CEP não localizado. Por favor, verifique o número.', 'error');
-                     // Limpa os campos se o CEP for inválido
-                    registerForm.street.value = '';
-                    registerForm.neighborhood.value = '';
-                    registerForm.city.value = '';
-                    registerForm.state.value = '';
+                    clearAddressFields();
                     return;
                 }
 
+                // Preenche os campos com os dados recebidos
                 registerForm.street.value = data.street;
                 registerForm.neighborhood.value = data.neighborhood;
                 registerForm.city.value = data.city;
                 registerForm.state.value = data.state;
                 
+                // Move o foco para o campo de número
                 registerForm.number.focus(); 
 
             } catch (error) {
                 showNotification(`Erro ao buscar CEP: ${error.message}`, 'error');
-                 // Limpa os campos em caso de erro
-                registerForm.street.value = '';
-                registerForm.neighborhood.value = '';
-                registerForm.city.value = '';
-                registerForm.state.value = '';
+                clearAddressFields();
             }
         }
     });
@@ -82,7 +99,7 @@ if (registerForm) {
         e.preventDefault();
         
         const name = registerForm.name.value.trim();
-        const phone = phoneInput.value.replace(/\D/g, ''); // Limpa a máscara antes de enviar
+        const phone = phoneInput.value.replace(/\D/g, '');
         const email = registerForm.email.value.trim();
         const password = registerForm.password.value;
         const confirmPassword = registerForm.confirmPassword.value;
@@ -100,13 +117,11 @@ if (registerForm) {
             return;
         }
         
-        // Validação extra para o telefone
         if (phone.length < 10 || phone.length > 11) {
             showNotification('O telefone deve ter 10 ou 11 dígitos (DDD + número).', 'error');
             return;
         }
         
-        // Validação extra para o CEP
         if (cep.length !== 8) {
             showNotification('O CEP deve ter 8 dígitos.', 'error');
             return;
@@ -118,7 +133,7 @@ if (registerForm) {
 
             await setDoc(doc(db, 'users', user.uid), {
                 name,
-                phone, // Salva o número limpo
+                phone,
                 email,
                 address: {
                     cep,
