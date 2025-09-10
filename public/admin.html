@@ -1,45 +1,61 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Administração - Olomi</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Olomi - Painel de Administração</title>
+  
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/admin.css" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <script type="module" src="./js/main.js" defer></script>
+  <script type="module" src="./js/admin.js" defer></script>
 </head>
 <body>
-    <header class="main-header">
-        <div class="container header-container">
-            <a href="index.html" class="logo-link">
-                <img src="assets/img/logo.jpg" alt="Olomi Logo" class="logo-img">
-            </a>
-            <nav id="user-navigation" class="user-nav">
-                <!-- O main.js irá preencher esta área -->
-            </nav>
-            <div id="admin-link-container" class="admin-nav">
-                <!-- O main.js irá preencher esta área se for admin -->
-            </div>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="logo-area">
+        <a href="index.html"><img src="./assets/img/logo.jpg" alt="Olomi Logo" class="logo"></a>
+        <h1><a href="/" style="text-decoration: none; color: inherit;">OLOMI</a></h1>
+      </div>
+      <nav>
+        <div id="admin-link-container" style="display: inline-block;"></div>
+        <a href="carrinho.html" class="cart-link">Carrinho (<span id="cart-count">0</span>)</a>
+        <div id="user-navigation" style="display: inline-block; margin-left: 1rem;"></div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+        <h2 class="page-title">Painel de Administração</h2>
+        <p class="page-subtitle">Bem-vindo, administrador. Aqui você pode gerir o conteúdo do site.</p>
+
+        <div class="admin-section">
+            <h3>Gestão de Produtos</h3>
+            <p>Em breve: Um formulário para adicionar, editar e apagar produtos do catálogo.</p>
+            <!-- O formulário de upload de produtos será implementado aqui -->
         </div>
-    </header>
 
-    <main class="container admin-container">
-        <h1>Painel de Administração</h1>
-        <p>Bem-vindo, administrador. Esta é a área onde você pode gerir o site.</p>
+    </div>
+  </main>
 
-        <section id="product-management">
-            <h2>Gestão de Produtos</h2>
-            <p>Em breve: Formulário para adicionar, editar e remover produtos.</p>
-            <!-- Formulário de upload de produtos será adicionado aqui -->
-        </section>
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
+      <div class="footer-links">
+        <a href="https://wa.me/5519987346984">WhatsApp</a>
+        <span>|</span>
+        <a href="https://www.instagram.com/olomi_rj/" target="_blank">Instagram</a>
+      </div>
+      <p class="footer-tagline">Axé que fortalece os seus rituais ✨</p>
+    </div>
+  </footer>
 
-    </main>
-
-    <footer class="main-footer">
-        <div class="container">
-            <p>&copy; 2024 Olomi. Todos os direitos reservados.</p>
-        </div>
-    </footer>
-
-    <script type="module" src="js/main.js"></script>
 </body>
 </html>
