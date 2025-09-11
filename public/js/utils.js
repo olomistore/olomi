@@ -3,7 +3,8 @@ export const BRL = (value) => {
     if (typeof value !== 'number') {
         value = 0;
     }
-    return (value / 100).toLocaleString('pt-BR', {
+    // ✅ CORREÇÃO: Remove a divisão por 100, pois o preço já está no formato correto.
+    return value.toLocaleString('pt-BR', {
         style: 'currency',
         currency: 'BRL'
     });
