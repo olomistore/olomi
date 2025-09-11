@@ -11,9 +11,14 @@ function renderProduct(p) {
     if (!productDetailEl) return;
     document.title = `${p.name} - Olomi`;
 
+    // ✅ CORREÇÃO: Usa p.imageUrls[0] para aceder à primeira imagem do array.
+    const imageUrl = p.imageUrls && p.imageUrls.length > 0 
+        ? p.imageUrls[0] 
+        : 'https://placehold.co/600x600/f39c12/fff?text=Olomi';
+
     productDetailEl.innerHTML = `
         <div class="product-image-gallery">
-          <img src="${p.imageUrl || 'https://placehold.co/600x600/f39c12/fff?text=Olomi'}" alt="${p.name}">
+          <img src="${imageUrl}" alt="${p.name}">
         </div>
         <div class="product-info">
           <h2 class="product-title-large">${p.name}</h2>
@@ -32,11 +37,14 @@ function renderProduct(p) {
 function addToCart(p, buttonEl) {
     const cart = cartStore.get();
     const itemIndex = cart.findIndex(i => i.id === p.id);
+    
+    // ✅ CORREÇÃO: Garante que a primeira imagem é adicionada ao carrinho.
+    const imageUrl = p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : '';
 
     if (itemIndex >= 0) {
         cart[itemIndex].qty += 1;
     } else {
-        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 });
+        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: imageUrl, qty: 1 });
     }
 
     cartStore.set(cart);
