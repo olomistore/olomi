@@ -1,10 +1,10 @@
-import { auth, db } from './firebase.js'; // O Storage não é mais necessário aqui no cliente
+import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
 import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
-// As funções do Storage (ref, deleteObject) ainda são necessárias para apagar/editar
 import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+import { showToast, showConfirmation } from './utils.js'; // Importa as novas funções
 
-const storage = getStorage(); // Inicializa o storage para as operações de apagar
+const storage = getStorage();
 
 // --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
 const productForm = document.getElementById('product-form');
@@ -23,7 +23,6 @@ const formatPrice = (price) => {
 };
 
 // --- LÓGICA PRINCIPAL ---
-
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -33,15 +32,16 @@ onAuthStateChanged(auth, async (user) => {
         const roleRef = doc(db, 'roles', user.uid);
         const roleSnap = await getDoc(roleRef);
         if (!roleSnap.exists() || !roleSnap.data().admin) {
-            alert('Acesso negado. Apenas administradores podem aceder a esta página.');
-            window.location.href = 'index.html';
+            showToast('Acesso negado. Apenas administradores.', 'error');
+            setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
             loadProducts();
             loadOrders();
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
-        window.location.href = 'index.html';
+        showToast('Erro ao verificar permissões.', 'error');
+        setTimeout(() => window.location.href = 'index.html', 2000);
     }
 });
 
@@ -85,7 +85,6 @@ const loadProducts = () => {
 };
 
 const loadOrders = () => {
-    // Lógica para carregar pedidos permanece a mesma
     const ordersRef = collection(db, 'orders');
     onSnapshot(ordersRef, (snapshot) => {
         ordersTableBody.innerHTML = '';
@@ -109,29 +108,29 @@ productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
 
-    if (target.classList.contains('delete-btn')) {
-        if (confirm('Tem a certeza de que deseja apagar este produto?')) {
+    if (target.classList.contains('delete')) {
+        const confirmed = await showConfirmation('Tem a certeza?', 'Esta ação não pode ser revertida!');
+        if (confirmed) {
             try {
                 const productRef = doc(db, 'products', id);
                 const productSnap = await getDoc(productRef);
                 if(productSnap.exists()) {
                     const productData = productSnap.data();
-                    // Apaga cada imagem do storage
                     for (const url of productData.imageUrls) {
                         const imageRef = ref(storage, url);
-                        await deleteObject(imageRef).catch(err => console.warn("Falha ao apagar imagem antiga, pode já ter sido removida:", err));
+                        await deleteObject(imageRef).catch(err => console.warn("Falha ao apagar imagem antiga:", err));
                     }
                 }
                 await deleteDoc(productRef);
-                alert('Produto apagado com sucesso!');
+                showToast('Produto apagado com sucesso!');
             } catch (error) {
                 console.error('Erro ao apagar produto:', error);
-                alert('Falha ao apagar o produto.');
+                showToast('Falha ao apagar o produto.', 'error');
             }
         }
     }
 
-    if (target.classList.contains('edit-btn')) {
+    if (target.classList.contains('edit')) {
         const productRef = doc(db, 'products', id);
         const productSnap = await getDoc(productRef);
         const product = productSnap.data();
@@ -168,14 +167,12 @@ productForm.addEventListener('submit', async (e) => {
         let imageUrls = existingImageUrls;
         const files = imageUpload.files;
 
-        // ✅ PASSO 1: Se houver novos arquivos, faça o upload via Cloud Function
         if (files.length > 0) {
             const formData = new FormData();
             for (const file of files) {
                 formData.append('files', file);
             }
 
-            // URL da sua nova Cloud Function
             const uploadUrl = 'https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile';
             const response = await fetch(uploadUrl, {
                 method: 'POST',
@@ -188,9 +185,8 @@ productForm.addEventListener('submit', async (e) => {
             }
 
             const result = await response.json();
-            imageUrls = result.imageUrls; // URLs retornados pela função
+            imageUrls = result.imageUrls;
 
-            // Se estiver editando, apague as imagens antigas do Storage
             if (isEditing) {
                  for (const url of existingImageUrls) {
                     await deleteObject(ref(storage, url)).catch(err => console.warn("Falha ao apagar imagem antiga:", err));
@@ -198,7 +194,6 @@ productForm.addEventListener('submit', async (e) => {
             }
         }
 
-        // ✅ PASSO 2: Salve os dados do produto no Firestore (lógica inalterada)
         const productData = {
             name: productForm.name.value,
             description: productForm.description.value,
@@ -210,10 +205,10 @@ productForm.addEventListener('submit', async (e) => {
 
         if (isEditing) {
             await updateDoc(doc(db, 'products', currentEditingProductId), productData);
-            alert('Produto atualizado com sucesso!');
+            showToast('Produto atualizado com sucesso!');
         } else {
             await addDoc(collection(db, 'products'), { ...productData, createdAt: new Date() });
-            alert('Produto adicionado com sucesso!');
+            showToast('Produto adicionado com sucesso!');
         }
 
         productForm.reset();
@@ -223,7 +218,7 @@ productForm.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error('Erro ao salvar produto:', error);
-        alert(`Falha ao salvar produto: ${error.message}`);
+        showToast(`Falha ao salvar produto: ${error.message}`, 'error');
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Salvar Produto';
