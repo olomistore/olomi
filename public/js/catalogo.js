@@ -31,9 +31,14 @@ function render(list) {
         link.style.textDecoration = 'none';
         link.style.color = 'inherit';
 
+        // ✅ CORREÇÃO: Usa p.imageUrls[0] para aceder à primeira imagem do array.
+        const imageUrl = p.imageUrls && p.imageUrls.length > 0 
+            ? p.imageUrls[0] 
+            : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
+
         link.innerHTML = `
           <div class="product-card">
-            <img src="${p.imageUrl || 'https://placehold.co/400x400/f39c12/fff?text=Olomi'}" alt="${p.name}" class="product-image">
+            <img src="${imageUrl}" alt="${p.name}" class="product-image">
             <div class="card-content">
               <h3 class="product-title">${p.name}</h3>
               <p class="product-description">${p.description?.slice(0, 100) || 'Sem descrição.'}</p>
@@ -90,11 +95,14 @@ function filter() {
 function addToCart(p, buttonEl) {
     const cart = cartStore.get();
     const itemIndex = cart.findIndex(i => i.id === p.id);
+    
+    // ✅ CORREÇÃO: Garante que a primeira imagem é adicionada ao carrinho.
+    const imageUrl = p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : '';
 
     if (itemIndex >= 0) {
         cart[itemIndex].qty += 1;
     } else {
-        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, qty: 1 });
+        cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: imageUrl, qty: 1 });
     }
 
     cartStore.set(cart);
@@ -126,13 +134,11 @@ async function init() {
     
     try {
         const productsCollection = collection(db, 'products');
-        // ALTERAÇÃO CRÍTICA: A ordenação foi removida da consulta
         const qy = query(productsCollection);
         const snapshot = await getDocs(qy);
 
         products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // A ordenação é feita aqui, no código, o que é mais seguro e não requer índices
         products.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
         render(products);
