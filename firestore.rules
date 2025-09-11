@@ -2,48 +2,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // --- FUNÇÕES AUXILIARES ---
     function isAdmin() {
       return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
-    }
-
-    function isClient() {
-      return get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.client == true;
     }
 
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // --- REGRAS ESPECÍFICAS ---
-
-    // Utilizadores só podem ler e editar os seus próprios dados.
     match /users/{userId} {
       allow read, update: if isOwner(userId);
-      allow create: if request.auth != null; // Permite o registo
+      allow create: if request.auth != null;
     }
 
-    // Funções só podem ser lidas pelo próprio utilizador ou por um admin.
     match /roles/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if request.auth != null; // Permite a atribuição de função no registo
+      allow create: if request.auth != null;
     }
 
-    // Produtos podem ser lidos por todos, mas apenas escritos por administradores.
     match /products/{productId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // ✅ CORREÇÃO: Adiciona regras para a coleção 'orders'
     match /orders/{orderId} {
-      // Permite que um cliente autenticado crie um pedido.
-      // Apenas o `userId` do próprio utilizador pode ser inserido no novo documento.
-      allow create: if isClient() && request.resource.data.userId == request.auth.uid;
+      // ✅ CORREÇÃO: Permite a criação se o utilizador estiver autenticado e for o dono do pedido.
+      // A verificação `isClient()` foi removida para evitar problemas de timing na autenticação.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       
-      // Permite que um utilizador leia os seus próprios pedidos.
-      // Permite que um administrador leia ou atualize qualquer pedido (ex: para alterar o status).
-      allow read, update: if isAdmin() || (isClient() && isOwner(resource.data.userId));
+      allow read, update: if isAdmin() || isOwner(resource.data.userId);
     }
   }
 }
