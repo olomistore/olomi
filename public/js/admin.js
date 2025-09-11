@@ -75,8 +75,8 @@ const loadProducts = () => {
                 <td>${formatPrice(product.price)}</td>
                 <td>${product.stock}</td>
                 <td>
-                    <button class="edit-btn" data-id="${docSnap.id}">Editar</button>
-                    <button class="delete-btn" data-id="${docSnap.id}">Apagar</button>
+                    <button class="action-btn edit" data-id="${docSnap.id}">Editar</button>
+                    <button class="action-btn delete" data-id="${docSnap.id}">Apagar</button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
