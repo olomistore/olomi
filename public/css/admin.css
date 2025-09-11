@@ -178,3 +178,19 @@
 .admin-form .cancel-btn:hover {
     background-color: #95a5a6;
 }
+
+/* Estilos para a pré-visualização de imagens */
+#image-preview-container {
+  display: flex;
+  flex-wrap: wrap; /* Permite que as imagens quebrem para a próxima linha */
+  gap: 10px; /* Espaço entre as imagens */
+  margin-top: 1rem; /* Espaço acima do contentor */
+}
+
+#image-preview-container img {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover; /* Garante que a imagem preencha o espaço sem se distorcer */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
