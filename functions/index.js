@@ -118,7 +118,8 @@ exports.uploadFile = onRequest(
                 }
             });
             
-            req.pipe(busboy);
+            // ✅ CORREÇÃO FINAL: Usa req.rawBody para a API v2 em vez de req.pipe()
+            busboy.end(req.rawBody);
 
         } catch (err) {
             logger.error('Erro inesperado na função uploadFile:', err);
