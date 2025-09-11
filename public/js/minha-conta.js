@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { BRL } from './utils.js';
+import { BRL, showToast } from './utils.js';
 
 const loadingSpinner = '<div class="spinner"></div>';
 
@@ -62,9 +62,9 @@ async function handleUpdateUserData(e) {
                 city: data.city, state: data.state
             }
         });
-        alert('Dados atualizados com sucesso!');
+        showToast('Dados atualizados com sucesso!', 'success'); // ✅ CORREÇÃO: Usa showToast
     } catch (error) {
-        alert('Ocorreu um erro ao atualizar os seus dados.');
+        showToast('Ocorreu um erro ao atualizar os seus dados.', 'error'); // ✅ CORREÇÃO: Usa showToast
     }
 }
 
@@ -75,40 +75,45 @@ async function loadOrderHistory(user, container) {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, where("userId", "==", user.uid), orderBy("createdAt", "desc"));
     
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-        container.innerHTML = '<p>Você ainda não fez nenhuma encomenda.</p>';
-        return;
+    try {
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            container.innerHTML = '<p>Você ainda não fez nenhuma encomenda.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        querySnapshot.forEach(doc => {
+            const order = doc.data();
+            
+            // ✅ CORREÇÃO: Verifica se o campo `createdAt` existe e é um timestamp válido antes de o formatar.
+            const orderDate = order.createdAt && order.createdAt.toDate 
+                ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
+                : 'Data pendente';
+
+            const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name}</li>`).join('');
+
+            const orderEl = document.createElement('div');
+            orderEl.className = 'order-item';
+            orderEl.innerHTML = `
+                <div class="order-item-header">
+                    <span class="order-id">Pedido #${doc.id.substring(0, 6)}</span>
+                    <span class="order-status ${order.status}">${order.status === 'pending' ? 'Pendente' : 'Enviado'}</span>
+                </div>
+                <div class="order-details">
+                    <p><strong>Data:</strong> ${orderDate}</p>
+                    <p><strong>Total:</strong> ${BRL(order.total)}</p>
+                </div>
+                <div class="order-items-list"><strong>Itens:</strong><ul>${itemsHtml}</ul></div>
+            `;
+            container.appendChild(orderEl);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar o histórico de pedidos: ", error);
+        container.innerHTML = '<p>Ocorreu um erro ao carregar o seu histórico de pedidos.</p>';
     }
-
-    container.innerHTML = '';
-    querySnapshot.forEach(doc => {
-        const order = doc.data();
-        const orderDate = order.createdAt.toDate().toLocaleDateString('pt-BR');
-        const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name}</li>`).join('');
-
-        const orderEl = document.createElement('div');
-        orderEl.className = 'order-item';
-        orderEl.innerHTML = `
-            <div class="order-item-header">
-                <span class="order-id">Pedido #${doc.id.substring(0, 6)}</span>
-                <span class="order-status ${order.status}">${order.status === 'pending' ? 'Pendente' : 'Enviado'}</span>
-            </div>
-            <div class="order-details">
-                <p><strong>Data:</strong> ${orderDate}</p>
-                <p><strong>Total:</strong> ${BRL(order.total)}</p>
-            </div>
-            <div class="order-items-list"><strong>Itens:</strong><ul>${itemsHtml}</ul></div>
-        `;
-        container.appendChild(orderEl);
-    });
 }
 
-/**
- * Inicializa a página da conta do cliente, carregando os dados e o histórico.
- * Esta função é EXPORTADA e chamada pelo main.js quando o utilizador está autenticado
- * na página correta.
- */
 export function initMinhaContaPage(user) {
     const userDetailsContent = document.getElementById('user-details-content');
     const orderHistoryList = document.getElementById('order-history-list');
@@ -117,8 +122,6 @@ export function initMinhaContaPage(user) {
         loadUserData(user, userDetailsContent);
         loadOrderHistory(user, orderHistoryList);
     } else {
-        // Se não houver utilizador, o main.js irá redirecionar.
-        // Apenas como fallback, limpa a área.
         if (userDetailsContent) userDetailsContent.innerHTML = '<p>Você precisa de estar autenticado para ver esta página.</p>';
         if (orderHistoryList) orderHistoryList.innerHTML = '';
     }

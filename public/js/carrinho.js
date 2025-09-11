@@ -147,7 +147,7 @@ form?.addEventListener('submit', async (e) => {
         // ✅ CORREÇÃO: A lógica de atualização de stock que causava o erro foi removida.
         // A gestão de stock deve ser feita por um admin ou por uma função de backend segura.
 
-        const lojaNumero = '5521975932484';
+        const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
 
