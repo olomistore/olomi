@@ -1,14 +1,12 @@
 import { db, auth } from './firebase.js';
-import { collection, addDoc, serverTimestamp, doc, getDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { BRL, cartStore } from './utils.js';
+import { BRL, cartStore, showToast } from './utils.js';
 
 const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
-
-let shippingCost = 0;
 
 async function populateFormWithUserData(user) {
     if (!user || !form) return;
@@ -64,7 +62,7 @@ function renderCart() {
         itemsListEl.appendChild(itemEl);
     });
 
-    const total = subtotal; // O total agora é apenas o subtotal
+    const total = subtotal;
     totalsEl.innerHTML = `
         <div class="summary-row"><span>Subtotal</span><span>${BRL(subtotal)}</span></div>
         <div class="summary-row total"><span>Total</span><span>${BRL(total)}</span></div>
@@ -116,13 +114,13 @@ form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) {
-        alert('Você precisa de estar autenticado para finalizar a compra.');
+        showToast('Você precisa de estar autenticado para finalizar a compra.', 'warning');
         window.location.href = `login-cliente.html?redirect=carrinho.html`;
         return;
     }
     const cart = cartStore.get();
     if (cart.length === 0) {
-        alert('O seu carrinho está vazio.');
+        showToast('O seu carrinho está vazio.', 'info');
         return;
     }
     const submitButton = form.querySelector('button[type="submit"]');
@@ -132,10 +130,10 @@ form?.addEventListener('submit', async (e) => {
     const fullAddress = `${data.street}, ${data.number}${data.complement ? ' - ' + data.complement : ''} - ${data.neighborhood}, ${data.city} - ${data.state}, CEP: ${data.cep}`;
     
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-    const total = subtotal; // Garante que o total não inclua frete
+    const total = subtotal;
     
     const order = {
-        userId: user.uid, items: cart, subtotal, shipping: shippingCost, total,
+        userId: user.uid, items: cart, subtotal, total,
         customer: {
             name: data.name, phone: data.phone, email: data.email, fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
@@ -143,13 +141,11 @@ form?.addEventListener('submit', async (e) => {
         status: 'pending', createdAt: serverTimestamp(),
     };
     try {
+        // Apenas cria o pedido. A atualização de stock foi removida.
         const ref = await addDoc(collection(db, 'orders'), order);
-        const batch = writeBatch(db);
-        order.items.forEach(item => {
-            const productRef = doc(db, "products", item.id);
-            batch.update(productRef, { stock: increment(-item.qty) });
-        });
-        await batch.commit();
+
+        // ✅ CORREÇÃO: A lógica de atualização de stock que causava o erro foi removida.
+        // A gestão de stock deve ser feita por um admin ou por uma função de backend segura.
 
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
@@ -171,14 +167,14 @@ form?.addEventListener('submit', async (e) => {
                  }, 1500);
             });
         } else {
-             alert('Pedido criado! Estamos a redirecioná-lo para o WhatsApp para finalizar.');
+             showToast('Pedido criado com sucesso!', 'success');
              window.open(whatsappUrl, '_blank');
              window.location.href = 'index.html';
         }
 
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
-        alert('Erro ao finalizar o pedido: ' + err.message);
+        showToast('Erro ao finalizar o pedido: ' + err.message, 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Finalizar via WhatsApp';
     }
