@@ -16,7 +16,7 @@ async function populateFormWithUserData(user) {
         const userData = docSnap.data();
         form.name.value = userData.name || '';
         form.phone.value = userData.phone || '';
-        form.email.value = user.email || ''; // O email vem do objeto `auth`
+        form.email.value = user.email || '';
         if (userData.address) {
             form.cep.value = userData.address.cep || '';
             form.street.value = userData.address.street || '';
@@ -132,17 +132,16 @@ form?.addEventListener('submit', async (e) => {
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
     const total = subtotal;
     
-    // ✅ CORREÇÃO: Garante que o UID e o email são lidos diretamente do objeto `user` autenticado.
     const order = {
         userId: user.uid, 
         items: cart, 
         subtotal, 
         total,
         customer: {
-            uid: user.uid, // ✅ Corrigido
+            uid: user.uid, 
             name: data.name,
             phone: data.phone,
-            email: user.email, // ✅ Corrigido
+            email: user.email, 
             fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
         },
@@ -157,26 +156,21 @@ form?.addEventListener('submit', async (e) => {
         const msg = buildWhatsappMessage(ref.id, order);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
 
+        // ✅ CORREÇÃO: Lógica simplificada para garantir clique único.
+        
+        // 1. Limpa o carrinho.
         cartStore.clear();
 
-        const formContainer = document.querySelector('.checkout-form-container');
-        if (formContainer) {
-            formContainer.innerHTML = `
-                <h3 class="section-title">Pedido Recebido!</h3>
-                <p>Seu pedido foi criado com sucesso. Para finalizar, por favor, envie os detalhes para nós no WhatsApp.</p>
-                <a href="${whatsappUrl}" target="_blank" class="submit-btn" id="whatsapp-redirect-btn" style="text-align: center; text-decoration: none; display: block;">Finalizar via WhatsApp</a>
-            `;
-            
-            document.getElementById('whatsapp-redirect-btn').addEventListener('click', () => {
-                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                 }, 1500);
-            });
-        } else {
-             showToast('Pedido criado com sucesso!', 'success');
-             window.open(whatsappUrl, '_blank');
-             window.location.href = 'index.html';
-        }
+        // 2. Mostra mensagem de sucesso.
+        showToast('Pedido recebido! A redirecionar para o WhatsApp...', 'success');
+
+        // 3. Abre o WhatsApp num novo separador.
+        window.open(whatsappUrl, '_blank');
+
+        // 4. Redireciona a página principal para o início após um intervalo.
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
 
     } catch (err) {
         console.error("Erro ao finalizar o pedido:", err);
