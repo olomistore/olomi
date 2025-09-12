@@ -30,7 +30,7 @@ onAuthStateChanged(auth, async (user) => {
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
             loadProducts();
-            loadOrders(); // Carrega os pedidos após verificar o admin
+            loadOrders();
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
@@ -39,7 +39,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Botão de logout
+// Logout
 logoutButton.addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = 'login.html');
 });
@@ -66,7 +66,6 @@ const loadProducts = () => {
         productsTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
-            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
@@ -83,7 +82,7 @@ const loadProducts = () => {
 };
 
 
-// ✅ CORREÇÃO GERAL: Função de carregar pedidos com linha de detalhes expansível
+// ✅ CORREÇÃO GERAL: Função de carregar pedidos com layout de tabela corrigido
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, orderBy("createdAt", "desc"));
@@ -93,54 +92,53 @@ const loadOrders = () => {
         snapshot.forEach(docSnap => {
             const order = docSnap.data();
             const orderId = docSnap.id;
+
+            // Linha principal do pedido
             const tr = document.createElement('tr');
-            tr.className = 'order-summary-row'; // Adiciona classe para a linha principal
+            tr.className = 'order-summary-row';
             tr.dataset.orderId = orderId;
 
-            const orderDate = order.createdAt && order.createdAt.toDate 
-                ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
-                : 'Pendente';
+            const orderDate = order.createdAt?.toDate().toLocaleDateString('pt-BR') || 'Pendente';
+            const statusMap = {
+                pending: { text: 'Pendente', class: 'pending' },
+                shipped: { text: 'Enviado', class: 'shipped' },
+                cancelled: { text: 'Cancelado', class: 'cancelled' }
+            };
+            const statusInfo = statusMap[order.status] || statusMap.pending;
 
-            let statusText = 'Pendente';
-            let statusClass = 'pending';
-            if (order.status === 'shipped') {
-                statusText = 'Enviado';
-                statusClass = 'shipped';
-            } else if (order.status === 'cancelled') {
-                statusText = 'Cancelado';
-                statusClass = 'cancelled';
-            }
-
-            // Linha principal do pedido (visível por padrão)
+            // ✅ CORREÇÃO: Restaurada a estrutura de 6 colunas para alinhar com o cabeçalho <th>
             tr.innerHTML = `
+                <td>${orderId.substring(0, 6)}...</td>
+                <td>${order.customer?.name || 'N/A'}</td>
                 <td>${orderDate}</td>
-                <td>${order.customer?.name || 'Cliente não encontrado'}</td>
                 <td>${BRL(order.total)}</td>
-                <td><span class="status ${statusClass}">${statusText}</span></td>
+                <td><span class="status ${statusInfo.class}">${statusInfo.text}</span></td>
                 <td class="order-actions">
-                     ${order.status === 'pending' ? 
+                    ${order.status === 'pending' ? 
                     `<button class="action-btn ship" data-id="${orderId}">Marcar Enviado</button>
                      <button class="action-btn cancel" data-id="${orderId}">Cancelar</button>` : ''
                     }
                 </td>
             `;
 
-            // Linha de detalhes (oculta por padrão)
+            // Linha de detalhes (oculta)
             const detailsTr = document.createElement('tr');
             detailsTr.className = 'order-details-row';
-            detailsTr.style.display = 'none'; // Oculta por padrão
+            detailsTr.style.display = 'none';
 
             const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name} (${BRL(item.price)})</li>`).join('');
             const fullAddress = order.customer?.fullAddress || 'Endereço não fornecido';
 
+            // ✅ CORREÇÃO: Colspan ajustado para 6 para abranger a tabela inteira
             detailsTr.innerHTML = `
-                <td colspan="5">
+                <td colspan="6">
                     <div class="order-details-content">
                         <p><strong>ID do Pedido:</strong> ${orderId}</p>
+                        <p><strong>Data e Hora:</strong> ${order.createdAt?.toDate().toLocaleString('pt-BR')}</p>
                         <p><strong>Cliente:</strong> ${order.customer?.name} (${order.customer?.email})</p>
                         <p><strong>Contato:</strong> ${order.customer?.phone}</p>
                         <p><strong>Endereço de Entrega:</strong> ${fullAddress}</p>
-                        <div><strong>Itens:</strong><ul>${itemsHtml}</ul></div>
+                        <div><strong>Itens do Pedido:</strong><ul>${itemsHtml}</ul></div>
                     </div>
                 </td>
             `;
@@ -151,45 +149,39 @@ const loadOrders = () => {
     });
 };
 
-// ✅ NOVO: Listener para expandir/recolher os detalhes do pedido
+// Listener para expandir/recolher e para os botões de ação
 ordersTableBody.addEventListener('click', async (e) => {
+    const actionButton = e.target.closest('.action-btn');
     const summaryRow = e.target.closest('.order-summary-row');
-    
-    // Se o clique foi num botão de ação, processa a ação
-    if (e.target.closest('.action-btn')) {
-        const id = e.target.getAttribute('data-id');
-        if (!id) return;
+
+    if (actionButton) {
+        e.stopPropagation(); // Impede que o clique no botão se propague para a linha
+        const id = actionButton.getAttribute('data-id');
         const orderRef = doc(db, 'orders', id);
 
-        if (e.target.classList.contains('ship')) {
-            const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado.', 'Sim, enviar');
+        if (actionButton.classList.contains('ship')) {
+            const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado para "Enviado".', 'Sim, enviar');
             if (confirmed) {
                 await updateDoc(orderRef, { status: 'shipped' });
                 showToast('Pedido marcado como enviado!', 'success');
             }
-        }
-
-        if (e.target.classList.contains('cancel')) {
+        } else if (actionButton.classList.contains('cancel')) {
             const confirmed = await showConfirmation('Cancelar este Pedido?', 'Esta ação não pode ser revertida.', 'Sim, cancelar');
             if (confirmed) {
                 await updateDoc(orderRef, { status: 'cancelled' });
                 showToast('Pedido cancelado.', 'info');
             }
         }
-        return; // Impede que o clique no botão também expanda a linha
-    }
-    
-    // Se o clique foi na linha (mas não num botão), expande/recolhe os detalhes
-    if (summaryRow) {
+    } else if (summaryRow) {
         const detailsRow = summaryRow.nextElementSibling;
-        if (detailsRow && detailsRow.classList.contains('order-details-row')) {
+        if (detailsRow?.classList.contains('order-details-row')) {
             detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
         }
     }
 });
 
 
-// Listener para apagar e editar produtos (sem alterações)
+// Gestão de produtos (sem alterações)
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
@@ -244,7 +236,6 @@ productsTableBody.addEventListener('click', async (e) => {
     }
 });
 
-// Submissão do formulário de produtos (sem alterações)
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = productForm.querySelector('button[type="submit"]');
