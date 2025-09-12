@@ -4,19 +4,19 @@ import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orde
 import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation } from './utils.js';
 
-// Variáveis e referências do DOM
+// --- ✅ CORREÇÃO GERAL: Seletores de DOM Corrigidos e Consolidados ---
 const storage = getStorage();
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 const productsTableBody = document.querySelector('#products-table tbody');
-const ordersTableBody = document.querySelector('#orders-table-body'); // ✅ CORREÇÃO: ID correto
+const ordersTableBody = document.querySelector('#orders-table-body');
 const logoutButton = document.getElementById('logout');
 
 let currentEditingProductId = null;
 let existingImageUrls = [];
 
-// Autenticação e verificação de permissões
+// --- Autenticação e Verificação de Permissões ---
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -29,6 +29,7 @@ onAuthStateChanged(auth, async (user) => {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
+            // Carrega ambas as funções após a verificação bem-sucedida
             loadProducts();
             loadOrders();
         }
@@ -39,12 +40,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Logout
+// --- Logout ---
 logoutButton.addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = 'login.html');
 });
 
-// Preview de imagem
+// --- Preview de Imagem ---
 imageUpload.addEventListener('change', (e) => {
     imagePreviewContainer.innerHTML = '';
     Array.from(e.target.files).forEach(file => {
@@ -58,7 +59,7 @@ imageUpload.addEventListener('change', (e) => {
     });
 });
 
-// ✅ CORREÇÃO: Função de carregar produtos restaurada
+// --- ✅ CORREÇÃO GERAL: Função `loadProducts` Restaurada ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("name"));
@@ -66,7 +67,7 @@ const loadProducts = () => {
         productsTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
-            const tr = document.createElement('tr'); // A criação da linha estava em falta
+            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
@@ -82,8 +83,7 @@ const loadProducts = () => {
     });
 };
 
-
-// Função de carregar pedidos com layout de tabela corrigido
+// --- ✅ CORREÇÃO GERAL: Função `loadOrders` Consolidada e Estável ---
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, orderBy("createdAt", "desc"));
@@ -146,7 +146,7 @@ const loadOrders = () => {
     });
 };
 
-// Listener para expandir/recolher e para os botões de ação
+// --- Listeners de Eventos ---
 ordersTableBody.addEventListener('click', async (e) => {
     const actionButton = e.target.closest('.action-btn');
     const summaryRow = e.target.closest('.order-summary-row');
@@ -177,8 +177,6 @@ ordersTableBody.addEventListener('click', async (e) => {
     }
 });
 
-
-// Gestão de produtos
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
@@ -233,6 +231,7 @@ productsTableBody.addEventListener('click', async (e) => {
     }
 });
 
+// --- Submissão do Formulário de Produto ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = productForm.querySelector('button[type="submit"]');
