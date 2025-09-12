@@ -10,7 +10,7 @@ const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 const productsTableBody = document.querySelector('#products-table tbody');
-const ordersTableBody = document.querySelector('#orders-table tbody');
+const ordersTableBody = document.querySelector('#orders-table-body'); // ✅ CORREÇÃO: ID correto
 const logoutButton = document.getElementById('logout');
 
 let currentEditingProductId = null;
@@ -58,7 +58,7 @@ imageUpload.addEventListener('change', (e) => {
     });
 });
 
-// Carregar produtos
+// ✅ CORREÇÃO: Função de carregar produtos restaurada
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("name"));
@@ -66,6 +66,7 @@ const loadProducts = () => {
         productsTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
+            const tr = document.createElement('tr'); // A criação da linha estava em falta
             tr.innerHTML = `
                 <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
@@ -82,7 +83,7 @@ const loadProducts = () => {
 };
 
 
-// ✅ CORREÇÃO GERAL: Função de carregar pedidos com layout de tabela corrigido
+// Função de carregar pedidos com layout de tabela corrigido
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, orderBy("createdAt", "desc"));
@@ -93,7 +94,6 @@ const loadOrders = () => {
             const order = docSnap.data();
             const orderId = docSnap.id;
 
-            // Linha principal do pedido
             const tr = document.createElement('tr');
             tr.className = 'order-summary-row';
             tr.dataset.orderId = orderId;
@@ -106,7 +106,6 @@ const loadOrders = () => {
             };
             const statusInfo = statusMap[order.status] || statusMap.pending;
 
-            // ✅ CORREÇÃO: Restaurada a estrutura de 6 colunas para alinhar com o cabeçalho <th>
             tr.innerHTML = `
                 <td>${orderId.substring(0, 6)}...</td>
                 <td>${order.customer?.name || 'N/A'}</td>
@@ -121,7 +120,6 @@ const loadOrders = () => {
                 </td>
             `;
 
-            // Linha de detalhes (oculta)
             const detailsTr = document.createElement('tr');
             detailsTr.className = 'order-details-row';
             detailsTr.style.display = 'none';
@@ -129,7 +127,6 @@ const loadOrders = () => {
             const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name} (${BRL(item.price)})</li>`).join('');
             const fullAddress = order.customer?.fullAddress || 'Endereço não fornecido';
 
-            // ✅ CORREÇÃO: Colspan ajustado para 6 para abranger a tabela inteira
             detailsTr.innerHTML = `
                 <td colspan="6">
                     <div class="order-details-content">
@@ -155,7 +152,7 @@ ordersTableBody.addEventListener('click', async (e) => {
     const summaryRow = e.target.closest('.order-summary-row');
 
     if (actionButton) {
-        e.stopPropagation(); // Impede que o clique no botão se propague para a linha
+        e.stopPropagation();
         const id = actionButton.getAttribute('data-id');
         const orderRef = doc(db, 'orders', id);
 
@@ -181,7 +178,7 @@ ordersTableBody.addEventListener('click', async (e) => {
 });
 
 
-// Gestão de produtos (sem alterações)
+// Gestão de produtos
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
