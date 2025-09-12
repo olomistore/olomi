@@ -3,7 +3,6 @@ export const BRL = (value) => {
     if (typeof value !== 'number') {
         value = 0;
     }
-    // ✅ CORREÇÃO: Remove a divisão por 100, pois o preço já está no formato correto.
     return value.toLocaleString('pt-BR', {
         style: 'currency',
         currency: 'BRL'
@@ -60,9 +59,10 @@ export const showToast = (title, icon = 'success') => {
  * Exibe uma caixa de diálogo de confirmação estilizada.
  * @param {string} title - O título da caixa de diálogo.
  * @param {string} text - O texto de apoio da caixa de diálogo.
+ * @param {string} confirmButtonText - O texto para o botão de confirmação.
  * @returns {Promise<boolean>} - Retorna uma promessa que resolve para `true` se o usuário confirmar, e `false` caso contrário.
  */
-export const showConfirmation = (title, text) => {
+export const showConfirmation = (title, text, confirmButtonText = 'Sim') => { // ✅ CORREÇÃO: Adicionado parâmetro com valor padrão
     return Swal.fire({
         title: title,
         text: text,
@@ -70,7 +70,7 @@ export const showConfirmation = (title, text) => {
         showCancelButton: true,
         confirmButtonColor: '#f39c12', // Laranja
         cancelButtonColor: '#95a5a6', // Cinza
-        confirmButtonText: 'Sim, pode apagar!',
+        confirmButtonText: confirmButtonText, // ✅ CORREÇÃO: Usa o parâmetro
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         return result.isConfirmed;

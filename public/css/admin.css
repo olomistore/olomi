@@ -183,6 +183,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    min-height: 60px; /* ✅ CORREÇÃO: Garante altura mínima para a célula */
 }
 
 .admin-table .action-btn.ship {

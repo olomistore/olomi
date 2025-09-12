@@ -78,10 +78,8 @@ const loadProducts = () => {
     });
 };
 
-// ✅ CORREÇÃO: Função de carregar pedidos refatorada
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
-    // Ordena os pedidos para mostrar os mais recentes primeiro
     const q = query(ordersRef, orderBy("createdAt", "desc"));
 
     onSnapshot(q, (snapshot) => {
@@ -95,7 +93,6 @@ const loadOrders = () => {
                 ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
                 : 'Pendente';
 
-            // Define o texto e a classe do status
             let statusText = 'Pendente';
             let statusClass = 'pending';
             if (order.status === 'shipped') {
@@ -124,7 +121,6 @@ const loadOrders = () => {
     });
 };
 
-// ✅ CORREÇÃO: Adiciona um listener de eventos para os botões de ação dos pedidos
 ordersTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
@@ -132,8 +128,9 @@ ordersTableBody.addEventListener('click', async (e) => {
 
     const orderRef = doc(db, 'orders', id);
 
+    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
     if (target.classList.contains('ship')) {
-        const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado.');
+        const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado para "Enviado".', 'Sim, enviar');
         if (confirmed) {
             try {
                 await updateDoc(orderRef, { status: 'shipped' });
@@ -144,8 +141,9 @@ ordersTableBody.addEventListener('click', async (e) => {
         }
     }
 
+    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
     if (target.classList.contains('cancel')) {
-        const confirmed = await showConfirmation('Cancelar este Pedido?', 'Esta ação não pode ser revertida.');
+        const confirmed = await showConfirmation('Cancelar este Pedido?', 'Esta ação não pode ser revertida e o pedido será cancelado.', 'Sim, cancelar');
         if (confirmed) {
             try {
                 await updateDoc(orderRef, { status: 'cancelled' });
@@ -161,8 +159,9 @@ productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
 
+    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
     if (target.classList.contains('delete')) {
-        const confirmed = await showConfirmation('Tem a certeza?', 'Esta ação não pode ser revertida!');
+        const confirmed = await showConfirmation('Tem a certeza?', 'O produto será apagado permanentemente.', 'Sim, apagar');
         if (confirmed) {
             try {
                 const productRef = doc(db, 'products', id);
@@ -279,7 +278,6 @@ productForm.addEventListener('submit', async (e) => {
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Salvar Produto';
-        // Limpa o campo de upload de ficheiros
         imageUpload.value = '';
     }
 });
