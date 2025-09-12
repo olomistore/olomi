@@ -1,5 +1,6 @@
 import { auth } from './firebase.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { showToast } from './utils.js'; // Importa a função de notificação
 
 const loginClienteForm = document.getElementById('login-cliente-form');
 if (loginClienteForm) {
@@ -15,7 +16,37 @@ if (loginClienteForm) {
             window.location.href = redirectUrl || 'index.html';
         } catch (err) {
             console.error("Erro ao entrar:", err);
-            alert('Erro ao entrar: Verifique o seu e-mail e senha.');
+            showToast('Erro ao entrar: Verifique o seu e-mail e senha.', 'error');
+        }
+    });
+}
+
+// Funcionalidade de redefinição de senha
+const forgotPasswordLink = document.getElementById('forgot-password-link');
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const { value: email } = await Swal.fire({
+            title: 'Redefinir a sua senha',
+            input: 'email',
+            inputLabel: 'Para receber o link de redefinição, insira o seu e-mail abaixo',
+            inputPlaceholder: 'seunome@exemplo.com',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Enviar',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#777777',
+        });
+
+        if (email) {
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showToast('E-mail de redefinição enviado com sucesso!', 'success');
+            } catch (error) {
+                console.error("Erro ao enviar o e-mail de redefinição:", error);
+                showToast('Falha ao enviar e-mail. Verifique o endereço inserido.', 'error');
+            }
         }
     });
 }
