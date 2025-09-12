@@ -87,11 +87,12 @@ async function loadOrderHistory(user, container) {
         querySnapshot.forEach(doc => {
             const order = doc.data();
             
+            // ✅ CORREÇÃO: Verifica de forma segura se o campo `createdAt` existe antes de o formatar.
             const orderDate = order.createdAt && order.createdAt.toDate 
                 ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
                 : 'Data pendente';
 
-            // Define o texto e a classe do status
+            // ✅ CORREÇÃO: Mapeia todos os estados possíveis do pedido para texto e classes CSS.
             let statusText = 'Pendente';
             let statusClass = 'pending';
             if (order.status === 'shipped') {

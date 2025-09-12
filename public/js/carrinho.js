@@ -16,7 +16,7 @@ async function populateFormWithUserData(user) {
         const userData = docSnap.data();
         form.name.value = userData.name || '';
         form.phone.value = userData.phone || '';
-        form.email.value = userData.email || '';
+        form.email.value = user.email || ''; // O email vem do objeto `auth`
         if (userData.address) {
             form.cep.value = userData.address.cep || '';
             form.street.value = userData.address.street || '';
@@ -132,20 +132,26 @@ form?.addEventListener('submit', async (e) => {
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
     const total = subtotal;
     
+    // ✅ CORREÇÃO: Garante que o UID e o email são lidos diretamente do objeto `user` autenticado.
     const order = {
-        userId: user.uid, items: cart, subtotal, total,
+        userId: user.uid, 
+        items: cart, 
+        subtotal, 
+        total,
         customer: {
-            name: data.name, phone: data.phone, email: data.email, fullAddress: fullAddress,
+            uid: user.uid, // ✅ Corrigido
+            name: data.name,
+            phone: data.phone,
+            email: user.email, // ✅ Corrigido
+            fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
         },
-        status: 'pending', createdAt: serverTimestamp(),
+        status: 'pending', 
+        createdAt: serverTimestamp(),
     };
-    try {
-        // Apenas cria o pedido. A atualização de stock foi removida.
-        const ref = await addDoc(collection(db, 'orders'), order);
 
-        // ✅ CORREÇÃO: A lógica de atualização de stock que causava o erro foi removida.
-        // A gestão de stock deve ser feita por um admin ou por uma função de backend segura.
+    try {
+        const ref = await addDoc(collection(db, 'orders'), order);
 
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(ref.id, order);
