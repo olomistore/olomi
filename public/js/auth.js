@@ -1,5 +1,6 @@
 import { auth } from './firebase.js';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { showToast } from './utils.js';
 
 const loginForm = document.getElementById('login-form');
 const resetPasswordLink = document.getElementById('reset-password-link');
@@ -20,30 +21,43 @@ if (loginForm) {
             // Fazer login com o Firebase Auth
             await signInWithEmailAndPassword(auth, email, password);
             // O redirecionamento será tratado pelo 'main.js' que deteta a mudança de estado de autenticação.
-            // Apenas redirecionamos para a página inicial como fallback.
             window.location.href = 'index.html';
         } catch (error) {
             console.error('Erro no login:', error);
-            alert(`Erro ao fazer login: ${error.message}`);
+            showToast(`Erro ao fazer login: ${error.code}`, 'error');
             submitButton.disabled = false;
             submitButton.textContent = 'Entrar';
         }
     });
 }
 
-// Processo de Reset de Senha
+// ✅ CORREÇÃO: Processo de Reset de Senha com Modal Elegante
 if (resetPasswordLink) {
     resetPasswordLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        const email = prompt('Por favor, insira o seu e-mail para receber o link de redefinição de senha:');
+
+        const { value: email } = await Swal.fire({
+            title: 'Recuperar Senha',
+            input: 'email',
+            inputLabel: 'Insira o seu e-mail para receber o link de redefinição',
+            inputPlaceholder: 'seu.email@exemplo.com',
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar',
+            showCancelButton: true,
+            customClass: {
+                confirmButton: 'submit-btn',
+                cancelButton: 'cancel-btn'
+            },
+            buttonsStyling: false
+        });
 
         if (email) {
             try {
                 await sendPasswordResetEmail(auth, email);
-                alert('Link para redefinição de senha enviado para o seu e-mail!');
+                showToast('Link para redefinição de senha enviado para o seu e-mail!', 'success');
             } catch (error) {
                 console.error('Erro ao enviar e-mail de redefinição:', error);
-                alert(`Erro: ${error.message}`);
+                showToast(`Erro: ${error.code}`, 'error');
             }
         }
     });
