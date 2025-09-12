@@ -12,6 +12,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
+    <!-- SweetAlert2 para notificações -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script type="module" src="./js/cliente-auth.js" defer></script>
 </head>
 <body>
@@ -25,9 +28,13 @@
             <form id="login-cliente-form" class="login-form" method="POST">
                 <input name="email" type="email" placeholder="E-mail" required />
                 <input name="password" type="password" placeholder="Senha" required />
-                <button type="submit">Entrar</button>
+                <button type="submit" class="btn-primary">Entrar</button>
             </form>
-            <a href="cadastro.html" class="back-to-store">Não tem uma conta? Cadastre-se.</a>
+            
+            <div class="login-links">
+                <a href="#" id="forgot-password-link" class="link">Esqueci a minha senha</a>
+                <a href="cadastro-cliente.html" class="link">Não tem uma conta? Cadastre-se</a>
+            </div>
         </div>
     </main>
 
