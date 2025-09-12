@@ -22,7 +22,7 @@ if (loginClienteForm) {
 }
 
 // Funcionalidade de redefinição de senha
-const forgotPasswordLink = document.getElementById('forgot-password-link');
+const forgotPasswordLink = document.getElementById('reset-password-link');
 if (forgotPasswordLink) {
     forgotPasswordLink.addEventListener('click', async (e) => {
         e.preventDefault();
