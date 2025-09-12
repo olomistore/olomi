@@ -4,8 +4,8 @@ import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orde
 import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation } from './utils.js';
 
+// Variáveis e referências do DOM
 const storage = getStorage();
-
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
@@ -16,6 +16,7 @@ const logoutButton = document.getElementById('logout');
 let currentEditingProductId = null;
 let existingImageUrls = [];
 
+// Autenticação e verificação de permissões
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -29,7 +30,7 @@ onAuthStateChanged(auth, async (user) => {
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
             loadProducts();
-            loadOrders();
+            loadOrders(); // Carrega os pedidos após verificar o admin
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
@@ -38,10 +39,12 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Botão de logout
 logoutButton.addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = 'login.html');
 });
 
+// Preview de imagem
 imageUpload.addEventListener('change', (e) => {
     imagePreviewContainer.innerHTML = '';
     Array.from(e.target.files).forEach(file => {
@@ -55,9 +58,10 @@ imageUpload.addEventListener('change', (e) => {
     });
 });
 
+// Carregar produtos
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
-    const q = query(productsRef, orderBy("name")); // Ordena os produtos por nome
+    const q = query(productsRef, orderBy("name"));
     onSnapshot(q, (snapshot) => {
         productsTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
@@ -78,6 +82,8 @@ const loadProducts = () => {
     });
 };
 
+
+// ✅ CORREÇÃO GERAL: Função de carregar pedidos com linha de detalhes expansível
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, orderBy("createdAt", "desc"));
@@ -86,8 +92,10 @@ const loadOrders = () => {
         ordersTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const order = docSnap.data();
+            const orderId = docSnap.id;
             const tr = document.createElement('tr');
-            tr.dataset.orderId = docSnap.id;
+            tr.className = 'order-summary-row'; // Adiciona classe para a linha principal
+            tr.dataset.orderId = orderId;
 
             const orderDate = order.createdAt && order.createdAt.toDate 
                 ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
@@ -103,63 +111,89 @@ const loadOrders = () => {
                 statusClass = 'cancelled';
             }
 
+            // Linha principal do pedido (visível por padrão)
             tr.innerHTML = `
-                <td>${docSnap.id.substring(0, 6)}...</td>
-                <td>${order.customer.name || 'Não disponível'}</td>
                 <td>${orderDate}</td>
+                <td>${order.customer?.name || 'Cliente não encontrado'}</td>
                 <td>${BRL(order.total)}</td>
                 <td><span class="status ${statusClass}">${statusText}</span></td>
                 <td class="order-actions">
-                    ${order.status === 'pending' ? 
-                    `<button class="action-btn ship" data-id="${docSnap.id}">Marcar como Enviado</button>
-                     <button class="action-btn cancel" data-id="${docSnap.id}">Cancelar Pedido</button>` : ''
+                     ${order.status === 'pending' ? 
+                    `<button class="action-btn ship" data-id="${orderId}">Marcar Enviado</button>
+                     <button class="action-btn cancel" data-id="${orderId}">Cancelar</button>` : ''
                     }
                 </td>
             `;
+
+            // Linha de detalhes (oculta por padrão)
+            const detailsTr = document.createElement('tr');
+            detailsTr.className = 'order-details-row';
+            detailsTr.style.display = 'none'; // Oculta por padrão
+
+            const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name} (${BRL(item.price)})</li>`).join('');
+            const fullAddress = order.customer?.fullAddress || 'Endereço não fornecido';
+
+            detailsTr.innerHTML = `
+                <td colspan="5">
+                    <div class="order-details-content">
+                        <p><strong>ID do Pedido:</strong> ${orderId}</p>
+                        <p><strong>Cliente:</strong> ${order.customer?.name} (${order.customer?.email})</p>
+                        <p><strong>Contato:</strong> ${order.customer?.phone}</p>
+                        <p><strong>Endereço de Entrega:</strong> ${fullAddress}</p>
+                        <div><strong>Itens:</strong><ul>${itemsHtml}</ul></div>
+                    </div>
+                </td>
+            `;
+            
             ordersTableBody.appendChild(tr);
+            ordersTableBody.appendChild(detailsTr);
         });
     });
 };
 
+// ✅ NOVO: Listener para expandir/recolher os detalhes do pedido
 ordersTableBody.addEventListener('click', async (e) => {
-    const target = e.target;
-    const id = target.getAttribute('data-id');
-    if (!id) return;
+    const summaryRow = e.target.closest('.order-summary-row');
+    
+    // Se o clique foi num botão de ação, processa a ação
+    if (e.target.closest('.action-btn')) {
+        const id = e.target.getAttribute('data-id');
+        if (!id) return;
+        const orderRef = doc(db, 'orders', id);
 
-    const orderRef = doc(db, 'orders', id);
-
-    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
-    if (target.classList.contains('ship')) {
-        const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado para "Enviado".', 'Sim, enviar');
-        if (confirmed) {
-            try {
+        if (e.target.classList.contains('ship')) {
+            const confirmed = await showConfirmation('Marcar como Enviado?', 'O estado do pedido será alterado.', 'Sim, enviar');
+            if (confirmed) {
                 await updateDoc(orderRef, { status: 'shipped' });
                 showToast('Pedido marcado como enviado!', 'success');
-            } catch (error) {
-                showToast('Erro ao atualizar o pedido.', 'error');
             }
         }
-    }
 
-    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
-    if (target.classList.contains('cancel')) {
-        const confirmed = await showConfirmation('Cancelar este Pedido?', 'Esta ação não pode ser revertida e o pedido será cancelado.', 'Sim, cancelar');
-        if (confirmed) {
-            try {
+        if (e.target.classList.contains('cancel')) {
+            const confirmed = await showConfirmation('Cancelar este Pedido?', 'Esta ação não pode ser revertida.', 'Sim, cancelar');
+            if (confirmed) {
                 await updateDoc(orderRef, { status: 'cancelled' });
                 showToast('Pedido cancelado.', 'info');
-            } catch (error) {
-                showToast('Erro ao cancelar o pedido.', 'error');
             }
+        }
+        return; // Impede que o clique no botão também expanda a linha
+    }
+    
+    // Se o clique foi na linha (mas não num botão), expande/recolhe os detalhes
+    if (summaryRow) {
+        const detailsRow = summaryRow.nextElementSibling;
+        if (detailsRow && detailsRow.classList.contains('order-details-row')) {
+            detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
         }
     }
 });
 
+
+// Listener para apagar e editar produtos (sem alterações)
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const id = target.getAttribute('data-id');
 
-    // ✅ CORREÇÃO: Texto do botão de confirmação personalizado
     if (target.classList.contains('delete')) {
         const confirmed = await showConfirmation('Tem a certeza?', 'O produto será apagado permanentemente.', 'Sim, apagar');
         if (confirmed) {
@@ -170,8 +204,7 @@ productsTableBody.addEventListener('click', async (e) => {
                     const productData = productSnap.data();
                     if (productData.imageUrls && productData.imageUrls.length > 0) {
                         for (const url of productData.imageUrls) {
-                            const imageRef = ref(storage, url);
-                            await deleteObject(imageRef).catch(err => console.warn("Falha ao apagar imagem antiga:", err));
+                            await deleteObject(ref(storage, url)).catch(err => console.warn("Falha ao apagar imagem antiga:", err));
                         }
                     }
                 }
@@ -211,6 +244,7 @@ productsTableBody.addEventListener('click', async (e) => {
     }
 });
 
+// Submissão do formulário de produtos (sem alterações)
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = productForm.querySelector('button[type="submit"]');
