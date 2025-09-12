@@ -138,10 +138,10 @@ form?.addEventListener('submit', async (e) => {
         subtotal, 
         total,
         customer: {
-            uid: user.uid, 
+            uid: user.uid, // ✅ Corrigido
             name: data.name,
             phone: data.phone,
-            email: user.email, 
+            email: user.email, // ✅ Corrigido
             fullAddress: fullAddress,
             address: { cep: data.cep, street: data.street, number: data.number, complement: data.complement, neighborhood: data.neighborhood, city: data.city, state: data.state }
         },
