@@ -70,8 +70,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <!-- ✅ CORREÇÃO: Adicionado o ID que faltava ao tbody -->
-                    <tbody id="orders-table-body"></tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </section>
@@ -83,7 +82,8 @@
         </div>
     </footer>
     
-    <script type="module" src="./js/admin.js"></script>
+    <!-- ✅ CORREÇÃO DEFINITIVA: Adicionado o atributo 'defer' para garantir que o script só executa após o HTML carregar -->
+    <script type="module" src="./js/admin.js" defer></script>
 
 </body>
 </html>

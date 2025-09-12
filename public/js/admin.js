@@ -4,13 +4,13 @@ import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orde
 import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation } from './utils.js';
 
-// --- ✅ CORREÇÃO GERAL: Seletores de DOM Corrigidos e Consolidados ---
+// --- Seletores de DOM (Versão Simplificada e Final) ---
 const storage = getStorage();
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 const productsTableBody = document.querySelector('#products-table tbody');
-const ordersTableBody = document.querySelector('#orders-table-body');
+const ordersTableBody = document.querySelector('#orders-table tbody');
 const logoutButton = document.getElementById('logout');
 
 let currentEditingProductId = null;
@@ -29,7 +29,6 @@ onAuthStateChanged(auth, async (user) => {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
-            // Carrega ambas as funções após a verificação bem-sucedida
             loadProducts();
             loadOrders();
         }
@@ -40,26 +39,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- Logout ---
-logoutButton.addEventListener('click', () => {
-    signOut(auth).then(() => window.location.href = 'login.html');
-});
-
-// --- Preview de Imagem ---
-imageUpload.addEventListener('change', (e) => {
-    imagePreviewContainer.innerHTML = '';
-    Array.from(e.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            imagePreviewContainer.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-    });
-});
-
-// --- ✅ CORREÇÃO GERAL: Função `loadProducts` Restaurada ---
+// --- Funções Principais ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("name"));
@@ -83,11 +63,9 @@ const loadProducts = () => {
     });
 };
 
-// --- ✅ CORREÇÃO GERAL: Função `loadOrders` Consolidada e Estável ---
 const loadOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(ordersRef, orderBy("createdAt", "desc"));
-
     onSnapshot(q, (snapshot) => {
         ordersTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
@@ -113,7 +91,7 @@ const loadOrders = () => {
                 <td>${BRL(order.total)}</td>
                 <td><span class="status ${statusInfo.class}">${statusInfo.text}</span></td>
                 <td class="order-actions">
-                    ${order.status === 'pending' ? 
+                    ${order.status === 'pending' ?
                     `<button class="action-btn ship" data-id="${orderId}">Marcar Enviado</button>
                      <button class="action-btn cancel" data-id="${orderId}">Cancelar</button>` : ''
                     }
@@ -139,7 +117,7 @@ const loadOrders = () => {
                     </div>
                 </td>
             `;
-            
+
             ordersTableBody.appendChild(tr);
             ordersTableBody.appendChild(detailsTr);
         });
@@ -147,6 +125,23 @@ const loadOrders = () => {
 };
 
 // --- Listeners de Eventos ---
+logoutButton.addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = 'login.html');
+});
+
+imageUpload.addEventListener('change', (e) => {
+    imagePreviewContainer.innerHTML = '';
+    Array.from(e.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            imagePreviewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
 ordersTableBody.addEventListener('click', async (e) => {
     const actionButton = e.target.closest('.action-btn');
     const summaryRow = e.target.closest('.order-summary-row');
@@ -214,7 +209,7 @@ productsTableBody.addEventListener('click', async (e) => {
         productForm.price.value = product.price;
         productForm.stock.value = product.stock;
         productForm.category.value = product.category;
-        
+
         imagePreviewContainer.innerHTML = '';
         if (product.imageUrls && product.imageUrls.length > 0) {
             product.imageUrls.forEach(url => {
@@ -223,7 +218,7 @@ productsTableBody.addEventListener('click', async (e) => {
                 imagePreviewContainer.appendChild(img);
             });
         }
-        
+
         currentEditingProductId = id;
         existingImageUrls = product.imageUrls || [];
         productForm.querySelector('button[type="submit"]').textContent = 'Atualizar Produto';
@@ -231,7 +226,6 @@ productsTableBody.addEventListener('click', async (e) => {
     }
 });
 
-// --- Submissão do Formulário de Produto ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = productForm.querySelector('button[type="submit"]');
