@@ -62,12 +62,13 @@ async function handleUpdateUserData(e) {
                 city: data.city, state: data.state
             }
         });
-        showToast('Dados atualizados com sucesso!', 'success'); // ✅ CORREÇÃO: Usa showToast
+        showToast('Dados atualizados com sucesso!', 'success');
     } catch (error) {
-        showToast('Ocorreu um erro ao atualizar os seus dados.', 'error'); // ✅ CORREÇÃO: Usa showToast
+        showToast('Ocorreu um erro ao atualizar os seus dados.', 'error');
     }
 }
 
+// ✅ CORREÇÃO: Função de carregar histórico de pedidos refatorada
 async function loadOrderHistory(user, container) {
     if (!container) return;
     container.innerHTML = loadingSpinner;
@@ -86,10 +87,20 @@ async function loadOrderHistory(user, container) {
         querySnapshot.forEach(doc => {
             const order = doc.data();
             
-            // ✅ CORREÇÃO: Verifica se o campo `createdAt` existe e é um timestamp válido antes de o formatar.
             const orderDate = order.createdAt && order.createdAt.toDate 
                 ? order.createdAt.toDate().toLocaleDateString('pt-BR') 
                 : 'Data pendente';
+
+            // Define o texto e a classe do status
+            let statusText = 'Pendente';
+            let statusClass = 'pending';
+            if (order.status === 'shipped') {
+                statusText = 'Enviado';
+                statusClass = 'shipped';
+            } else if (order.status === 'cancelled') {
+                statusText = 'Cancelado';
+                statusClass = 'cancelled';
+            }
 
             const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name}</li>`).join('');
 
@@ -98,7 +109,7 @@ async function loadOrderHistory(user, container) {
             orderEl.innerHTML = `
                 <div class="order-item-header">
                     <span class="order-id">Pedido #${doc.id.substring(0, 6)}</span>
-                    <span class="order-status ${order.status}">${order.status === 'pending' ? 'Pendente' : 'Enviado'}</span>
+                    <span class="order-status-badge ${statusClass}">${statusText}</span>
                 </div>
                 <div class="order-details">
                     <p><strong>Data:</strong> ${orderDate}</p>

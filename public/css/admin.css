@@ -113,31 +113,21 @@
     border-radius: 4px;
 }
 
-/* --- ESTILOS ATUALIZADOS E NOVOS --- */
-
-/* Badge de Status do Pedido */
-.order-status-badge {
-    font-weight: bold;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    color: var(--cor-branco);
-    text-align: center;
-    display: inline-block;
+#image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
 }
 
-.status-pending { background-color: #f39c12; } /* Laranja */
-.status-sent { background-color: #27ae60; }    /* Verde */
-.status-canceled { background-color: #95a5a6; } /* Cinza */
-
-/* Célula de Ações */
-.actions-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+#image-preview-container img {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-/* Botões de Ação Genéricos */
 .admin-table .action-btn {
     background: none;
     border: none;
@@ -146,51 +136,69 @@
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: bold;
-    color: var(--cor-branco);
-    transition: opacity 0.2s ease;
+    color: var(--cor-preto);
+    transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
 .admin-table .action-btn:hover {
     opacity: 0.8;
 }
 
-/* Botões de Ação Específicos */
-.admin-table .action-btn.edit { color: #3498db; background-color: transparent; }
-.admin-table .action-btn.delete { color: #e74c3c; background-color: transparent; }
-.admin-table .action-btn.sent { background-color: #27ae60; }
-.admin-table .action-btn.cancel { background-color: #e74c3c; }
+.admin-table .action-btn.edit { 
+    color: #3498db; 
+    background-color: #ecf5fd;
+    border: 1px solid #3498db;
+}
+.admin-table .action-btn.delete { 
+    color: #e74c3c; 
+    background-color: #fbecec;
+    border: 1px solid #e74c3c;
+}
 
-/* Estilo para o botão de cancelar edição */
-.admin-form .cancel-btn {
-    background-color: #7f8c8d; /* Cinza */
-    color: var(--cor-branco);
+/* --- ✅ NOVOS ESTILOS PARA GESTÃO DE ENCOMENDAS --- */
+
+.admin-table .status {
+    padding: 0.3rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.85rem;
     font-weight: bold;
-    font-size: 1.1rem;
-    padding: 0.8rem 1.5rem;
+    color: var(--cor-branco);
+    text-transform: capitalize;
+}
+
+.admin-table .status.pending {
+    background-color: #f39c12; /* Laranja */
+}
+
+.admin-table .status.shipped {
+    background-color: #27ae60; /* Verde */
+}
+
+.admin-table .status.cancelled {
+    background-color: #95a5a6; /* Cinza */
+}
+
+.admin-table .order-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.admin-table .action-btn.ship {
+    background-color: #27ae60;
+    color: var(--cor-branco);
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    align-self: flex-start;
-    margin-left: 1rem;
 }
 
-.admin-form .cancel-btn:hover {
-    background-color: #95a5a6;
+.admin-table .action-btn.cancel {
+    background-color: #e74c3c;
+    color: var(--cor-branco);
+    border: none;
 }
 
-/* Estilos para a pré-visualização de imagens */
-#image-preview-container {
-  display: flex;
-  flex-wrap: wrap; /* Permite que as imagens quebrem para a próxima linha */
-  gap: 10px; /* Espaço entre as imagens */
-  margin-top: 1rem; /* Espaço acima do contentor */
-}
-
-#image-preview-container img {
-  max-width: 100px;
-  max-height: 100px;
-  object-fit: cover; /* Garante que a imagem preencha o espaço sem se distorcer */
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.admin-table .action-btn.ship:hover,
+.admin-table .action-btn.cancel:hover {
+    opacity: 0.85;
+    color: var(--cor-branco);
 }

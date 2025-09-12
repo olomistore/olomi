@@ -32,23 +32,6 @@
     font-size: 1.2rem;
 }
 
-.order-status {
-    font-weight: bold;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-}
-
-.order-status.pending {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.order-status.sent {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
 .order-details p {
     margin-bottom: 0.5rem;
 }
@@ -62,6 +45,30 @@
     font-size: 0.9rem;
     color: var(--cor-texto-claro);
 }
+
+/* --- ✅ NOVOS ESTILOS PARA O BADGE DE ESTADO --- */
+
+.order-status-badge {
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--cor-branco);
+    text-transform: capitalize;
+}
+
+.order-status-badge.pending {
+    background-color: #f39c12; /* Laranja */
+}
+
+.order-status-badge.shipped {
+    background-color: #27ae60; /* Verde */
+}
+
+.order-status-badge.cancelled {
+    background-color: #95a5a6; /* Cinza */
+}
+
 
 @media (min-width: 768px) {
     .account-layout {
