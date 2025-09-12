@@ -48,14 +48,19 @@ const loadProducts = () => {
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
             const tr = document.createElement('tr');
+            // ✅ CORREÇÃO: Substituídos os botões de texto por ícones SVG
             tr.innerHTML = `
                 <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
                 <td>${BRL(product.price)}</td>
                 <td>${product.stock}</td>
-                <td>
-                    <button class="action-btn edit" data-id="${docSnap.id}">Editar</button>
-                    <button class="action-btn delete" data-id="${docSnap.id}">Apagar</button>
+                <td class="actions-cell">
+                    <button class="action-btn-icon edit" data-id="${docSnap.id}" title="Editar produto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </button>
+                    <button class="action-btn-icon delete" data-id="${docSnap.id}" title="Apagar produto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
@@ -173,7 +178,9 @@ ordersTableBody.addEventListener('click', async (e) => {
 });
 
 productsTableBody.addEventListener('click', async (e) => {
-    const target = e.target;
+    const target = e.target.closest('.action-btn-icon'); // Target icon buttons
+    if (!target) return;
+
     const id = target.getAttribute('data-id');
 
     if (target.classList.contains('delete')) {
