@@ -79,12 +79,14 @@ function render(list) {
         const buttonText = isOutOfStock ? 'Esgotado' : 'Adicionar ao Carrinho';
         const buttonDisabled = isOutOfStock ? 'disabled' : '';
 
+        // Adicionada a descrição do produto (p.description)
         productCard.innerHTML = `
             <a href="produto.html?id=${p.id}" class="product-link">
                 <img src="${imageUrl}" alt="${p.name}" class="product-image">
             </a>
             <div class="card-content">
                 <h3 class="product-title"><a href="produto.html?id=${p.id}">${p.name}</a></h3>
+                <p class="product-description">${p.description || 'Clique para ver mais detalhes.'}</p>
                 <p class="product-price">${BRL(p.price)}</p>
                 <button type="button" class="add-to-cart-btn" data-id="${p.id}" ${buttonDisabled}>${buttonText}</button>
             </div>
