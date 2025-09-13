@@ -114,3 +114,4 @@ O projeto está organizado de forma lógica para separar as responsabilidades:
 4.  **Execute Localmente:**
     - Como este é um projeto de frontend puro, pode executá-lo com qualquer servidor web estático. Se tiver o VS Code, uma excelente opção é a extensão **Live Server**.
     - Clique com o botão direito no ficheiro `public/index.html` e selecione "Open with Live Server".
+    
