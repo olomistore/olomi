@@ -19,20 +19,20 @@ if (userNavContainer && adminLinkContainer) {
         if (user) {
             // O utilizador está autenticado
 
-            // Verifica o status de administrador na coleção 'roles', que é o local correto.
+            // Verifica o status de administrador na coleção 'roles'.
             const roleRef = doc(db, 'roles', user.uid);
             const roleSnap = await getDoc(roleRef);
             const isAdmin = roleSnap.exists() && roleSnap.data().admin;
 
-            // Mostra o link do painel de admin se o utilizador for admin
+            // Mostra o link do painel de admin se o utilizador for admin, usando a classe padronizada.
             adminLinkContainer.innerHTML = isAdmin
-                ? '<a href="admin.html" class="nav-button nav-button-admin">Painel Admin</a>'
+                ? '<a href="admin.html" class="nav-link">Painel Admin</a>'
                 : '';
 
-            // Mostra os links da conta do utilizador e o botão de sair
+            // Mostra os links da conta do utilizador e o botão de sair, usando a classe padronizada.
             userNavContainer.innerHTML = `
-                <a href="minha-conta.html" class="nav-button">Minha Conta</a>
-                <a href="#" id="logout-btn" class="nav-button">Sair</a>
+                <a href="minha-conta.html" class="nav-link">Minha Conta</a>
+                <a href="#" id="logout-btn" class="nav-link">Sair</a>
             `;
 
             // Adiciona o evento de clique ao botão de logout
@@ -41,7 +41,6 @@ if (userNavContainer && adminLinkContainer) {
                 logoutBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     signOut(auth).then(() => {
-                        // Redireciona para a página inicial para uma melhor experiência.
                         window.location.href = '/index.html';
                     }).catch((error) => {
                         console.error("Erro ao fazer logout:", error);
@@ -54,8 +53,8 @@ if (userNavContainer && adminLinkContainer) {
             adminLinkContainer.innerHTML = ''; // Garante que o link de admin está escondido
 
             userNavContainer.innerHTML = `
-                <a href="login-cliente.html" class="nav-button">Entrar</a>
-                <a href="registro-cliente.html" class="nav-button">Registar</a>
+                <a href="login-cliente.html" class="nav-link">Entrar</a>
+                <a href="registro-cliente.html" class="nav-link">Registar</a>
             `;
         }
     });
