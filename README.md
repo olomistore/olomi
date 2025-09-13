@@ -1,118 +1,116 @@
 # Projeto E-commerce Olomi
 
-Este é um projeto de e-commerce completo construído com HTML, CSS e JavaScript puros, utilizando o Firebase como backend. A plataforma inclui funcionalidades tanto para clientes quanto para administradores.
+Este é um projeto de e-commerce completo construído com HTML, CSS e JavaScript puro (Vanilla JS), utilizando o Firebase como um backend abrangente (BaaS - Backend as a Service). A plataforma foi desenvolvida de forma modular e inclui funcionalidades essenciais tanto para clientes quanto para administradores.
 
 ## Visão Geral
 
-O projeto consiste em uma loja virtual onde os clientes podem navegar por produtos, adicioná-los ao carrinho e gerenciar suas contas. Há também um painel administrativo para gerenciar produtos, visualizar pedidos e administrar o site.
+A Olomi é uma loja virtual focada em artigos africanos e religiosos. Os clientes podem navegar por um catálogo dinâmico, pesquisar produtos, adicioná-los ao carrinho e gerenciar as suas contas e pedidos. Em paralelo, um painel de administração protegido permite a gestão completa de produtos e o acompanhamento de pedidos.
 
 ## Tecnologias Utilizadas
 
 - **Frontend:**
   - HTML5
-  - CSS3
-  - JavaScript (ES6 Modules)
+  - CSS3 (com Variáveis CSS para um design coeso)
+  - JavaScript (ES6+), organizado em módulos para melhor manutenibilidade.
 
 - **Backend (Firebase):**
-  - **Firebase Authentication:** Para autenticação de usuários (clientes e administradores).
-  - **Firestore:** Como banco de dados NoSQL para armazenar informações de produtos, pedidos e usuários.
-  - **Firebase Storage:** Para armazenamento de imagens de produtos.
-  - **Firebase Hosting:** Para hospedar o site.
-
-- **Ferramentas e Bibliotecas:**
-  - **SweetAlert2:** Para notificações e modais elegantes.
+  - **Firebase Authentication:** Para autenticação segura de clientes e administradores (login com e-mail e senha).
+  - **Firestore:** Como banco de dados NoSQL para armazenar informações de produtos, pedidos, utilizadores e controle de acesso (roles).
+  - **Firebase Storage:** Para o upload e armazenamento das imagens dos produtos.
 
 ## Estrutura do Projeto
 
-O projeto está organizado da seguinte forma:
+O projeto está organizado de forma lógica para separar as responsabilidades:
 
 ```
-/
-|-- functions/               # Cloud Functions (backend em Node.js)
-|   |-- index.js
-|   `-- package.json
-|-- public/                  # Arquivos públicos (frontend)
-|   |-- css/                 # Estilos CSS
-|   |-- js/                  # Scripts JavaScript
-|   |-- assets/              # Imagens e outros recursos
-|   |-- admin.html           # Painel de administração
-|   |-- carrinho.html        # Página do carrinho de compras
-|   |-- index.html           # Página inicial da loja
-|   |-- login.html           # Página de login do administrador
-|   |-- login-cliente.html   # Página de login do cliente
-|   |-- produto.html         # Página de detalhes do produto
-|   `-- ... (outras páginas)
-|-- firebase.json            # Configurações de deploy do Firebase
-|-- firestore.rules          # Regras de segurança do Firestore
-|-- storage.rules            # Regras de segurança do Firebase Storage
-|-- README.md                # Este arquivo
+/public
+|-- /assets/          # Imagens estáticas (logo, etc.)
+|-- /css/             # Ficheiros de estilo (style.css)
+|-- /js/              # Todos os scripts JavaScript
+|   |-- admin.js        # Lógica do painel de admin
+|   |-- catalogo.js     # Lógica da página inicial (catálogo)
+|   |-- carrinho.js     # Lógica da página do carrinho
+|   |-- produto.js      # Lógica da página de detalhe do produto
+|   |-- auth.js         # Funções de autenticação
+|   |-- main.js         # Script principal (cabeçalho, navegação)
+|   |-- firebase.js     # Configuração e inicialização do Firebase
+|   |-- utils.js        # Funções utilitárias (formatação, cart store)
+|   `-- ...           # Outros scripts modulares
+|
+|-- admin.html          # Painel de Administração
+|-- carrinho.html       # Página do carrinho de compras
+|-- index.html          # Página inicial (catálogo de produtos)
+|-- produto.html        # Página de detalhe do produto
+|-- login-cliente.html  # Página de login
+|-- minha-conta.html    # Página do cliente com histórico de pedidos
+`-- ...               # Outras páginas HTML
 ```
 
 ## Funcionalidades
 
 ### Para Clientes:
-- Cadastro e Login de clientes.
-- Redefinição de senha.
-- Navegação pelo catálogo de produtos.
-- Visualização de detalhes dos produtos.
-- Adicionar produtos ao carrinho de compras.
-- Gerenciar itens no carrinho (adicionar, remover, atualizar quantidade).
-- Acesso a uma área "Minha Conta" para visualizar o histórico de pedidos e gerenciar dados pessoais.
+
+- **Autenticação Completa:** Cadastro, login e gestão de sessão.
+- **Catálogo Dinâmico:** Navegação, pesquisa textual e filtro por categorias.
+- **Visualização de Produto:** Página de detalhe para cada item.
+- **Carrinho de Compras Persistente:** Adicionar, remover e atualizar a quantidade de itens (persiste no `localStorage`).
+- **Feedback ao Utilizador:** Notificações (toasts) para ações como "adicionado ao carrinho".
+- **Área "Minha Conta":** Acesso seguro ao histórico de pedidos.
 
 ### Para Administradores:
-- Login seguro em um painel de administração.
-- Gerenciamento de produtos (CRUD - Criar, Ler, Atualizar, Deletar).
-- Visualização de todos os pedidos realizados.
-- Criação de contas de administrador.
 
-## Como Configurar o Projeto
+- **Painel Seguro:** Acesso a um painel de administração (`/admin.html`) restrito a utilizadores com a role de "admin".
+- **Gestão de Produtos (CRUD):**
+  - **Criar:** Adicionar novos produtos com nome, descrição, preço, stock, categoria e imagens.
+  - **Ler:** Visualizar todos os produtos numa tabela organizada.
+  - **Atualizar:** (Funcionalidade a ser implementada no frontend) Editar produtos existentes.
+  - **Deletar:** Remover produtos da loja.
+- **Gestão de Pedidos:** Visualizar todos os pedidos feitos pelos clientes e atualizar o seu status (ex: "Pendente" para "Enviado").
+- **Criação de Novos Admins:** Uma página dedicada para atribuir a role de administrador a novos utilizadores.
 
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/arthurcmps/olomi.git
-   cd seu-repositorio
-   ```
+## Como Configurar e Executar o Projeto
 
-2. **Configure o Firebase:**
-   - Crie um novo projeto no [Firebase Console](https://console.firebase.google.com/).
-   - Na página do seu projeto, adicione um novo aplicativo da Web.
-   - Copie as credenciais de configuração do Firebase.
-   - Cole suas credenciais no arquivo `public/js/firebase.js`.
-   - Ative os seguintes serviços do Firebase no console:
-     - **Authentication:** Ative o provedor "E-mail/senha".
-     - **Firestore:** Crie um banco de dados.
-     - **Storage:** Configure o armazenamento.
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/arthurcmps/olomi.git
+    cd olomi
+    ```
 
-3. **Instale as dependências das Cloud Functions:**
-   ```bash
-   cd functions
-   npm install
-   ```
+2.  **Configure o Firebase:**
+    - Crie um projeto no [console do Firebase](https://console.firebase.google.com/).
+    - Ative os seguintes serviços: **Authentication** (com o provedor "E-mail/Senha"), **Firestore** e **Storage**.
+    - Na visão geral do seu projeto, adicione um novo aplicativo da Web (</>).
+    - O Firebase fornecerá um objeto de configuração `firebaseConfig`. Copie este objeto.
 
-## Como Executar o Projeto Localmente
+3.  **Crie o Ficheiro de Configuração:**
+    - Na pasta `public/js/`, crie um novo ficheiro chamado `firebase.js`.
+    - Cole o objeto `firebaseConfig` e inicialize o Firebase, como no exemplo abaixo:
 
-Para testar o projeto localmente, você pode usar o Firebase Emulator Suite, que permite simular os serviços do Firebase na sua máquina.
+    ```javascript
+    // public/js/firebase.js
 
-1. **Instale o Firebase CLI:**
-   Se ainda não o tiver, instale a CLI do Firebase globalmente:
-   ```bash
-   npm install -g firebase-tools
-   ```
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 
-2. **Inicie os emuladores:**
-   Na raiz do projeto, execute:
-   ```bash
-   firebase emulators:start
-   ```
+    // Cole aqui o objeto de configuração do seu projeto Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_STORAGE_BUCKET",
+      messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+      appId: "SUA_APP_ID"
+    };
 
-3. **Acesse o site:**
-   - O site estará disponível em `http://localhost:5000`.
-   - A interface dos emuladores estará em `http://localhost:4000`.
+    // Inicializa o Firebase e exporta os serviços
+    const app = initializeApp(firebaseConfig);
+    export const db = getFirestore(app);
+    export const auth = getAuth(app);
+    export const storage = getStorage(app);
+    ```
 
-## Deploy
-
-Para fazer o deploy do projeto no Firebase Hosting, execute o seguinte comando na raiz do projeto:
-
-```bash
-firebase deploy
-```
+4.  **Execute Localmente:**
+    - Como este é um projeto de frontend puro, pode executá-lo com qualquer servidor web estático. Se tiver o VS Code, uma excelente opção é a extensão **Live Server**.
+    - Clique com o botão direito no ficheiro `public/index.html` e selecione "Open with Live Server".
