@@ -1,99 +1,118 @@
-# E-commerce Olomi - Artigos Africanos e Religiosos
+# Projeto E-commerce Olomi
 
-Bem-vindo ao repositório do projeto Olomi, um e-commerce completo desenvolvido com tecnologias web modernas e focado numa experiência de utilizador limpa e segura.  
+Este é um projeto de e-commerce completo construído com HTML, CSS e JavaScript puros, utilizando o Firebase como backend. A plataforma inclui funcionalidades tanto para clientes quanto para administradores.
 
-## 📜 Descrição
-Olomi é uma plataforma de e-commerce concebida para a venda de artigos africanos e religiosos.  
-O site permite que os clientes naveguem por um catálogo de produtos, calculem o frete, criem uma conta e finalizem as suas compras, enquanto oferece um painel administrativo completo para a gestão da loja.  
+## Visão Geral
 
-O projeto foi construído inteiramente com tecnologias do lado do cliente (frontend), utilizando o Firebase como um poderoso Backend como um Serviço (BaaS) para gerir todos os dados e a autenticação.  
+O projeto consiste em uma loja virtual onde os clientes podem navegar por produtos, adicioná-los ao carrinho e gerenciar suas contas. Há também um painel administrativo para gerenciar produtos, visualizar pedidos e administrar o site.
 
-## ✨ Funcionalidades Implementadas
+## Tecnologias Utilizadas
 
-### Para Clientes
-- **Catálogo de Produtos**: Visualização de produtos com pesquisa e filtro por categoria.  
-- **Página de Detalhes do Produto**: Vista detalhada de cada item com descrição e imagens.  
-- **Controlo de Stock**: Exibição da quantidade de stock disponível e bloqueio de compra para itens esgotados.  
-- **Carrinho de Compras**: Adição de produtos, gestão de quantidades e remoção de itens.  
-- **Cálculo de Frete**: Integração com a API dos Correios através de uma Cloud Function para calcular o valor do frete em tempo real.  
-- **Sistema de Autenticação**: Os clientes podem criar uma conta, iniciar sessão e ter os seus dados guardados para compras futuras.  
-- **Painel "Minha Conta"**: Área para o cliente visualizar o seu histórico de encomendas e atualizar os seus dados de registo.  
-- **Checkout Seguro**: O processo de finalização de compra exige que o utilizador esteja autenticado e preenche automaticamente os seus dados, finalizando o pedido através de uma mensagem formatada para o WhatsApp.  
+- **Frontend:**
+  - HTML5
+  - CSS3
+  - JavaScript (ES6 Modules)
 
-### Para Administradores
-- **Painel de Administração Seguro**: Acesso restrito a uma área de gestão protegida por autenticação e verificação de permissões.  
-- **Gestão Completa de Produtos**: Criar, editar (nome, preço, descrição, stock e imagem) e apagar produtos.  
-- **Gestão de Encomendas**: Visualização de todas as encomendas recebidas, com a opção de atualizar o status para *Enviado* ou *Cancelado*.  
-- **Redefinição de Senha**: Opção para o administrador recuperar o acesso à sua conta.  
+- **Backend (Firebase):**
+  - **Firebase Authentication:** Para autenticação de usuários (clientes e administradores).
+  - **Firestore:** Como banco de dados NoSQL para armazenar informações de produtos, pedidos e usuários.
+  - **Firebase Storage:** Para armazenamento de imagens de produtos.
+  - **Firebase Hosting:** Para hospedar o site.
 
-## 🛠 Tecnologias Utilizadas
+- **Ferramentas e Bibliotecas:**
+  - **SweetAlert2:** Para notificações e modais elegantes.
 
-### Frontend
-- HTML5  
-- CSS3 (com Variáveis e Flexbox/Grid)  
-- JavaScript (ES6 Modules, Vanilla JS)  
+## Estrutura do Projeto
 
-### Backend (Serviços Firebase)
-- **Firebase Authentication**: Gestão de utilizadores (clientes e administradores).  
-- **Firestore Database**: Base de dados NoSQL para produtos, encomendas, dados de utilizadores e permissões.  
-- **Firebase Storage**: Armazenamento de imagens dos produtos.  
-- **Firebase Cloud Functions**: Lógica do lado do servidor, como o cálculo de frete (resolvendo problemas de CORS).  
+O projeto está organizado da seguinte forma:
 
-### Ferramentas e APIs
-- Git & GitHub: Controlo de versão e alojamento do código.  
-- API ViaCEP: Preenchimento automático de endereços durante o registo.  
-- API dos Correios: Cálculo de frete em tempo real.  
-
-## 🚀 Como Executar o Projeto Localmente
-
-### 1. Clonar o Repositório
-```bash
-git clone https://github.com/arthurcmps/olomi.git
-cd olomi
+```
+/
+|-- functions/               # Cloud Functions (backend em Node.js)
+|   |-- index.js
+|   `-- package.json
+|-- public/                  # Arquivos públicos (frontend)
+|   |-- css/                 # Estilos CSS
+|   |-- js/                  # Scripts JavaScript
+|   |-- assets/              # Imagens e outros recursos
+|   |-- admin.html           # Painel de administração
+|   |-- carrinho.html        # Página do carrinho de compras
+|   |-- index.html           # Página inicial da loja
+|   |-- login.html           # Página de login do administrador
+|   |-- login-cliente.html   # Página de login do cliente
+|   |-- produto.html         # Página de detalhes do produto
+|   `-- ... (outras páginas)
+|-- firebase.json            # Configurações de deploy do Firebase
+|-- firestore.rules          # Regras de segurança do Firestore
+|-- storage.rules            # Regras de segurança do Firebase Storage
+|-- README.md                # Este arquivo
 ```
 
-### 2. Configurar o Firebase
-1. Aceda ao Console do Firebase e crie um novo projeto.  
-2. Ative os seguintes serviços: Authentication (E-mail/Senha), Firestore Database e Storage.  
-3. Vá para **Configurações do projeto (⚙) > Geral** e, na secção *Seus apps*, crie uma nova aplicação Web.  
-4. Copie o objeto de configuração `firebaseConfig`.  
+## Funcionalidades
 
-### 3. Configurar as Credenciais
-1. No seu projeto, localize o ficheiro `js/firebase.js`.  
-2. Cole o objeto `firebaseConfig` que copiou do Firebase, substituindo os valores de exemplo.  
+### Para Clientes:
+- Cadastro e Login de clientes.
+- Redefinição de senha.
+- Navegação pelo catálogo de produtos.
+- Visualização de detalhes dos produtos.
+- Adicionar produtos ao carrinho de compras.
+- Gerenciar itens no carrinho (adicionar, remover, atualizar quantidade).
+- Acesso a uma área "Minha Conta" para visualizar o histórico de pedidos e gerenciar dados pessoais.
 
-### 4. Configurar as Cloud Functions
+### Para Administradores:
+- Login seguro em um painel de administração.
+- Gerenciamento de produtos (CRUD - Criar, Ler, Atualizar, Deletar).
+- Visualização de todos os pedidos realizados.
+- Criação de contas de administrador.
+
+## Como Configurar o Projeto
+
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/arthurcmps/olomi.git
+   cd seu-repositorio
+   ```
+
+2. **Configure o Firebase:**
+   - Crie um novo projeto no [Firebase Console](https://console.firebase.google.com/).
+   - Na página do seu projeto, adicione um novo aplicativo da Web.
+   - Copie as credenciais de configuração do Firebase.
+   - Cole suas credenciais no arquivo `public/js/firebase.js`.
+   - Ative os seguintes serviços do Firebase no console:
+     - **Authentication:** Ative o provedor "E-mail/senha".
+     - **Firestore:** Crie um banco de dados.
+     - **Storage:** Configure o armazenamento.
+
+3. **Instale as dependências das Cloud Functions:**
+   ```bash
+   cd functions
+   npm install
+   ```
+
+## Como Executar o Projeto Localmente
+
+Para testar o projeto localmente, você pode usar o Firebase Emulator Suite, que permite simular os serviços do Firebase na sua máquina.
+
+1. **Instale o Firebase CLI:**
+   Se ainda não o tiver, instale a CLI do Firebase globalmente:
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. **Inicie os emuladores:**
+   Na raiz do projeto, execute:
+   ```bash
+   firebase emulators:start
+   ```
+
+3. **Acesse o site:**
+   - O site estará disponível em `http://localhost:5000`.
+   - A interface dos emuladores estará em `http://localhost:4000`.
+
+## Deploy
+
+Para fazer o deploy do projeto no Firebase Hosting, execute o seguinte comando na raiz do projeto:
+
 ```bash
-cd functions
-npm install firebase-functions firebase-admin axios xml2js cors
-cd ..
+firebase deploy
 ```
-
-### 5. Executar o Emulador Local
-```bash
-firebase emulators:start
-```
-O site estará disponível em [http://localhost:5000](http://localhost:5000).  
-
-## 🔒 Nota de Segurança Importante: Criação do Administrador
-O projeto inclui os ficheiros `criar-admin.html` e `js/criar-admin.js` com o único propósito de criar o primeiro utilizador administrador.  
-
-Após criar a sua conta de administrador com sucesso, é **OBRIGATÓRIO** apagar estes dois ficheiros do seu projeto antes de o publicar online.  
-Deixá-los no site publicado representa uma falha de segurança.  
-
----
-
-## Índice
-- E-commerce Olomi - Artigos Africanos e Religiosos  
-- 📜 Descrição  
-- ✨ Funcionalidades Implementadas  
-  - Para Clientes  
-  - Para Administradores  
-- 🛠️ Tecnologias Utilizadas  
-- 🚀 Como Executar o Projeto Localmente  
-  - Clonar o Repositório  
-  - Configurar o Firebase  
-  - Configurar as Credenciais  
-  - Configurar as Cloud Functions  
-  - Executar o Emulador Local  
-- 🔒 Nota de Segurança Importante: Criação do Administrador  
