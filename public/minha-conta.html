@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-    <!-- ✅ Biblioteca de Notificações (essencial para a confirmação visual) -->
+    <!-- Biblioteca de Notificações (essencial para a confirmação visual) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script type="module" src="./js/main.js?v=2.0" defer></script>
@@ -55,6 +55,25 @@
             <p class="footer-title">Olomi – Artigos Africanos e Religiosos</p>
         </div>
     </footer>
+
+    <!-- Script Orquestrador da Página -->
+    <script type="module">
+      import { auth } from './js/firebase.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+      import { initMinhaContaPage } from './js/minha-conta.js';
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Utilizador está autenticado, podemos carregar os dados da página.
+          initMinhaContaPage(user);
+        } else {
+          // Utilizador não está autenticado. Redireciona para a página de login
+          // porque esta página não tem utilidade para um visitante.
+          console.log("Utilizador não autenticado. A redirecionar para o login...");
+          window.location.href = 'login-cliente.html';
+        }
+      });
+    </script>
 
 </body>
 </html>

@@ -33,7 +33,7 @@ async function loadUserData(user, container) {
                         <input name="city" type="text" placeholder="Cidade" value="${data.address?.city || ''}" required />
                         <input name="state" type="text" placeholder="Estado" value="${data.address?.state || ''}" required />
                     </fieldset>
-                    <button type="submit" class="submit-btn">Guardar Alterações</button>
+                    <button type="submit" class="submit-btn">Salvar Alterações</button>
                 </form>
             `;
             
@@ -62,7 +62,7 @@ async function handleUpdateUserData(e) {
     // --- MELHORIA: Feedback de carregamento no botão ---
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
-    button.textContent = 'A guardar...';
+    button.textContent = 'Salvando...';
 
     const data = Object.fromEntries(new FormData(form).entries());
     const userRef = doc(db, 'users', user.uid);
@@ -83,7 +83,7 @@ async function handleUpdateUserData(e) {
     } finally {
         // Garante que o botão é reativado mesmo se ocorrer um erro
         button.disabled = false;
-        button.textContent = 'Guardar Alterações';
+        button.textContent = 'Salvar Alterações';
     }
 }
 

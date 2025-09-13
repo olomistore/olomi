@@ -56,25 +56,36 @@ export function BRL(value) {
 }
 
 /**
- * Displays a toast notification.
+ * Displays a toast notification using SweetAlert2.
+ * Assumes SweetAlert2 library is loaded on the page.
  * @param {string} message - The message to display.
  * @param {string} type - 'success', 'error', 'warning', 'info'.
  */
 export function showToast(message, type = 'info') {
-    const toastContainer = document.getElementById('toast-container') || createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toastContainer.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 100); // Delay for CSS transition
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 is not loaded. Please include it in your HTML.');
+        alert(message); // Fallback to a simple alert
+        return;
+    }
 
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 500); // Remove after transition
-    }, 3000);
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
+
+    Toast.fire({
+        icon: type,
+        title: message
+    });
 }
+
 
 function createToastContainer() {
     const container = document.createElement('div');
