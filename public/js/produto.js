@@ -1,15 +1,60 @@
 import { db } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-// Importa as funções de carrinho e utilitários centralizadas
-import { BRL, updateCartCount, addToCart } from './utils.js';
+// Corrigido: Importa o cartStore e o showToast, o padrão centralizado no projeto.
+import { BRL, cartStore, showToast } from './utils.js';
 
 const productDetailEl = document.getElementById('product-detail');
 
-let currentProduct = null;
+let currentProduct = null; // Guarda o produto carregado nesta página
 
+/**
+ * Lida com a lógica de adicionar o produto atual ao carrinho.
+ * @param {object} product - O objeto do produto a ser adicionado.
+ * @param {HTMLElement} button - O botão que foi clicado, para dar feedback visual.
+ */
+function handleAddToCart(product, button) {
+    if (!product) return;
+
+    const cart = cartStore.get();
+    const existingItem = cart.find(item => item.id === product.id);
+
+    if (existingItem) {
+        if (existingItem.qty < product.stock) {
+            existingItem.qty++;
+            showToast(`${product.name} adicionado ao carrinho!`);
+        } else {
+            showToast('Quantidade máxima em stock atingida.', 'warning');
+            return;
+        }
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            qty: 1,
+            stock: product.stock,
+            imageUrl: (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : null
+        });
+        showToast(`${product.name} adicionado ao carrinho!`);
+    }
+
+    cartStore.set(cart); // Salva o carrinho e notifica os listeners (que atualizam o contador no header)
+
+    // Feedback visual, igual ao do catálogo
+    button.textContent = 'Adicionado!';
+    button.disabled = true;
+    setTimeout(() => {
+        button.textContent = 'Adicionar ao Carrinho';
+        button.disabled = false;
+    }, 1500);
+}
+
+/**
+ * Renderiza os detalhes do produto no ecrã.
+ */
 function renderProduct(p) {
     if (!productDetailEl) return;
-    document.title = `${p.name} - Olomi`;
+    document.title = `${p.name} - Olomi`; // Atualiza o título da página
 
     const imageUrl = p.imageUrls && p.imageUrls.length > 0 
         ? p.imageUrls[0] 
@@ -29,19 +74,20 @@ function renderProduct(p) {
 
     const button = productDetailEl.querySelector('.add-to-cart-btn-large');
 
-    // --- MELHORIA: VERIFICAÇÃO DE STOCK ---
     if (p.stock <= 0) {
         button.disabled = true;
         button.textContent = 'Produto Esgotado';
-        button.style.backgroundColor = '#ccc'; // Cinza, para indicar que está desativado
     } else {
-        button.addEventListener('click', (event) => {
-            // Usa a função centralizada addToCart
-            addToCart(p, event.target);
+        button.addEventListener('click', () => {
+            // A ação de clique agora chama a função handleAddToCart correta
+            handleAddToCart(p, button);
         });
     }
 }
 
+/**
+ * Função principal de inicialização.
+ */
 async function init() {
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('id');
@@ -67,9 +113,7 @@ async function init() {
         console.error("Erro ao procurar o produto:", error);
         productDetailEl.innerHTML = '<p>Ocorreu um erro ao carregar o produto.</p>';
     }
-    
-    // Atualiza a contagem do carrinho na inicialização da página
-    updateCartCount();
 }
 
+// --- INICIALIZAÇÃO ---
 init();
