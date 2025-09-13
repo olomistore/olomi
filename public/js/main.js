@@ -1,101 +1,49 @@
 import { auth, db } from './firebase.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { cartStore } from './utils.js';
 
-/**
- * Ponto de entrada principal da aplicação.
- * Gere o estado de autenticação e delega para a lógica específica da página.
- */
-function main() {
+// Como este script é carregado com `defer` (padrão para módulos),
+// o DOM já estará pronto quando ele for executado. O listener DOMContentLoaded é desnecessário.
+
+const userNavContainer = document.getElementById('user-navigation');
+const adminLinkContainer = document.getElementById('admin-link-container');
+
+// Garante que os elementos existem antes de tentar usá-los
+if (userNavContainer && adminLinkContainer) {
+    // Atualiza a contagem do carrinho na inicialização
+    cartStore.updateCountUI();
+
+    // Regista um listener para quando o carrinho mudar, para manter a contagem atualizada
+    cartStore.onChange(cartStore.updateCountUI);
+
+    // Observa as mudanças no estado de autenticação do utilizador
     onAuthStateChanged(auth, async (user) => {
-        // O updateUserNav precisa de ser aguardado para garantir que a verificação de admin acontece
-        // antes de qualquer outra lógica dependente de permissões.
-        await updateUserNav(user);
+        if (user) {
+            // O utilizador está autenticado
+            const userRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userRef);
 
-        const path = window.location.pathname;
-        const page = path.split("/").pop() || "index.html";
+            const isAdmin = docSnap.exists() && docSnap.data().isAdmin;
 
-        switch (page) {
-            case 'minha-conta.html':
-                if (user) {
-                    try {
-                        // Importa o módulo da página da conta DINAMICAMENTE
-                        const module = await import('./minha-conta.js');
-                        module.initMinhaContaPage(user);
-                    } catch (err) {
-                        console.error('Falha ao carregar o módulo da página da conta:', err);
-                        alert('Ocorreu um erro ao carregar os dados da sua conta.');
-                    }
-                } else {
-                    alert('Você precisa de estar autenticado para aceder a esta página.');
-                    window.location.href = 'login-cliente.html';
-                }
-                break;
+            // Mostra o link do painel de admin se o utilizador for admin
+            adminLinkContainer.innerHTML = isAdmin
+                ? '<a href="admin.html" class="nav-link">Painel Admin</a>'
+                : '';
 
-            case 'admin.html':
-                // A verificação de admin já acontece no updateUserNav. Se o utilizador não for admin,
-                // o link nem aparece. Apenas como uma segunda camada de segurança, verificamos se há um utilizador.
-                if (!user) {
-                    alert('Acesso restrito.');
-                    window.location.href = 'index.html';
-                }
-                break;
+            // Mostra os links da conta do utilizador
+            userNavContainer.innerHTML = '<a href="minha-conta.html" class="nav-link">Minha Conta</a>';
 
-            // Nota: Outras páginas como 'index.html' ou 'carrinho.html' não precisam de lógica
-            // específica aqui, pois os seus scripts ('catalogo.js', 'carrinho.js') são carregados
-            // diretamente no HTML e funcionam de forma independente.
+        } else {
+            // O utilizador não está autenticado
+            adminLinkContainer.innerHTML = ''; // Garante que o link de admin está escondido
+
+            userNavContainer.innerHTML = `
+                <a href="login-cliente.html" class="nav-link">Entrar</a>
+                <a href="registro-cliente.html" class="nav-link">Registar</a>
+            `;
         }
     });
+} else {
+    console.error('Elementos de navegação do cabeçalho não encontrados. O HTML está correto?');
 }
-
-/**
- * Atualiza a barra de navegação (cabeçalho) com base no estado de login.
- */
-async function updateUserNav(user) {
-    const userNav = document.getElementById('user-navigation');
-    const adminLinkContainer = document.getElementById('admin-link-container');
-
-    if (!userNav || !adminLinkContainer) return;
-
-    adminLinkContainer.innerHTML = '';
-
-    if (user) {
-        userNav.innerHTML = `
-            <a href="minha-conta.html" class="cart-link">Minha Conta</a>
-            <button id="global-logout-btn" class="logout-btn">Sair</button>
-        `;
-        document.getElementById('global-logout-btn')?.addEventListener('click', handleLogout);
-
-        try {
-            const roleRef = doc(db, 'roles', user.uid);
-            const snap = await getDoc(roleRef);
-            if (snap.exists() && snap.data().admin) {
-                adminLinkContainer.innerHTML = `<a href="admin.html" class="cart-link admin-link">Painel Admin</a>`;
-            }
-        } catch (error) {
-            console.error("Erro ao verificar a função de admin:", error);
-        }
-
-    } else {
-        userNav.innerHTML = `
-            <a href="login-cliente.html" class="cart-link">Entrar</a>
-            <a href="cadastro.html" class="cart-link">Registar</a>
-        `;
-    }
-}
-
-/**
- * Gere o processo de logout.
- */
-function handleLogout() {
-    signOut(auth).then(() => {
-        // Redireciona para a página inicial após o logout para garantir um estado limpo
-        window.location.href = '/index.html'; 
-    }).catch(err => {
-        console.error("Erro ao fazer logout:", err);
-        alert("Ocorreu um erro ao tentar sair.");
-    });
-}
-
-// Inicializa o script quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', main);

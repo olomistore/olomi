@@ -1,6 +1,8 @@
-import { auth } from './firebase.js';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
-import { showToast } from './utils.js'; // Importa a função de notificação
+
+import { auth, db } from './firebase.js';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { showToast } from './utils.js';
 
 const loginClienteForm = document.getElementById('login-cliente-form');
 if (loginClienteForm) {
@@ -10,13 +12,32 @@ if (loginClienteForm) {
         const password = loginClienteForm.password.value.trim();
         
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // **NOVA VERIFICAÇÃO**
+            const roleRef = doc(db, 'roles', user.uid);
+            const roleSnap = await getDoc(roleRef);
+
+            // Verifica se o utilizador é um administrador
+            if (roleSnap.exists() && roleSnap.data().admin) {
+                // Se for admin, desloga e informa para usar o login de admin
+                await signOut(auth);
+                throw new Error('Login de administrador. Utilize a página de login correta.');
+            }
+
+            // Se for cliente, continua o fluxo normal
             const params = new URLSearchParams(window.location.search);
             const redirectUrl = params.get('redirect');
-            window.location.href = redirectUrl || 'index.html';
-        } catch (err) {
-            console.error("Erro ao entrar:", err);
-            showToast('Erro ao entrar: Verifique o seu e-mail e senha.', 'error');
+            // Redireciona para a conta do cliente, que é um destino mais lógico
+            window.location.href = redirectUrl || 'minha-conta.html'; 
+
+        } catch (error) {
+            console.error("Erro ao entrar:", error);
+            const errorMessage = error.message.includes('Login de administrador')
+                ? error.message
+                : 'Erro ao entrar: Verifique o seu e-mail e senha.';
+            showToast(errorMessage, 'error');
         }
     });
 }

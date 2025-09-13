@@ -3,23 +3,18 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-functions.js";
 
-// Configuração do seu projeto Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCiiWyMqDmF17aQBA-fwNo5ByotEsA7fn0",
-  authDomain: "olomi-7816a.firebaseapp.com",
-  databaseURL: "https://olomi-7816a-default-rtdb.firebaseio.com",
-  projectId: "olomi-7816a",
-  storageBucket: "olomi-7816a.appspot.com", // CORRIGIDO
-  messagingSenderId: "562685499782",
-  appId: "1:562685499782:web:23616d2db4738093c43407",
-  measurementId: "G-2FSC9P97MX"
-};
+// O Firebase Hosting irá carregar e fornecer a configuração automaticamente.
+// Faça o fetch da configuração a partir de um URL reservado.
+const response = await fetch('/__/firebase/init.json');
+const firebaseConfig = await response.json();
 
 // Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 
-// Exporta os serviços do Firebase que serão utilizados noutras partes do site
+// Exporta os serviços do Firebase individualmente para que outros módulos possam usá-los
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);

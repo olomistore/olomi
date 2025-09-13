@@ -1,129 +1,115 @@
-const {onRequest} = require("firebase-functions/v2/https");
-const {setGlobalOptions} = require("firebase-functions/v2");
-const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
-const axios = require("axios");
-const xml2js = require("xml2js");
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
-const Busboy = require('busboy');
 
-admin.initializeApp();
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { logger } = require("firebase-functions");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 
-// Define as opções globais para todas as funções (região, memória, etc.)
-setGlobalOptions({
-  region: 'us-central1',
-  timeoutSeconds: 120,
-  memory: '512MB'
-});
+// Inicializa o Firebase Admin SDK
+initializeApp();
 
-// Função de cálculo de frete com a sintaxe v2
-exports.calculateShipping = onRequest(
-    { cors: true }, // A opção cors integrada lida com o CORS automaticamente
-    async (req, res) => {
-        if (req.method !== 'POST') {
-            return res.status(405).send({ error: 'Method not allowed' });
-        }
-        try {
-            const destinationCep = req.body?.data?.cep;
-            if (!destinationCep || !/^\d{8}$/.test(destinationCep)) {
-                return res.status(400).send({ error: "O CEP é obrigatório e deve ter 8 dígitos." });
-            }
-            const originCep = "21371121";
-            const packageWeight = "1";
-            const correiosUrl = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx?sCepOrigem=${originCep}&sCepDestino=${destinationCep}&nVlPeso=${packageWeight}&nCdFormato=1&nVlComprimento=20&nVlAltura=10&nVlLargura=15&nCdServico=04510&StrRetorno=xml`;
-            
-            const response = await axios.get(correiosUrl);
-            const xml = response.data;
-            const parser = new xml2js.Parser();
-            const result = await parser.parseStringPromise(xml);
-            
-            const service = result.Servicos.cServico[0];
-            if (service.Erro[0] !== "0" && service.MsgErro && service.MsgErro.length > 0) {
-                return res.status(400).send({ error: service.MsgErro[0].trim() });
-            }
-            const shippingValue = service.Valor[0].replace(",", ".");
-            const deliveryTime = service.PrazoEntrega[0];
-            const responseData = { data: { price: parseFloat(shippingValue), deadline: parseInt(deliveryTime, 10) } };
-            return res.status(200).send(responseData);
-        } catch (error) {
-            logger.error("Erro no cálculo de frete:", error);
-            return res.status(500).send({ error: "Falha interna ao calcular o frete." });
-        }
+/**
+ * Cloud Function "Chamável" para criar um pedido.
+ * Executa validações de segurança e de negócio no lado do servidor.
+ *
+ * @param {object} request - O objeto da requisição, contendo os dados enviados pelo cliente.
+ * @returns {Promise<{orderId: string}>} - Retorna o ID do pedido criado.
+ */
+exports.createorder = onCall(async (request) => {
+    // 1. Validação de Autenticação
+    // A função "onCall" já garante que `request.auth` existe.
+    // Se o utilizador não estiver autenticado, a função lança um erro automaticamente.
+    if (!request.auth) {
+        logger.error("Tentativa de criação de pedido por utilizador não autenticado.");
+        throw new HttpsError('unauthenticated', 'Você precisa estar autenticado para fazer um pedido.');
     }
-);
 
-// Função de upload de arquivo com a sintaxe v2
-exports.uploadFile = onRequest(
-    { cors: true }, // Usa a opção cors integrada
-    (req, res) => {
-        if (req.method !== 'POST') {
-            return res.status(405).json({ error: 'Method not allowed' });
-        }
+    const userId = request.auth.uid;
+    const items = request.data.items; // Espera-se um array [{ id, qty }, ...]
 
-        try {
-            const busboy = Busboy({ headers: req.headers });
-            const tmpdir = os.tmpdir();
-            const uploads = [];
-            const fileWrites = [];
+    // 2. Validação de Input
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        throw new HttpsError('invalid-argument', 'O carrinho está vazio ou os dados do pedido são inválidos.');
+    }
 
-            busboy.on('file', (fieldname, file, {filename, encoding, mimeType}) => {
-                const filepath = path.join(tmpdir, filename);
-                uploads.push({ filepath, mimeType });
+    const db = getFirestore();
+    let totalAmount = 0; // O total será calculado no servidor
 
-                const writeStream = fs.createWriteStream(filepath);
-                file.pipe(writeStream);
+    try {
+        // Usamos uma transação para garantir a consistência do stock
+        const orderId = await db.runTransaction(async (transaction) => {
+            const productRefs = items.map(item => db.collection('products').doc(item.id));
+            const productDocs = await transaction.getAll(...productRefs);
 
-                const promise = new Promise((resolve, reject) => {
-                    file.on('end', () => writeStream.end());
-                    writeStream.on('finish', resolve);
-                    writeStream.on('error', reject);
-                });
-                fileWrites.push(promise);
-            });
+            const itemsForOrder = [];
+            const stockUpdates = [];
 
-            busboy.on('error', err => {
-                logger.error('Erro do Busboy:', err);
-                res.status(400).json({ error: 'Erro ao processar o formulário.' });
-            });
+            for (let i = 0; i < productDocs.length; i++) {
+                const productDoc = productDocs[i];
+                const item = items[i];
 
-            busboy.on('finish', async () => {
-                try {
-                    await Promise.all(fileWrites);
-
-                    const bucket = admin.storage().bucket();
-                    const imageUrls = [];
-
-                    for (const upload of uploads) {
-                        const { filepath, mimeType } = upload;
-                        const filename = path.basename(filepath);
-                        const destination = `products/${Date.now()}-${filename}`;
-
-                        await bucket.upload(filepath, {
-                            destination: destination,
-                            metadata: { contentType: mimeType },
-                            public: true
-                        });
-                        fs.unlinkSync(filepath);
-
-                        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}`;
-                        imageUrls.push(publicUrl);
-                    }
-                    
-                    return res.status(200).json({ imageUrls });
-                } catch (error) {
-                    logger.error("Erro no upload para o Storage:", error);
-                    return res.status(500).json({ error: 'Falha ao fazer upload do arquivo.' });
+                if (!productDoc.exists) {
+                    throw new HttpsError('not-found', `Produto com ID ${item.id} não encontrado.`);
                 }
-            });
-            
-            // ✅ CORREÇÃO FINAL: Usa req.rawBody para a API v2 em vez de req.pipe()
-            busboy.end(req.rawBody);
 
-        } catch (err) {
-            logger.error('Erro inesperado na função uploadFile:', err);
-            return res.status(500).json({ error: 'Ocorreu um erro inesperado no servidor.' });
+                const productData = productDoc.data();
+                const requestedQty = Number(item.qty);
+
+                // 3. Validação de Stock e Quantidade
+                if (isNaN(requestedQty) || requestedQty <= 0) {
+                     throw new HttpsError('invalid-argument', `Quantidade inválida para o produto ${productData.name}.`);
+                }
+                if (productData.stock < requestedQty) {
+                    throw new HttpsError('failed-precondition', `Stock insuficiente para o produto: ${productData.name}.`);
+                }
+
+                // 4. Cálculo de Preço no Servidor
+                totalAmount += (productData.price * requestedQty);
+                
+                // Prepara os dados do item para serem guardados no pedido
+                itemsForOrder.push({
+                    id: productDoc.id,
+                    name: productData.name,
+                    price: productData.price, // Preço do servidor
+                    qty: requestedQty,
+                    imageUrl: productData.imageUrls && productData.imageUrls.length > 0 ? productData.imageUrls[0] : null
+                });
+
+                // Prepara a atualização do stock
+                stockUpdates.push({
+                    ref: productDoc.ref,
+                    newStock: productData.stock - requestedQty
+                });
+            }
+
+            // Após validar todos os itens, regista as atualizações de stock
+            stockUpdates.forEach(update => {
+                transaction.update(update.ref, { stock: update.newStock });
+            });
+
+            // 5. Criação do Pedido
+            const orderRef = db.collection('orders').doc(); // Cria uma referência com um ID único
+            transaction.set(orderRef, {
+                userId: userId,
+                items: itemsForOrder,
+                total: totalAmount,
+                status: 'pending', // Status inicial
+                createdAt: Timestamp.now()
+            });
+
+            return orderRef.id;
+        });
+
+        logger.info(`Pedido ${orderId} criado com sucesso para o utilizador ${userId}.`);
+        return { orderId: orderId };
+
+    } catch (error) {
+        logger.error(`Erro ao criar pedido para o utilizador ${userId}:`, error);
+
+        // Se o erro já for um HttpsError, propaga-o. Caso contrário, lança um erro genérico.
+        if (error instanceof HttpsError) {
+            throw error;
+        } else {
+            throw new HttpsError('internal', 'Ocorreu um erro interno ao processar o seu pedido.');
         }
     }
-);
+});

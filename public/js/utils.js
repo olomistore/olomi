@@ -1,78 +1,112 @@
-// Formata um número para a moeda BRL (Real Brasileiro)
-export const BRL = (value) => {
-    if (typeof value !== 'number') {
-        value = 0;
-    }
-    return value.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    });
-};
+// --- Centralized Cart Management ---
 
-// Converte um valor em string (ex: "19.90") para cêntimos (ex: 1990)
-export const toCents = (value) => {
-    if (typeof value === 'string') {
-        value = value.replace(',', '.');
-    }
-    return Math.round(parseFloat(value) * 100);
-};
+const CART_STORAGE_KEY = 'cart';
 
-// Armazenamento local para o carrinho de compras
+// Private functions for cart logic
+function getCartFromStorage() {
+    try {
+        return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+    } catch (e) {
+        console.error("Failed to parse cart from localStorage", e);
+        return [];
+    }
+}
+
+function saveCartToStorage(cart) {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+}
+
+// Listener for changes
+let cartChangeCallback = () => {};
+
+// The single, centralized cart store object
 export const cartStore = {
-    get: () => {
-        const json = localStorage.getItem('cart');
-        return json ? JSON.parse(json) : [];
-    },
+    get: getCartFromStorage,
     set: (cart) => {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        saveCartToStorage(cart);
+        cartChangeCallback(cart); // Notify listener on change
     },
     clear: () => {
-        localStorage.removeItem('cart');
+        localStorage.removeItem(CART_STORAGE_KEY);
+        cartChangeCallback([]); // Notify listener
+    },
+    onChange: (callback) => {
+        cartChangeCallback = callback;
+    },
+    // Helper function to update count on any page
+    updateCountUI: () => {
+        const cart = getCartFromStorage();
+        const cartCountEl = document.getElementById('cart-count');
+        if (cartCountEl) {
+            cartCountEl.textContent = cart.reduce((count, item) => count + item.qty, 0);
+        }
     }
 };
 
-/**
- * Exibe um "toast" (pequena notificação) estilizado.
- * @param {string} title - A mensagem a ser exibida.
- * @param {string} icon - O tipo de ícone ('success', 'error', 'warning', 'info', 'question').
- */
-export const showToast = (title, icon = 'success') => {
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer);
-            toast.addEventListener('mouseleave', Swal.resumeTimer);
-        }
-    });
-
-    Toast.fire({
-        icon: icon,
-        title: title
-    });
-};
+// --- Utility Functions ---
 
 /**
- * Exibe uma caixa de diálogo de confirmação estilizada.
- * @param {string} title - O título da caixa de diálogo.
- * @param {string} text - O texto de apoio da caixa de diálogo.
- * @param {string} confirmButtonText - O texto para o botão de confirmação.
- * @returns {Promise<boolean>} - Retorna uma promessa que resolve para `true` se o usuário confirmar, e `false` caso contrário.
+ * Formats a number into BRL currency string.
+ * @param {number} value - The number to format.
+ * @returns {string} - Formatted currency string (e.g., "R$ 12,34").
  */
-export const showConfirmation = (title, text, confirmButtonText = 'Sim') => { // ✅ CORREÇÃO: Adicionado parâmetro com valor padrão
-    return Swal.fire({
+export function BRL(value) {
+    if (typeof value !== 'number') return "R$ 0,00";
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+/**
+ * Displays a toast notification.
+ * @param {string} message - The message to display.
+ * @param {string} type - 'success', 'error', 'warning', 'info'.
+ */
+export function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100); // Delay for CSS transition
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500); // Remove after transition
+    }, 3000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+/**
+ * Shows a confirmation dialog using SweetAlert2.
+ * Assumes SweetAlert2 library (sweetalert2.all.min.js) is loaded on the page.
+ * @param {string} title - The title of the dialog.
+ * @param {string} text - The descriptive text.
+ * @returns {Promise<boolean>} - Resolves true if confirmed, false otherwise.
+ */
+export async function showConfirmation(title, text) {
+    // Check if Swal is available
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 is not loaded. Please include it in your HTML.');
+        // Fallback to native confirm
+        return window.confirm(`${title}\n\n${text}`);
+    }
+
+    const result = await Swal.fire({
         title: title,
         text: text,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#f39c12', // Laranja
-        cancelButtonColor: '#95a5a6', // Cinza
-        confirmButtonText: confirmButtonText, // ✅ CORREÇÃO: Usa o parâmetro
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        return result.isConfirmed;
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, confirmo!',
+        cancelButtonText: 'Cancelar',
     });
-};
+    return result.isConfirmed;
+}

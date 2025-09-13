@@ -1,5 +1,6 @@
-import { auth } from './firebase.js';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { auth, db } from './firebase.js';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 import { showToast } from './utils.js';
 
 const loginForm = document.getElementById('login-form');
@@ -15,23 +16,39 @@ if (loginForm) {
         const submitButton = loginForm.querySelector('button');
 
         submitButton.disabled = true;
-        submitButton.textContent = 'A entrar...';
+        submitButton.textContent = 'A verificar...';
 
         try {
-            // Fazer login com o Firebase Auth
-            await signInWithEmailAndPassword(auth, email, password);
-            // O redirecionamento será tratado pelo 'main.js' que deteta a mudança de estado de autenticação.
-            window.location.href = 'index.html';
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Verifica a função (role) do utilizador no Firestore
+            const roleRef = doc(db, 'roles', user.uid);
+            const roleSnap = await getDoc(roleRef);
+
+            if (roleSnap.exists() && roleSnap.data().admin) {
+                // Se for admin, redireciona para o painel de admin
+                window.location.href = 'admin.html';
+            } else {
+                // Se não for admin, desloga imediatamente e lança um erro
+                await signOut(auth);
+                throw new Error('Acesso não autorizado. Apenas para administradores.');
+            }
+
         } catch (error) {
             console.error('Erro no login:', error);
-            showToast(`Erro ao fazer login: ${error.code}`, 'error');
+            // Personaliza a mensagem para o nosso erro customizado ou erros do Firebase
+            const errorMessage = error.message.includes('Acesso não autorizado') 
+                ? error.message 
+                : 'Credenciais inválidas ou utilizador não encontrado.'; // Mensagem mais genérica para segurança
+            showToast(errorMessage, 'error');
             submitButton.disabled = false;
             submitButton.textContent = 'Entrar';
         }
     });
 }
 
-// ✅ CORREÇÃO: Processo de Reset de Senha com Modal Elegante
+// Processo de Reset de Senha
 if (resetPasswordLink) {
     resetPasswordLink.addEventListener('click', async (e) => {
         e.preventDefault();
