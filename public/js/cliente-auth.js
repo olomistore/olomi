@@ -29,8 +29,8 @@ if (loginClienteForm) {
             // Se for cliente, continua o fluxo normal
             const params = new URLSearchParams(window.location.search);
             const redirectUrl = params.get('redirect');
-            // Redireciona para a conta do cliente, que é um destino mais lógico
-            window.location.href = redirectUrl || 'minha-conta.html'; 
+            // Redireciona para a página inicial, que é um destino mais lógico
+            window.location.href = 'index.html'; 
 
         } catch (error) {
             console.error("Erro ao entrar:", error);

@@ -35,7 +35,7 @@ main.site-main { flex-grow: 1; padding: 2.5rem 0; }
 .logo-area { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .logo-area .logo { height: 48px; width: 48px; border-radius: 50%; border: 2px solid var(--cor-laranja); }
 .logo-area h1 { font-family: var(--fonte-logo); font-size: 2.25rem; color: var(--cor-branco); text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
-nav { display: flex; align-items: center; gap: 1.5rem; }
+nav { display: flex; align-items: center; }
 
 /* Estilo Unificado para Todos os Links de Navegação */
 .cart-link, .nav-link {
@@ -44,6 +44,7 @@ nav { display: flex; align-items: center; gap: 1.5rem; }
     font-size: 1.125rem;
     text-decoration: none;
     transition: color 0.3s ease;
+    margin-left: 2.5rem; /* AUMENTA O ESPAÇAMENTO ENTRE OS LINKS */
 }
 
 .cart-link:hover, .nav-link:hover {
