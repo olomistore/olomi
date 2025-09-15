@@ -218,3 +218,21 @@ button:disabled:hover { background-color: #bdc3c7; }
 @media (min-width: 992px) {
     .cart-layout { grid-template-columns: 2fr 1fr; align-items: flex-start; }
 }
+
+/* AJUSTE DE RESPONSIVIDADE PARA O CABEÇALHO */
+@media (max-width: 767px) {
+    .site-header .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .logo-area h1 {
+        font-size: 1.75rem;
+    }
+    nav {
+        width: 100%;
+        justify-content: center;
+    }
+    .cart-link, .nav-link {
+        font-size: 1rem;
+    }
+}
