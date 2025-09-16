@@ -89,7 +89,7 @@ function updateCart(productId, action) {
         if (item.qty < item.stock) {
             item.qty++;
         } else {
-            showToast('Quantidade máxima em stock atingida.', 'info');
+            showToast('Quantidade máxima em estoque atingida.', 'info');
         }
     } else if (action === 'decrease') {
         item.qty--;
@@ -154,7 +154,13 @@ form?.addEventListener('submit', async (e) => {
 
     try {
         const result = await createOrderFunction({ items: itemsForFunction });
-        const { orderId, orderDetails } = result.data;
+        
+        // --- INÍCIO DA CORREÇÃO ---
+        const orderData = result.data;
+
+        if (!orderData || !orderData.orderId || !orderData.items || typeof orderData.total === 'undefined') {
+            throw new Error('A resposta da criação do pedido está malformada ou incompleta.');
+        }
 
         submitButton.textContent = 'A redirecionar...';
         
@@ -163,9 +169,10 @@ form?.addEventListener('submit', async (e) => {
         
         const customerDataForWpp = { name: formData.name, phone: formData.phone, fullAddress };
 
-        const lojaNumero = '5519987346984'; // Substituir pelo número da loja
-        const msg = buildWhatsappMessage(orderId, orderDetails, customerDataForWpp);
+        const lojaNumero = '5519987346984';
+        const msg = buildWhatsappMessage(orderData.orderId, orderData, customerDataForWpp);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
+        // --- FIM DA CORREÇÃO ---
 
         cartStore.clear();
         showToast('Pedido recebido! A redirecionar para o WhatsApp...', 'success');
@@ -177,7 +184,7 @@ form?.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error("Erro ao finalizar pedido:", error);
-        showToast(error.message || 'Ocorreu um erro desconhecido.', 'error');
+        showToast(error.message || 'Ocorreu um erro desconhecido ao processar o seu pedido.', 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Finalizar via WhatsApp';
     }
