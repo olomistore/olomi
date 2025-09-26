@@ -48,7 +48,6 @@ const loadProducts = () => {
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
             const tr = document.createElement('tr');
-            // ✅ CORREÇÃO: Substituídos os botões de texto por ícones SVG
             tr.innerHTML = `
                 <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
@@ -108,15 +107,34 @@ const loadOrders = () => {
             detailsTr.style.display = 'none';
 
             const itemsHtml = order.items.map(item => `<li>${item.qty}x ${item.name} (${BRL(item.price)})</li>`).join('');
-            const fullAddress = order.customer?.fullAddress || 'Endereço não fornecido';
+            
+            // --- INÍCIO DA MODIFICAÇÃO ---
+            let fullAddress = 'Endereço não fornecido';
+            const customerAddress = order.customer?.address;
+            if (customerAddress) {
+                const { street, number, complement, neighborhood, city, state, cep } = customerAddress;
+                const addressParts = [
+                    street,
+                    number,
+                    complement,
+                    neighborhood,
+                    city,
+                    state
+                ].filter(p => !!p); // Filtra partes vazias
+                fullAddress = addressParts.join(', ');
+                if (cep) {
+                    fullAddress += `, CEP: ${cep}`;
+                }
+            }
+            // --- FIM DA MODIFICAÇÃO ---
 
             detailsTr.innerHTML = `
                 <td colspan="6">
                     <div class="order-details-content">
                         <p><strong>ID do Pedido:</strong> ${orderId}</p>
                         <p><strong>Data e Hora:</strong> ${order.createdAt?.toDate().toLocaleString('pt-BR')}</p>
-                        <p><strong>Cliente:</strong> ${order.customer?.name} (${order.customer?.email})</p>
-                        <p><strong>Contato:</strong> ${order.customer?.phone}</p>
+                        <p><strong>Cliente:</strong> ${order.customer?.name || 'N/A'} (${order.customer?.email || 'N/A'})</p>
+                        <p><strong>Contato:</strong> ${order.customer?.phone || 'N/A'}</p>
                         <p><strong>Endereço de Entrega:</strong> ${fullAddress}</p>
                         <div><strong>Itens do Pedido:</strong><ul>${itemsHtml}</ul></div>
                     </div>

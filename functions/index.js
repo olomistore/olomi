@@ -14,9 +14,7 @@ initializeApp();
  * @param {object} request - O objeto da requisição, contendo os dados enviados pelo cliente.
  * @returns {Promise<{orderId: string}>} - Retorna o ID do pedido criado.
  */
-// --- INÍCIO DA CORREÇÃO: Adiciona a opção { cors: true } ---
 exports.createorder = onCall({ cors: true }, async (request) => {
-// --- FIM DA CORREÇÃO ---
 
     // 1. Validação de Autenticação
     if (!request.auth) {
@@ -26,11 +24,18 @@ exports.createorder = onCall({ cors: true }, async (request) => {
 
     const userId = request.auth.uid;
     const items = request.data.items;
+    const customer = request.data.customer; // --- MODIFICAÇÃO ---
 
     // 2. Validação de Input
     if (!items || !Array.isArray(items) || items.length === 0) {
         throw new HttpsError('invalid-argument', 'O carrinho está vazio ou os dados do pedido são inválidos.');
     }
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    if (!customer || !customer.name || !customer.address || !customer.phone) {
+        throw new HttpsError('invalid-argument', 'Os dados do cliente estão em falta ou são inválidos.');
+    }
+    // --- FIM DA MODIFICAÇÃO ---
+
 
     const db = getFirestore();
     let totalAmount = 0;
@@ -82,13 +87,17 @@ exports.createorder = onCall({ cors: true }, async (request) => {
             });
 
             const orderRef = db.collection('orders').doc();
+            
+            // --- INÍCIO DA MODIFICAÇÃO ---
             const newOrder = {
                 userId: userId,
+                customer: customer, // Adiciona os dados do cliente
                 items: itemsForOrder,
                 total: totalAmount,
                 status: 'pending',
                 createdAt: Timestamp.now()
             };
+            // --- FIM DA MODIFICAÇÃO ---
             transaction.set(orderRef, newOrder);
 
             // Retorna os detalhes completos do pedido

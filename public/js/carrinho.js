@@ -149,13 +149,28 @@ form?.addEventListener('submit', async (e) => {
     submitButton.disabled = true;
     submitButton.textContent = 'A validar...';
 
+    const formData = Object.fromEntries(new FormData(form).entries());
+    const customerData = {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        address: {
+            cep: formData.cep,
+            street: formData.street,
+            number: formData.number,
+            complement: formData.complement,
+            neighborhood: formData.neighborhood,
+            city: formData.city,
+            state: formData.state,
+        }
+    };
+
     const itemsForFunction = cart.map(item => ({ id: item.id, qty: item.qty }));
     const createOrderFunction = httpsCallable(functions, 'createorder');
 
     try {
-        const result = await createOrderFunction({ items: itemsForFunction });
+        const result = await createOrderFunction({ items: itemsForFunction, customer: customerData });
         
-        // --- INÍCIO DA CORREÇÃO ---
         const orderData = result.data;
 
         if (!orderData || !orderData.orderId || !orderData.items || typeof orderData.total === 'undefined') {
@@ -164,7 +179,6 @@ form?.addEventListener('submit', async (e) => {
 
         submitButton.textContent = 'A redirecionar...';
         
-        const formData = Object.fromEntries(new FormData(form).entries());
         const fullAddress = `${formData.street}, ${formData.number}${formData.complement ? ' - ' + formData.complement : ''} - ${formData.neighborhood}, ${formData.city} - ${formData.state}, CEP: ${formData.cep}`;
         
         const customerDataForWpp = { name: formData.name, phone: formData.phone, fullAddress };
@@ -172,7 +186,6 @@ form?.addEventListener('submit', async (e) => {
         const lojaNumero = '5519987346984';
         const msg = buildWhatsappMessage(orderData.orderId, orderData, customerDataForWpp);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
-        // --- FIM DA CORREÇÃO ---
 
         cartStore.clear();
         showToast('Pedido recebido! A redirecionar para o WhatsApp...', 'success');
