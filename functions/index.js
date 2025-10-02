@@ -1,11 +1,12 @@
+const { initializeApp } = require("firebase-admin/app");
+initializeApp();
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
-const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
+const { uploadFile } = require("./upload.js");
 
-// Inicializa o Firebase Admin SDK
-initializeApp();
+exports.uploadFile = uploadFile;
 
 /**
  * Cloud Function "Chamável" para criar um pedido.

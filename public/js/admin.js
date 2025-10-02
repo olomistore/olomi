@@ -269,7 +269,7 @@ productForm.addEventListener('submit', async (e) => {
                 formData.append('files', file);
             }
 
-            const uploadUrl = 'https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile';
+            const uploadUrl = '/uploadFile';
             const response = await fetch(uploadUrl, {
                 method: 'POST',
                 body: formData,
