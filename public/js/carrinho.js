@@ -183,7 +183,7 @@ form?.addEventListener('submit', async (e) => {
         
         const customerDataForWpp = { name: formData.name, phone: formData.phone, fullAddress };
 
-        const lojaNumero = '5519987346984';
+        const lojaNumero = '5521959517508';
         const msg = buildWhatsappMessage(orderData.orderId, orderData, customerDataForWpp);
         const whatsappUrl = `https://wa.me/${lojaNumero}?text=${encodeURIComponent(msg)}`;
 

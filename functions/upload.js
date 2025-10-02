@@ -8,7 +8,8 @@ const os = require("os");
 const fs = require("fs");
 
 const storage = getStorage();
-const bucket = storage.bucket("olomi-7816a.appspot.com"); 
+// Deixa o SDK encontrar o bucket padrão automaticamente
+const bucket = storage.bucket();
 
 exports.uploadFile = onRequest({ cors: true }, (req, res) => {
   cors(req, res, () => {
@@ -22,7 +23,10 @@ exports.uploadFile = onRequest({ cors: true }, (req, res) => {
     const fileWrites = [];
     const publicUrls = [];
 
-    busboy.on("file", (fieldname, file, { filename }) => {
+    busboy.on("file", (fieldname, file, info) => {
+      const { filename, mimeType } = info;
+      logger.info(`Processing file: ${filename}, mimeType: ${mimeType}`);
+
       const filepath = path.join(tmpdir, filename);
       const writeStream = fs.createWriteStream(filepath);
       file.pipe(writeStream);
@@ -35,6 +39,7 @@ exports.uploadFile = onRequest({ cors: true }, (req, res) => {
           uploads[fieldname] = {
             filepath,
             filename,
+            mimeType,
           };
           resolve();
         });
@@ -47,23 +52,38 @@ exports.uploadFile = onRequest({ cors: true }, (req, res) => {
       await Promise.all(fileWrites);
 
       for (const fieldname in uploads) {
-        const { filepath, filename } = uploads[fieldname];
+        const { filepath, filename, mimeType } = uploads[fieldname];
         const destination = `products/${Date.now()}_${filename}`;
-        
+
         try {
+          logger.info(`Uploading ${filename} to ${destination}`);
           const [uploadedFile] = await bucket.upload(filepath, {
             destination,
             metadata: {
-              contentType: "image/jpeg", 
+              contentType: mimeType,
             },
           });
 
-          await uploadedFile.makePublic();
-          publicUrls.push(uploadedFile.publicUrl());
-          fs.unlinkSync(filepath); 
+          logger.info(`Making ${filename} public.`);
+          try {
+            await uploadedFile.makePublic();
+          } catch (aclError) {
+            logger.error(`Failed to make ${filename} public:`, aclError);
+            // Esta é a mensagem de erro que você verá se o bucket estiver com controle de acesso "Uniforme"
+            throw new Error(
+              "File uploaded, but failed to set public access. Please check your Cloud Storage bucket's permissions. It might be set to 'Uniform' access control."
+            );
+          }
+
+          const publicUrl = uploadedFile.publicUrl();
+          publicUrls.push(publicUrl);
+          logger.info(`File ${filename} uploaded successfully. Public URL: ${publicUrl}`);
+          
+          fs.unlinkSync(filepath);
         } catch (error) {
-          logger.error("Error uploading file:", error);
-          return res.status(500).json({ error: "Failed to upload file." });
+          logger.error(`Error processing file ${filename}:`, error);
+          // Retorna o erro específico que ocorreu
+          return res.status(500).json({ error: error.message || "Failed to upload file." });
         }
       }
 
