@@ -1,6 +1,7 @@
 import { db } from './firebase.js';
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
+// ✅ CORREÇÃO: A importação de getResizedImageUrl foi removida.
+import { BRL, cartStore, showToast } from './utils.js';
 
 // --- SELEÇÃO DOS ELEMENTOS ---
 const listEl = document.getElementById('products');
@@ -71,15 +72,15 @@ function render(list) {
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
 
+        // ✅ CORREÇÃO: Usa diretamente a URL da imagem original.
         const imageUrl = (p.imageUrls && p.imageUrls.length > 0)
-            ? getResizedImageUrl(p.imageUrls[0]) // <-- ALTERAÇÃO AQUI
+            ? p.imageUrls[0]
             : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
 
         const isOutOfStock = p.stock <= 0;
         const buttonText = isOutOfStock ? 'Esgotado' : 'Adicionar ao Carrinho';
         const buttonDisabled = isOutOfStock ? 'disabled' : '';
 
-        // Adicionada a descrição do produto (p.description)
         productCard.innerHTML = `
             <a href="produto.html?id=${p.id}" class="product-link">
                 <img src="${imageUrl}" alt="${p.name}" class="product-image" loading="lazy">

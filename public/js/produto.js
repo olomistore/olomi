@@ -1,7 +1,7 @@
 import { db } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-// Corrigido: Importa o cartStore e o showToast, o padrão centralizado no projeto.
-import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
+// ✅ CORREÇÃO: A importação de getResizedImageUrl foi removida.
+import { BRL, cartStore, showToast } from './utils.js';
 
 const productDetailEl = document.getElementById('product-detail');
 
@@ -40,7 +40,6 @@ function handleAddToCart(product, button) {
 
     cartStore.set(cart); // Salva o carrinho e notifica os listeners (que atualizam o contador no header)
 
-    // Feedback visual, igual ao do catálogo
     button.textContent = 'Adicionado!';
     button.disabled = true;
     setTimeout(() => {
@@ -56,8 +55,9 @@ function renderProduct(p) {
     if (!productDetailEl) return;
     document.title = `${p.name} - Olomi`; // Atualiza o título da página
 
+    // ✅ CORREÇÃO: Usa diretamente a URL da imagem original.
     const imageUrl = p.imageUrls && p.imageUrls.length > 0 
-        ? getResizedImageUrl(p.imageUrls[0]) // <-- ALTERAÇÃO AQUI
+        ? p.imageUrls[0]
         : 'https://placehold.co/600x600/f39c12/fff?text=Olomi';
 
     productDetailEl.innerHTML = `
@@ -79,7 +79,6 @@ function renderProduct(p) {
         button.textContent = 'Produto Esgotado';
     } else {
         button.addEventListener('click', () => {
-            // A ação de clique agora chama a função handleAddToCart correta
             handleAddToCart(p, button);
         });
     }
