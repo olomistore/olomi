@@ -82,7 +82,7 @@ function render(list) {
         // Adicionada a descrição do produto (p.description)
         productCard.innerHTML = `
             <a href="produto.html?id=${p.id}" class="product-link">
-                <img src="${imageUrl}" alt="${p.name}" class="product-image">
+                <img src="${imageUrl}" alt="${p.name}" class="product-image" loading="lazy">
             </a>
             <div class="card-content">
                 <h3 class="product-title"><a href="produto.html?id=${p.id}">${p.name}</a></h3>
