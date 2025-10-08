@@ -11,31 +11,50 @@ export function BRL(value) {
 }
 
 /**
- * ✅ CORREÇÃO DE SINTAXE
- * Converte a URL de uma imagem original para a URL da imagem redimensionada, removendo
- * o token de acesso original, que é inválido para o novo ficheiro.
- * A função agora depende da regra de leitura pública do Firebase Storage.
+ * ✅ CORREÇÃO FINAL E DEFINITIVA
+ * Converte a URL de uma imagem original para a URL da imagem otimizada pela extensão.
+ * A lógica agora considera a pasta 'resized/' e o sufixo no nome do ficheiro,
+ * com base na configuração da extensão (storage-resize-images.env).
  * @param {string} originalUrl A URL da imagem original com token.
- * @returns {string} A URL da imagem redimensionada, sem token.
+ * @returns {string} A URL da imagem otimizada, pronta para ser usada.
  */
 export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
 
-    // Remove o token e outros parâmetros (tudo depois de '?').
-    const baseUrl = originalUrl.split('?')[0];
+    try {
+        // 1. Isola a parte principal do URL, removendo o token de acesso.
+        const baseUrl = originalUrl.split('?')[0];
 
-    const lastDotIndex = baseUrl.lastIndexOf('.');
-    if (lastDotIndex === -1) return originalUrl; // Retorna a original se não tiver extensão
+        // 2. Extrai o caminho do ficheiro, que está codificado no URL.
+        // Ex: .../o/products%2Fproduto1%2Fimagem.jpg -> products%2Fproduto1%2Fimagem.jpg
+        const encodedPath = baseUrl.split('/o/')[1];
+        
+        // 3. Descodifica o caminho para poder manipulá-lo como uma string normal.
+        // Ex: products%2Fproduto1%2Fimagem.jpg -> products/produto1/imagem.jpg
+        const decodedPath = decodeURIComponent(encodedPath);
 
-    // Pega no nome do ficheiro sem a extensão.
-    const baseName = baseUrl.substring(0, lastDotIndex);
-    
-    // Gera a URL para a versão .webp redimensionada, e adiciona o parâmetro `alt=media` 
-    // para que o browser a exiba como uma imagem e não faça o download.
-    const newResizedUrl = `${baseName}_400x400.webp?alt=media`;
+        // 4. Encontra a posição do último ponto para separar o nome da extensão.
+        const lastDotIndex = decodedPath.lastIndexOf('.');
+        if (lastDotIndex === -1) return originalUrl; // Retorna original se não houver extensão.
+        const baseName = decodedPath.substring(0, lastDotIndex);
 
-    return newResizedUrl;
+        // 5. Monta o novo caminho, adicionando a pasta 'resized' e o sufixo no nome do ficheiro.
+        // Ex: resized/products/produto1/imagem_400x400.webp
+        const newPath = `resized/${baseName}_400x400.webp`;
+
+        // 6. Codifica o novo caminho para o formato de URL.
+        const newEncodedPath = encodeURIComponent(newPath);
+
+        // 7. Monta a URL final, adicionando o parâmetro ?alt=media para visualização.
+        const bucketUrl = baseUrl.split('/o/')[0];
+        return `${bucketUrl}/o/${newEncodedPath}?alt=media`;
+
+    } catch (error) {
+        console.error("Erro ao gerar URL de imagem otimizada:", error, originalUrl);
+        return originalUrl; // Em caso de qualquer erro, retorna a imagem original.
+    }
 }
+
 
 /**
  * Exibe uma notificação toast simples.
