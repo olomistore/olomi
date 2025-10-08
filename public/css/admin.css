@@ -116,7 +116,7 @@
     color: #555;
 }
 
-.admin-table tbody tr:hover {
+.admin-table tbody tr:not(.order-details-row):hover {
     background-color: #fdf5e8;
 }
 
@@ -140,28 +140,26 @@
     margin-right: 0.5rem;
 }
 
+/* Estilos para botões de Ação de Produto */
+.action-btn.edit {
+    background-color: #f39c12;
+    color: white;
+}
+
+.action-btn.delete {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background-color: #e67e22;
+}
+
+.action-btn.delete:hover {
+    background-color: #c0392b;
+}
+
 /* Tabela de Pedidos - Estilos Específicos */
-#orders-table .order-summary-row {
-    cursor: pointer;
-}
-
-#orders-table .order-details-row {
-    display: none; /* Escondido por padrão */
-    background-color: #fafafa;
-}
-
-#orders-table .order-details-content {
-    padding: 1.5rem;
-}
-
-#orders-table .order-details-content p {
-    margin-bottom: 0.5rem;
-}
-#orders-table .order-details-content ul {
-    list-style-type: disc;
-    padding-left: 20px;
-}
-
 .status {
     padding: 0.3rem 0.6rem;
     border-radius: 15px;
@@ -170,15 +168,15 @@
     color: white;
 }
 
-.status.pending {
+.status.pendente {
     background-color: #3498db;
 }
 
-.status.shipped {
+.status.enviado {
     background-color: #2ecc71;
 }
 
-.status.cancelled {
+.status.cancelado {
     background-color: #e74c3c;
 }
 
@@ -205,57 +203,146 @@
     background-color: #a5281b;
 }
 
-/* --- ABAS DA ÁREA ADMINISTRATIVA --- */
-.admin-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: -2px; /* Move os botões para baixo para sobrepor a borda */
-    position: relative;
-    z-index: 1;
-}
-
-.tab-link {
-    font-family: 'Rubik', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    border: 2px solid transparent;
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-    background-color: #f9f9f9;
+/* --- SEÇÕES RETRÁTEIS (ACCORDION) --- */
+.collapsible-trigger {
     cursor: pointer;
-    color: #666;
-    transition: all 0.3s ease;
-}
-
-.tab-link:hover {
-    background-color: #fffaf0;
-    color: #333;
-}
-
-.tab-link.active {
-    background-color: #fff;
-    color: #f39c12;
-    border-color: #eee;
-    border-bottom: 2px solid #fff; 
-}
-
-.tab-content {
-    display: none; /* Esconde todo o conteúdo por padrão */
-    border-radius: 0 8px 8px 8px;
-    border: 2px solid #eee;
-    padding: 0;
     position: relative;
-    z-index: 0;
-    background-color: #fff;
+    transition: background-color 0.2s ease;
+}
+.collapsible-trigger:hover {
+    background-color: #fcfcfc;
 }
 
-.tab-content.active {
-    display: block; /* Mostra apenas o conteúdo da aba ativa */
+.collapsible-trigger::after {
+    content: '❯';
+    position: absolute;
+    right: 0;
+    top: -0.7rem;
+    transform: rotate(90deg); 
+    font-size: 1.8rem;
+    color: #f39c12;
+    transition: transform 0.3s ease;
 }
 
-.tab-content .admin-section {
+.collapsible-section.active .collapsible-trigger::after {
+    transform: rotate(-90deg); 
+}
+
+.collapsible-content {
+    display: none;
+}
+
+.collapsible-section .admin-section-title {
+    border-bottom: 2px solid #f0f0f0;
     margin-bottom: 0;
-    box-shadow: none;
-    border-radius: 0;
+    padding-bottom: 0.5rem;
+}
+
+.collapsible-section.active .admin-section-title {
+     margin-bottom: 1.5rem;
+}
+
+/* --- ESTILOS PARA PEDIDOS RETRÁTEIS NA TABELA --- */
+.order-summary-row {
+    cursor: pointer;
+    position: relative;
+}
+
+.order-summary-row td:first-child::before {
+    content: '▶';
+    font-size: 0.8em;
+    margin-right: 10px;
+    color: #f39c12;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.order-summary-row.details-open td:first-child::before {
+    transform: rotate(90deg);
+}
+
+.order-details-row {
+    display: none;
+    background-color: #fafafa;
+}
+
+.order-details-cell {
+    padding: 1.5rem 2rem !important;
+    border-bottom: 2px solid #f39c12;
+}
+
+.order-details-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.order-details-cell h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.customer-details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+}
+
+.detail-item {
+    font-size: 0.95rem;
+}
+
+.detail-item strong {
+    color: #555;
+    margin-right: 8px;
+}
+
+/* Lista de produtos dentro dos detalhes do pedido */
+.order-products-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-products-list li {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.order-products-list li:last-child {
+    border-bottom: none;
+}
+
+.order-products-list img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-info strong {
+    font-weight: 600;
+}
+
+.product-info span {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .order-details-content-grid {
+        grid-template-columns: 1fr;
+    }
 }

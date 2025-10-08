@@ -11,14 +11,13 @@ const imagePreviewContainer = document.getElementById('image-preview-container')
 const productsTableBody = document.querySelector('#products-table tbody');
 const ordersTableBody = document.querySelector('#orders-table tbody');
 const logoutButton = document.getElementById('logout');
-const tabsContainer = document.querySelector('.admin-tabs');
 
 // --- ESTADO DA APLICAÇÃO ---
 let currentEditingProductId = null;
 let existingImageUrls = [];
 let ordersLoaded = false; // Flag para carregar pedidos apenas uma vez
 
-// --- AUTENTICAÇÃO ---
+// --- AUTENTICAÇÃO E CONFIGURAÇÃO INICIAL ---
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -31,9 +30,8 @@ onAuthStateChanged(auth, async (user) => {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
-            // Carrega os produtos por padrão e configura as abas
             loadProducts();
-            setupTabs();
+            setupCollapsibleSections();
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
@@ -42,27 +40,26 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- LÓGICA DAS ABAS ---
-const setupTabs = () => {
-    tabsContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('.tab-link');
-        if (!target) return;
-
-        const tabName = target.dataset.tab;
-        
-        // Remove a classe 'active' de todas as abas e conteúdos
-        document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-        // Adiciona a classe 'active' à aba e conteúdo clicados
-        target.classList.add('active');
-        document.getElementById(tabName).classList.add('active');
-
-        // Carrega os pedidos se a aba for clicada pela primeira vez
-        if (tabName === 'orders' && !ordersLoaded) {
-            loadOrders();
-            ordersLoaded = true;
-        }
+// --- LÓGICA DAS SEÇÕES RETRÁTEIS (ACCORDION) ---
+const setupCollapsibleSections = () => {
+    const allSections = document.querySelectorAll('.collapsible-section');
+    allSections.forEach(section => {
+        const trigger = section.querySelector('.collapsible-trigger');
+        trigger.addEventListener('click', () => {
+            const isAlreadyActive = section.classList.contains('active');
+            allSections.forEach(s => {
+                s.classList.remove('active');
+                s.querySelector('.collapsible-content').style.display = 'none';
+            });
+            if (!isAlreadyActive) {
+                section.classList.add('active');
+                section.querySelector('.collapsible-content').style.display = 'block';
+                if (section.querySelector('#orders-table') && !ordersLoaded) {
+                    loadOrders();
+                    ordersLoaded = true;
+                }
+            }
+        });
     });
 };
 
@@ -108,19 +105,63 @@ const loadOrders = () => {
         }
         snapshot.forEach(docSnap => {
             const order = docSnap.data();
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${docSnap.id.substring(0, 8)}...</td>
-                <td>${order.customerName || 'N/A'}</td>
+            const orderId = docSnap.id;
+            const customer = order.customer || {}; // Objeto do cliente
+
+            const summaryRow = document.createElement('tr');
+            summaryRow.className = 'order-summary-row';
+            summaryRow.dataset.orderId = orderId;
+            summaryRow.innerHTML = `
+                <td>${orderId.substring(0, 8)}...</td>
+                <td>${customer.name || 'N/A'}</td>
                 <td>${order.createdAt.toDate().toLocaleDateString('pt-BR')}</td>
                 <td>${BRL(order.totalAmount)}</td>
-                <td><span class="status ${order.status}">${order.status}</span></td>
+                <td><span class="status ${order.status.toLowerCase()}">${order.status}</span></td>
                 <td class="order-actions">
-                    <button class="action-btn ship" data-id="${docSnap.id}">Marcar como Enviado</button>
-                    <button class="action-btn cancel" data-id="${docSnap.id}">Cancelar</button>
+                    <button class="action-btn ship" data-id="${orderId}" ${order.status !== 'Pendente' ? 'disabled' : ''}>Marcar Enviado</button>
+                    <button class="action-btn cancel" data-id="${orderId}" ${order.status !== 'Pendente' ? 'disabled' : ''}>Cancelar</button>
                 </td>
             `;
-            ordersTableBody.appendChild(tr);
+
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'order-details-row';
+            detailsRow.style.display = 'none'; // Começa escondido
+
+            const productsHtml = (order.items && order.items.length > 0)
+                ? order.items.map(item => `
+                    <li>
+                        <img src="${getResizedImageUrl(item.imageUrl)}" alt="${item.name}">
+                        <div class="product-info">
+                            <strong>${item.name}</strong>
+                            <span>${item.quantity}x ${BRL(item.price)}</span>
+                        </div>
+                    </li>`).join('')
+                : '<li>Nenhum produto.</li>';
+
+            const customerHtml = `
+                <h4>Detalhes do Cliente</h4>
+                <div class="customer-details-grid">
+                    <div class="detail-item"><strong>Nome:</strong> ${customer.name || '-'}</div>
+                    <div class="detail-item"><strong>Email:</strong> ${customer.email || '-'}</div>
+                    <div class="detail-item"><strong>Telefone:</strong> ${customer.phone || '-'}</div>
+                    <div class="detail-item wide"><strong>Endereço:</strong> ${`${customer.address_street || ''}, ${customer.address_number || ''} - ${customer.address_neighborhood || ''}, ${customer.address_city || ''} - ${customer.address_state || ''}, CEP: ${customer.address_zip || ''}`}</div>
+                </div>
+            `;
+
+            detailsRow.innerHTML = `
+                <td colspan="6" class="order-details-cell">
+                    <div class="order-details-content-grid">
+                        <div class="customer-details-section">${customerHtml}</div>
+                        <div class="products-details-section">
+                            <h4>Produtos do Pedido</h4>
+                            <ul class="order-products-list">${productsHtml}</ul>
+                        </div>
+                    </div>
+                </td>
+            `;
+
+            ordersTableBody.appendChild(summaryRow);
+            ordersTableBody.appendChild(detailsRow);
         });
     }, (error) => {
         console.error("Erro ao carregar pedidos: ", error);
@@ -201,14 +242,13 @@ function resetForm() {
     currentEditingProductId = null;
     existingImageUrls = [];
     productForm.querySelector('button[type="submit"]').textContent = 'Salvar Produto';
-    imageUpload.value = ''; // Limpa a seleção de arquivos
+    imageUpload.value = ''; 
 }
 
 // --- AÇÕES DA TABELA DE PRODUTOS ---
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
-
     const productId = target.dataset.id;
 
     if (target.classList.contains('edit')) {
@@ -220,12 +260,10 @@ productsTableBody.addEventListener('click', async (e) => {
     }
 });
 
-
 const handleEditClick = async (id) => {
     try {
         const productRef = doc(db, 'products', id);
         const docSnap = await getDoc(productRef);
-
         if (docSnap.exists()) {
             const product = docSnap.data();
             productForm.name.value = product.name;
@@ -256,13 +294,12 @@ const handleEditClick = async (id) => {
 };
 
 const handleDeleteClick = async (id) => {
-    const confirmed = await showConfirmation('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.');
+    const confirmed = await showConfirmation('Tem certeza que deseja excluir este produto?');
     if (!confirmed) return;
 
     try {
         const productRef = doc(db, 'products', id);
         const docSnap = await getDoc(productRef);
-
         if (docSnap.exists()) {
             const product = docSnap.data();
             if (product.imageUrls && product.imageUrls.length > 0) {
@@ -271,7 +308,7 @@ const handleDeleteClick = async (id) => {
                     try {
                         const imageRef = ref(storage, url);
                         return deleteObject(imageRef);
-                    } catch (error) {
+                    } catch (error) { 
                         console.error(`Falha ao criar referência para exclusão: ${url}`, error);
                         return null; 
                     }
@@ -291,29 +328,40 @@ const handleDeleteClick = async (id) => {
 
 // --- AÇÕES DA TABELA DE PEDIDOS ---
 ordersTableBody.addEventListener('click', async (e) => {
-    const target = e.target.closest('.action-btn');
-    if (!target) return;
+    const actionBtn = e.target.closest('.action-btn');
+    if (actionBtn) {
+        const orderId = actionBtn.dataset.id;
+        const orderRef = doc(db, 'orders', orderId);
 
-    const orderId = target.dataset.id;
-    const orderRef = doc(db, 'orders', orderId);
-
-    if (target.classList.contains('ship')) {
-        const confirmed = await showConfirmation('Tem certeza que deseja marcar este pedido como enviado?');
-        if (confirmed) {
-            await updateDoc(orderRef, { status: 'shipped' });
-            showToast('Pedido marcado como enviado.', 'success');
+        if (actionBtn.classList.contains('ship')) {
+            if (await showConfirmation('Marcar este pedido como enviado?')) {
+                try {
+                    await updateDoc(orderRef, { status: 'Enviado' });
+                    showToast('Pedido marcado como enviado.', 'success');
+                } catch (err) { console.error(err); showToast('Erro ao atualizar status.', 'error'); }
+            }
         }
+
+        if (actionBtn.classList.contains('cancel')) {
+            if (await showConfirmation('Cancelar este pedido?')) {
+                try {
+                    await updateDoc(orderRef, { status: 'Cancelado' });
+                    showToast('Pedido cancelado.', 'success');
+                } catch (err) { console.error(err); showToast('Erro ao cancelar pedido.', 'error'); }
+            }
+        }
+        return;
     }
 
-    if (target.classList.contains('cancel')) {
-        const confirmed = await showConfirmation('Tem certeza que deseja cancelar este pedido?');
-         if (confirmed) {
-            await updateDoc(orderRef, { status: 'cancelled' });
-            showToast('Pedido cancelado.', 'success');
+    const summaryRow = e.target.closest('.order-summary-row');
+    if (summaryRow) {
+        const detailsRow = summaryRow.nextElementSibling;
+        if (detailsRow && detailsRow.classList.contains('order-details-row')) {
+            summaryRow.classList.toggle('details-open');
+            detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
         }
     }
 });
-
 
 // --- OUTROS EVENTOS ---
 imagePreviewContainer.addEventListener('click', (e) => {
