@@ -1,123 +1,29 @@
-// --- Centralized Cart Management ---
-
-const CART_STORAGE_KEY = 'cart';
-
-// Private functions for cart logic
-function getCartFromStorage() {
-    try {
-        return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
-    } catch (e) {
-        console.error("Failed to parse cart from localStorage", e);
-        return [];
-    }
-}
-
-function saveCartToStorage(cart) {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-}
-
-// Listener for changes
-let cartChangeCallback = () => {};
-
-// The single, centralized cart store object
-export const cartStore = {
-    get: getCartFromStorage,
-    set: (cart) => {
-        saveCartToStorage(cart);
-        cartChangeCallback(cart); // Notify listener on change
-    },
-    clear: () => {
-        localStorage.removeItem(CART_STORAGE_KEY);
-        cartChangeCallback([]); // Notify listener
-    },
-    onChange: (callback) => {
-        cartChangeCallback = callback;
-    },
-    // Helper function to update count on any page
-    updateCountUI: () => {
-        const cart = getCartFromStorage();
-        const cartCountEl = document.getElementById('cart-count');
-        if (cartCountEl) {
-            cartCountEl.textContent = cart.reduce((count, item) => count + item.qty, 0);
-        }
-    }
-};
-
-// --- Utility Functions ---
 
 /**
- * Formats a number into BRL currency string.
- * @param {number} value - The number to format.
- * @returns {string} - Formatted currency string (e.g., "R$ 12,34").
+ * Converte a URL de uma imagem original para a URL da imagem redimensionada.
+ * Exemplo: 
+ *   Entrada: "https://storage.googleapis.com/bucket/produtos/123/imagem.jpg?token=abc"
+ *   Saída:  "https://storage.googleapis.com/bucket/produtos/123/imagem_400x400.webp?token=abc"
+ * @param {string} originalUrl A URL da imagem original.
+ * @returns {string} A URL da imagem redimensionada.
  */
-export function BRL(value) {
-    if (typeof value !== 'number') return "R$ 0,00";
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+function getResizedImageUrl(originalUrl) {
+  // Separa a URL principal dos parâmetros (como o token de acesso)
+  const [baseUrl, params] = originalUrl.split('?');
 
-/**
- * Displays a toast notification using SweetAlert2.
- * Assumes SweetAlert2 library is loaded on the page.
- * @param {string} message - The message to display.
- * @param {string} type - 'success', 'error', 'warning', 'info'.
- */
-export function showToast(message, type = 'info') {
-    if (typeof Swal === 'undefined') {
-        console.error('SweetAlert2 is not loaded. Please include it in your HTML.');
-        alert(message); // Fallback to a simple alert
-        return;
-    }
+  // Encontra a posição do último ponto para identificar a extensão do ficheiro
+  const lastDotIndex = baseUrl.lastIndexOf('.');
+  if (lastDotIndex === -1) {
+    // Se não houver extensão, retorna a URL original para evitar erros
+    return originalUrl;
+  }
 
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer);
-            toast.addEventListener('mouseleave', Swal.resumeTimer);
-        }
-    });
+  // Extrai o nome base do ficheiro e a extensão
+  const baseName = baseUrl.substring(0, lastDotIndex);
+  
+  // Monta a nova URL com o sufixo de redimensionamento e a nova extensão
+  const newBaseUrl = `${baseName}_400x400.webp`;
 
-    Toast.fire({
-        icon: type,
-        title: message
-    });
-}
-
-
-function createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    document.body.appendChild(container);
-    return container;
-}
-
-/**
- * Shows a confirmation dialog using SweetAlert2.
- * Assumes SweetAlert2 library (sweetalert2.all.min.js) is loaded on the page.
- * @param {string} title - The title of the dialog.
- * @param {string} text - The descriptive text.
- * @returns {Promise<boolean>} - Resolves true if confirmed, false otherwise.
- */
-export async function showConfirmation(title, text) {
-    // Check if Swal is available
-    if (typeof Swal === 'undefined') {
-        console.error('SweetAlert2 is not loaded. Please include it in your HTML.');
-        // Fallback to native confirm
-        return window.confirm(`${title}\n\n${text}`);
-    }
-
-    const result = await Swal.fire({
-        title: title,
-        text: text,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sim, confirmo!',
-        cancelButtonText: 'Cancelar',
-    });
-    return result.isConfirmed;
+  // Junta a nova URL base com os parâmetros originais e retorna
+  return params ? `${newBaseUrl}?${params}` : newBaseUrl;
 }

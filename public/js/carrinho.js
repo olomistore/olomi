@@ -2,7 +2,7 @@ import { db, auth, functions } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-functions.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-import { BRL, cartStore, showToast } from './utils.js';
+import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
 
 const itemsListEl = document.getElementById('cart-items-list');
 const totalsEl = document.getElementById('totals-summary');
@@ -73,9 +73,11 @@ function renderCart() {
     }
 
     if (itemsListEl) {
-        itemsListEl.innerHTML = cart.map(item => `
+        itemsListEl.innerHTML = cart.map(item => {
+          const imageUrl = item.imageUrl ? getResizedImageUrl(item.imageUrl) : 'https://placehold.co/80x80/f39c12/fff?text=Olomi';
+          return `
             <div class="cart-item">
-                <div class="item-image"><img src="${item.imageUrl || 'https://placehold.co/80x80/f39c12/fff?text=Olomi'}" alt="${item.name}"></div>
+                <div class="item-image"><img src="${imageUrl}" alt="${item.name}"></div>
                 <div class="item-info">
                     <p class="item-name">${item.name}</p>
                     <div class="item-quantity">
@@ -89,7 +91,7 @@ function renderCart() {
                     <div class="item-actions"><button class="remove-btn" data-id="${item.id}" data-action="remove">Remover</button></div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     if (totalsEl) {

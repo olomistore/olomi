@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { BRL, cartStore, showToast } from './utils.js';
+import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
 
 // --- SELEÇÃO DOS ELEMENTOS ---
 const listEl = document.getElementById('products');
@@ -72,7 +72,7 @@ function render(list) {
         productCard.className = 'product-card';
 
         const imageUrl = (p.imageUrls && p.imageUrls.length > 0)
-            ? p.imageUrls[0]
+            ? getResizedImageUrl(p.imageUrls[0]) // <-- ALTERAÇÃO AQUI
             : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
 
         const isOutOfStock = p.stock <= 0;

@@ -1,7 +1,7 @@
 import { db } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 // Corrigido: Importa o cartStore e o showToast, o padrão centralizado no projeto.
-import { BRL, cartStore, showToast } from './utils.js';
+import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
 
 const productDetailEl = document.getElementById('product-detail');
 
@@ -57,7 +57,7 @@ function renderProduct(p) {
     document.title = `${p.name} - Olomi`; // Atualiza o título da página
 
     const imageUrl = p.imageUrls && p.imageUrls.length > 0 
-        ? p.imageUrls[0] 
+        ? getResizedImageUrl(p.imageUrls[0]) // <-- ALTERAÇÃO AQUI
         : 'https://placehold.co/600x600/f39c12/fff?text=Olomi';
 
     productDetailEl.innerHTML = `
