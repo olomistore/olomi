@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "olomi-7816a"
+  },
+  "targets": {},
+  "etags": {
+    "olomi-7816a": {
+      "extensionInstances": {
+        "storage-resize-images": "0f0483855cd24e67b7f53f4d73f0e8ce39e4d48905e3308fd86ecbd4cbf12a6a"
+      }
+    }
   }
 }
