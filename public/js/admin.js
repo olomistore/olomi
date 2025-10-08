@@ -1,18 +1,24 @@
 import { auth, db, storage } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
-import { collection, getDocs, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation, getResizedImageUrl } from './utils.js';
 
+// --- ELEMENTOS DO DOM ---
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 const productsTableBody = document.querySelector('#products-table tbody');
+const ordersTableBody = document.querySelector('#orders-table tbody');
 const logoutButton = document.getElementById('logout');
+const tabsContainer = document.querySelector('.admin-tabs');
 
+// --- ESTADO DA APLICAÇÃO ---
 let currentEditingProductId = null;
 let existingImageUrls = [];
+let ordersLoaded = false; // Flag para carregar pedidos apenas uma vez
 
+// --- AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -25,7 +31,9 @@ onAuthStateChanged(auth, async (user) => {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
+            // Carrega os produtos por padrão e configura as abas
             loadProducts();
+            setupTabs();
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
@@ -34,11 +42,40 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// --- LÓGICA DAS ABAS ---
+const setupTabs = () => {
+    tabsContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('.tab-link');
+        if (!target) return;
+
+        const tabName = target.dataset.tab;
+        
+        // Remove a classe 'active' de todas as abas e conteúdos
+        document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // Adiciona a classe 'active' à aba e conteúdo clicados
+        target.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+
+        // Carrega os pedidos se a aba for clicada pela primeira vez
+        if (tabName === 'orders' && !ordersLoaded) {
+            loadOrders();
+            ordersLoaded = true;
+        }
+    });
+};
+
+// --- CARREGAMENTO DE DADOS ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("createdAt", "desc"));
     onSnapshot(q, (snapshot) => {
         productsTableBody.innerHTML = '';
+        if (snapshot.empty) {
+            productsTableBody.innerHTML = `<tr><td colspan="5">Nenhum produto cadastrado.</td></tr>`;
+            return;
+        }
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
             const tr = document.createElement('tr');
@@ -60,6 +97,40 @@ const loadProducts = () => {
     });
 };
 
+const loadOrders = () => {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        ordersTableBody.innerHTML = '';
+        if (snapshot.empty) {
+            ordersTableBody.innerHTML = `<tr><td colspan="6">Nenhum pedido recebido.</td></tr>`;
+            return;
+        }
+        snapshot.forEach(docSnap => {
+            const order = docSnap.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${docSnap.id.substring(0, 8)}...</td>
+                <td>${order.customerName || 'N/A'}</td>
+                <td>${order.createdAt.toDate().toLocaleDateString('pt-BR')}</td>
+                <td>${BRL(order.totalAmount)}</td>
+                <td><span class="status ${order.status}">${order.status}</span></td>
+                <td class="order-actions">
+                    <button class="action-btn ship" data-id="${docSnap.id}">Marcar como Enviado</button>
+                    <button class="action-btn cancel" data-id="${docSnap.id}">Cancelar</button>
+                </td>
+            `;
+            ordersTableBody.appendChild(tr);
+        });
+    }, (error) => {
+        console.error("Erro ao carregar pedidos: ", error);
+        showToast("Erro ao carregar os pedidos.", "error");
+        ordersTableBody.innerHTML = `<tr><td colspan="6">Erro ao carregar pedidos. Tente novamente.</td></tr>`;
+    });
+};
+
+
+// --- FORMULÁRIO DE PRODUTO ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = e.target.querySelector('button[type="submit"]');
@@ -133,7 +204,7 @@ function resetForm() {
     imageUpload.value = ''; // Limpa a seleção de arquivos
 }
 
-// --- FUNCIONALIDADE DE EDITAR E EXCLUIR RESTAURADA ---
+// --- AÇÕES DA TABELA DE PRODUTOS ---
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -148,6 +219,7 @@ productsTableBody.addEventListener('click', async (e) => {
         handleDeleteClick(productId);
     }
 });
+
 
 const handleEditClick = async (id) => {
     try {
@@ -217,6 +289,33 @@ const handleDeleteClick = async (id) => {
     }
 };
 
+// --- AÇÕES DA TABELA DE PEDIDOS ---
+ordersTableBody.addEventListener('click', async (e) => {
+    const target = e.target.closest('.action-btn');
+    if (!target) return;
+
+    const orderId = target.dataset.id;
+    const orderRef = doc(db, 'orders', orderId);
+
+    if (target.classList.contains('ship')) {
+        const confirmed = await showConfirmation('Tem certeza que deseja marcar este pedido como enviado?');
+        if (confirmed) {
+            await updateDoc(orderRef, { status: 'shipped' });
+            showToast('Pedido marcado como enviado.', 'success');
+        }
+    }
+
+    if (target.classList.contains('cancel')) {
+        const confirmed = await showConfirmation('Tem certeza que deseja cancelar este pedido?');
+         if (confirmed) {
+            await updateDoc(orderRef, { status: 'cancelled' });
+            showToast('Pedido cancelado.', 'success');
+        }
+    }
+});
+
+
+// --- OUTROS EVENTOS ---
 imagePreviewContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-image')) {
         const urlToRemove = e.target.dataset.url;

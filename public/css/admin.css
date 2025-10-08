@@ -129,35 +129,16 @@
     text-align: right;
 }
 
-/* --- ✅ CORREÇÃO: Novo design dos botões de ação com Ícones --- */
-.action-btn-icon {
-    background: transparent;
+.action-btn {
+    padding: 0.4rem 0.8rem;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
-    padding: 5px;
-    margin-left: 8px;
-    border-radius: 50%;
-    transition: background-color 0.2s, transform 0.2s;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-right: 0.5rem;
 }
-
-.action-btn-icon svg {
-    stroke: #888; /* Cor cinza neutra para os ícones */
-    transition: stroke 0.2s;
-}
-
-.action-btn-icon:hover {
-    background-color: #f0f0f0; /* Fundo cinza claro ao passar o rato */
-    transform: scale(1.1);
-}
-
-.action-btn-icon.edit:hover svg {
-    stroke: #f39c12; /* Laranja para editar */
-}
-
-.action-btn-icon.delete:hover svg {
-    stroke: #e74c3c; /* Vermelho para apagar */
-}
-
 
 /* Tabela de Pedidos - Estilos Específicos */
 #orders-table .order-summary-row {
@@ -206,17 +187,6 @@
     vertical-align: middle;
 }
 
-.action-btn {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: background-color 0.3s, transform 0.2s;
-    margin-right: 0.5rem;
-}
-
 .action-btn.ship {
     background-color: #27ae60;
     color: white;
@@ -233,4 +203,59 @@
 
 .action-btn.cancel:hover {
     background-color: #a5281b;
+}
+
+/* --- ABAS DA ÁREA ADMINISTRATIVA --- */
+.admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: -2px; /* Move os botões para baixo para sobrepor a borda */
+    position: relative;
+    z-index: 1;
+}
+
+.tab-link {
+    font-family: 'Rubik', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.tab-link:hover {
+    background-color: #fffaf0;
+    color: #333;
+}
+
+.tab-link.active {
+    background-color: #fff;
+    color: #f39c12;
+    border-color: #eee;
+    border-bottom: 2px solid #fff; 
+}
+
+.tab-content {
+    display: none; /* Esconde todo o conteúdo por padrão */
+    border-radius: 0 8px 8px 8px;
+    border: 2px solid #eee;
+    padding: 0;
+    position: relative;
+    z-index: 0;
+    background-color: #fff;
+}
+
+.tab-content.active {
+    display: block; /* Mostra apenas o conteúdo da aba ativa */
+}
+
+.tab-content .admin-section {
+    margin-bottom: 0;
+    box-shadow: none;
+    border-radius: 0;
 }
