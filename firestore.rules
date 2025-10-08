@@ -10,12 +10,12 @@ service cloud.firestore {
                      get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
     }
 
-    // TESTE DE DIAGNÓSTICO FINAL:
-    // Temporariamente, permitir que qualquer utilizador AUTENTICADO leia QUALQUER documento de role.
-    // Isto vai desbloquear a chamada `get()` da regra do Storage.
+    // Um utilizador só pode ler a sua própria função (role).
+    // Isto é necessário para que as regras de segurança do Storage funcionem.
     match /roles/{userId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Manter a escrita bloqueada por segurança.
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Ninguém (exceto através de uma Cloud Function ou da consola) pode alterar funções.
+      allow write: if false;
     }
 
     // Regras de pedidos a serem definidas no futuro.
