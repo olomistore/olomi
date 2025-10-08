@@ -106,7 +106,8 @@ const loadOrders = () => {
         snapshot.forEach(docSnap => {
             const order = docSnap.data();
             const orderId = docSnap.id;
-            const customer = order.customer || {}; // Objeto do cliente
+            const customer = order.customer || {};
+            const address = customer.address || {};
 
             const summaryRow = document.createElement('tr');
             summaryRow.className = 'order-summary-row';
@@ -125,7 +126,7 @@ const loadOrders = () => {
 
             const detailsRow = document.createElement('tr');
             detailsRow.className = 'order-details-row';
-            detailsRow.style.display = 'none'; // Começa escondido
+            detailsRow.style.display = 'none';
 
             const productsHtml = (order.items && order.items.length > 0)
                 ? order.items.map(item => `
@@ -133,10 +134,12 @@ const loadOrders = () => {
                         <img src="${getResizedImageUrl(item.imageUrl)}" alt="${item.name}">
                         <div class="product-info">
                             <strong>${item.name}</strong>
-                            <span>${item.quantity}x ${BRL(item.price)}</span>
+                            <span>${item.qty}x ${BRL(item.price)}</span>
                         </div>
                     </li>`).join('')
                 : '<li>Nenhum produto.</li>';
+
+            const fullAddress = `${address.street || ''}, ${address.number || ''}${address.complement ? `, ${address.complement}` : ''} - ${address.neighborhood || ''}, ${address.city || ''} - ${address.state || ''}, CEP: ${address.cep || ''}`;
 
             const customerHtml = `
                 <h4>Detalhes do Cliente</h4>
@@ -144,7 +147,7 @@ const loadOrders = () => {
                     <div class="detail-item"><strong>Nome:</strong> ${customer.name || '-'}</div>
                     <div class="detail-item"><strong>Email:</strong> ${customer.email || '-'}</div>
                     <div class="detail-item"><strong>Telefone:</strong> ${customer.phone || '-'}</div>
-                    <div class="detail-item wide"><strong>Endereço:</strong> ${`${customer.address_street || ''}, ${customer.address_number || ''} - ${customer.address_neighborhood || ''}, ${customer.address_city || ''} - ${customer.address_state || ''}, CEP: ${customer.address_zip || ''}`}</div>
+                    <div class="detail-item wide"><strong>Endereço:</strong> ${fullAddress}</div>
                 </div>
             `;
 
