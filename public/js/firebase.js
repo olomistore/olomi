@@ -5,8 +5,6 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.3/firebas
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-functions.js";
 
-// O Firebase Hosting irá carregar e fornecer a configuração automaticamente.
-// Faça o fetch da configuração a partir de um URL reservado.
 const response = await fetch('/__/firebase/init.json');
 const firebaseConfig = await response.json();
 
