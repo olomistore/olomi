@@ -40,7 +40,7 @@ if (userNavContainer && adminLinkContainer) {
             adminLinkContainer.innerHTML = '';
             userNavContainer.innerHTML = `
                 <a href="login-cliente.html" class="nav-link">Entrar</a>
-                <a href="registro-cliente.html" class="nav-link">Registar</a>
+                <a href="cadastro.html" class="nav-link">Registar</a>
             `;
         }
     });
