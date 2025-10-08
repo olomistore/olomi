@@ -2,14 +2,19 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /products/{allPaths=**} {
-      allow write: if request.auth != null && 
-                   exists(/databases/$(database)/documents/roles/$(request.auth.uid)) &&
-                   get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
+      // Apenas administradores autenticados podem escrever.
+      allow write: if request.auth != null &&
+                   firestore.exists(/databases/(default)/documents/roles/$(request.auth.uid)) &&
+                   firestore.get(/databases/(default)/documents/roles/$(request.auth.uid)).data.admin == true;
+      
+      // Qualquer pessoa pode ler.
       allow read: if true;
     }
 
     match /resized/{allPaths=**} {
+      // A imagem redimensionada é pública.
       allow read: if true;
+      // Ninguém, exceto a extensão, pode escrever aqui.
       allow write: if false;
     }
   }

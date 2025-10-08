@@ -8,7 +8,7 @@ const firebaseConfig = {
   authDomain: "olomi-7816a.firebaseapp.com",
   databaseURL: "https://olomi-7816a-default-rtdb.firebaseio.com",
   projectId: "olomi-7816a",
-  storageBucket: "olomi-7816a.firebasestorage.app",
+  storageBucket: "olomi-7816a.appspot.com",
   messagingSenderId: "562685499782",
   appId: "1:562685499782:web:23616d2db4738093c43407",
   measurementId: "G-2FSC9P97MX"
