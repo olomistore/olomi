@@ -11,25 +11,30 @@ export function BRL(value) {
 }
 
 /**
- * ✅ FUNÇÃO CORRIGIDA (DE NOVO)
- * Converte a URL de uma imagem original para a URL da imagem redimensionada em .webp.
- * Esta lógica assume que a extensão "Resize Images" está configurada para converter
- * para o formato WebP, que é o padrão e o mais recomendado.
- * @param {string} originalUrl A URL da imagem original.
- * @returns {string} A URL da imagem redimensionada.
+ * ✅ CORREÇÃO FINAL
+ * Converte a URL de uma imagem original para a URL da imagem redimensionada, removendo
+ * o token de acesso original, que é inválido para o novo ficheiro.
+ * A função agora depende da regra de leitura pública do Firebase Storage.
+ * @param {string} originalUrl A URL da imagem original com token.
+ * @returns {string} A URL da imagem redimensionada, sem token.
  */
 export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
-    const [baseUrl, params] = originalUrl.split('?');
+
+    // Remove o token e outros parâmetros (tudo depois de '?').
+    const baseUrl = originalUrl.split('?")[0];
+
     const lastDotIndex = baseUrl.lastIndexOf('.');
     if (lastDotIndex === -1) return originalUrl; // Retorna a original se não tiver extensão
 
+    // Pega no nome do ficheiro sem a extensão.
     const baseName = baseUrl.substring(0, lastDotIndex);
     
-    // Gera a URL para a versão .webp redimensionada.
-    const newBaseUrl = `${baseName}_400x400.webp`;
+    // Gera a URL para a versão .webp redimensionada, e adiciona o parâmetro `alt=media` 
+    // para que o browser a exiba como uma imagem e não faça o download.
+    const newResizedUrl = `${baseName}_400x400.webp?alt=media`;
 
-    return params ? `${newBaseUrl}?${params}` : newBaseUrl;
+    return newResizedUrl;
 }
 
 /**
