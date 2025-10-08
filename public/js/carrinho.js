@@ -9,6 +9,29 @@ const totalsEl = document.getElementById('totals-summary');
 const form = document.getElementById('checkout-form');
 const cartContainer = document.getElementById('cart-container');
 
+// --- INÍCIO: FUNÇÃO DE MÁSCARA DE TELEFONE ---
+const formatPhone = (value) => {
+    if (!value) return "";
+    value = value.replace(/\D/g, ''); // Remove tudo o que não é dígito
+    value = value.slice(0, 11); // Limita a 11 dígitos (DDD + 9 dígitos)
+
+    if (value.length > 10) {
+        // Formato (XX) XXXXX-XXXX para celulares com 9 dígitos
+        return value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (value.length > 6) {
+        // Formato (XX) XXXX-XXXX para telefones fixos
+        return value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else if (value.length > 2) {
+        // Formato (XX) XXXX
+        return value.replace(/(\d{2})(\d+)/, '($1) $2');
+    } else if (value.length > 0) {
+        // Formato (XX
+        return `(${value}`;
+    }
+    return value;
+};
+// --- FIM: FUNÇÃO DE MÁSCARA DE TELEFONE ---
+
 // Preenche o formulário com os dados do utilizador autenticado
 async function populateFormWithUserData(user) {
     if (!user || !form) return;
@@ -17,7 +40,7 @@ async function populateFormWithUserData(user) {
     if (docSnap.exists()) {
         const userData = docSnap.data();
         form.name.value = userData.name || '';
-        form.phone.value = userData.phone || '';
+        form.phone.value = formatPhone(userData.phone || ''); // Aplica a máscara ao carregar
         form.email.value = user.email || '';
         if (userData.address) {
             form.cep.value = userData.address.cep || '';
@@ -152,7 +175,7 @@ form?.addEventListener('submit', async (e) => {
     const formData = Object.fromEntries(new FormData(form).entries());
     const customerData = {
         name: formData.name,
-        phone: formData.phone,
+        phone: formData.phone.replace(/\D/g, ''), // Envia apenas os números
         email: formData.email,
         address: {
             cep: formData.cep,
@@ -205,10 +228,15 @@ form?.addEventListener('submit', async (e) => {
 
 // Função de inicialização da página
 function init() {
-    // --- MELHORIA: Sistema reativo ---
-    // 1. Renderiza o estado inicial do carrinho.
+    // --- ADICIONA O EVENT LISTENER PARA A MÁSCARA DE TELEFONE ---
+    if (form && form.phone) {
+        form.phone.addEventListener('input', (e) => {
+            e.target.value = formatPhone(e.target.value);
+        });
+    }
+
+    // --- Sistema reativo ---
     renderCart();
-    // 2. Regista a função renderCart para ser chamada sempre que o carrinho mudar.
     cartStore.onChange(renderCart);
 
     onAuthStateChanged(auth, (user) => {
