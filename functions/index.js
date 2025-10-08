@@ -95,7 +95,7 @@ exports.createorder = onCall({ cors: true }, async (request) => {
                 customer: customer, // Adiciona os dados do cliente
                 items: itemsForOrder,
                 total: totalAmount,
-                status: 'pending',
+                status: 'Pendente',
                 createdAt: Timestamp.now()
             };
             // --- FIM DA MODIFICAÇÃO ---

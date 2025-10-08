@@ -83,13 +83,35 @@
     margin-top: 1rem;
 }
 
-#image-preview-container img {
+.image-preview {
+    position: relative;
+}
+
+.image-preview img {
     max-width: 100px;
     max-height: 100px;
     border-radius: 5px;
     object-fit: cover;
     border: 2px solid #eee;
 }
+
+.remove-image {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+}
+
 
 /* Tabelas */
 .table-container {
@@ -126,7 +148,7 @@
 }
 
 .actions-cell {
-    text-align: right;
+    white-space: nowrap;
 }
 
 .action-btn {
@@ -138,69 +160,60 @@
     font-weight: 500;
     transition: background-color 0.3s, transform 0.2s;
     margin-right: 0.5rem;
+    color: white; /* Garante que o texto seja branco por padrão */
 }
 
-/* Estilos para botões de Ação de Produto */
+.action-btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
 .action-btn.edit {
-    background-color: #f39c12;
-    color: white;
+    background-color: #3498db; /* Azul */
 }
 
 .action-btn.delete {
-    background-color: #e74c3c;
-    color: white;
+    background-color: #e74c3c; /* Vermelho */
 }
 
-.action-btn.edit:hover {
-    background-color: #e67e22;
+.action-btn.ship {
+    background-color: #27ae60; /* Verde */
 }
 
-.action-btn.delete:hover {
-    background-color: #c0392b;
+.action-btn.cancel {
+    background-color: #95a5a6; /* Cinza */
 }
 
-/* Tabela de Pedidos - Estilos Específicos */
+
+/* Tabela de Pedidos - Estilos dos Status */
 .status {
-    padding: 0.3rem 0.6rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 15px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: white;
+    text-transform: capitalize;
+    min-width: 80px;
+    text-align: center;
+    display: inline-block;
 }
 
 .status.pendente {
-    background-color: #3498db;
+    background-color: #f39c12; /* Laranja */
 }
 
 .status.enviado {
-    background-color: #2ecc71;
+    background-color: #2ecc71; /* Verde */
 }
 
 .status.cancelado {
-    background-color: #e74c3c;
+    background-color: #e74c3c; /* Vermelho */
 }
 
 .order-actions {
     min-height: 59px; 
     vertical-align: middle;
-}
-
-.action-btn.ship {
-    background-color: #27ae60;
-    color: white;
-}
-
-.action-btn.cancel {
-    background-color: #c0392b;
-    color: white;
-}
-
-.action-btn.ship:hover {
-    background-color: #219d55;
-}
-
-.action-btn.cancel:hover {
-    background-color: #a5281b;
+    white-space: nowrap;
 }
 
 /* --- SEÇÕES RETRÁTEIS (ACCORDION) --- */
@@ -295,6 +308,11 @@
 .detail-item {
     font-size: 0.95rem;
 }
+
+.detail-item.wide {
+    grid-column: 1 / -1;
+}
+
 
 .detail-item strong {
     color: #555;
