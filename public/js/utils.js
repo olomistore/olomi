@@ -11,7 +11,7 @@ export function BRL(value) {
 }
 
 /**
- * ✅ CORREÇÃO FINAL
+ * ✅ CORREÇÃO DE SINTAXE
  * Converte a URL de uma imagem original para a URL da imagem redimensionada, removendo
  * o token de acesso original, que é inválido para o novo ficheiro.
  * A função agora depende da regra de leitura pública do Firebase Storage.
@@ -22,7 +22,7 @@ export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
 
     // Remove o token e outros parâmetros (tudo depois de '?').
-    const baseUrl = originalUrl.split('?")[0];
+    const baseUrl = originalUrl.split('?')[0];
 
     const lastDotIndex = baseUrl.lastIndexOf('.');
     if (lastDotIndex === -1) return originalUrl; // Retorna a original se não tiver extensão
