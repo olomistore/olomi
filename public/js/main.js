@@ -5,14 +5,26 @@ import { cartStore } from './utils.js';
 
 const userNavContainer = document.getElementById('user-navigation');
 const adminLinkContainer = document.getElementById('admin-link-container');
+const cartCountEl = document.getElementById('cart-count');
+
+/**
+ * Atualiza a interface do utilizador com a contagem de itens no carrinho.
+ */
+function updateCartCountUI() {
+    if (!cartCountEl) return;
+    const cart = cartStore.get();
+    const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+    cartCountEl.textContent = totalItems;
+}
 
 // Garante que os elementos existem antes de tentar usá-los
 if (userNavContainer && adminLinkContainer) {
+    // --- CORREÇÃO APLICADA ---
     // Atualiza a contagem do carrinho na inicialização
-    cartStore.updateCountUI();
+    updateCartCountUI();
 
     // Regista um listener para quando o carrinho mudar, para manter a contagem atualizada
-    cartStore.onChange(cartStore.updateCountUI);
+    cartStore.onChange(updateCartCountUI);
 
     // Observa as mudanças no estado de autenticação do utilizador
     onAuthStateChanged(auth, async (user) => {
