@@ -50,6 +50,29 @@ export function showToast(message, type = 'success') {
 }
 
 /**
+ * ✅ FUNÇÃO ADICIONADA
+ * Exibe um modal de confirmação e retorna uma promessa que resolve para true se confirmado.
+ * @param {string} title - O título do modal.
+ * @param {string} text - O texto de descrição do modal.
+ * @param {string} confirmButtonText - O texto para o botão de confirmação.
+ * @returns {Promise<boolean>} - True se o utilizador confirmar, false caso contrário.
+ */
+export async function showConfirmation(title, text, confirmButtonText = 'Confirmar') {
+    const result = await Swal.fire({
+        title: title,
+        text: text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancelar'
+    });
+    return result.isConfirmed;
+}
+
+
+/**
  * Um objeto para gerir o estado do carrinho de compras, utilizando o localStorage
  * e permitindo que outras partes da aplicação "oiçam" as alterações.
  */
