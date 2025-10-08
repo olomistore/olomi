@@ -1,9 +1,8 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
-import { collection, getDocs, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { collection, getDocs, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
-// ✅ CORREÇÃO: A função showConfirmation foi re-adicionada às importações
-import { BRL, showToast, showConfirmation } from './utils.js';
+import { BRL, showToast, showConfirmation, getResizedImageUrl } from './utils.js';
 
 // --- Seletores de DOM ---
 const storage = getStorage();
@@ -31,7 +30,7 @@ onAuthStateChanged(auth, async (user) => {
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
             loadProducts();
-            loadOrders();
+            // loadOrders(); // Opcional: descomente se a função for necessária
         }
     } catch (error) {
         console.error('Erro ao verificar permissões:', error);
@@ -43,24 +42,23 @@ onAuthStateChanged(auth, async (user) => {
 // --- Funções Principais ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
-    const q = query(productsRef, orderBy("name"));
+    const q = query(productsRef, orderBy("createdAt", "desc")); // Ordenar por mais recente
     onSnapshot(q, (snapshot) => {
         productsTableBody.innerHTML = '';
         snapshot.forEach(docSnap => {
             const product = docSnap.data();
             const tr = document.createElement('tr');
+            const imageUrl = (product.imageUrls && product.imageUrls.length > 0)
+                ? getResizedImageUrl(product.imageUrls[0])
+                : 'https://placehold.co/100x100/f39c12/fff?text=Olomi';
             tr.innerHTML = `
-                <td><img src="${product.imageUrls[0] || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${product.name}" width="50"></td>
+                <td><img src="${imageUrl}" alt="${product.name}" width="50"></td>
                 <td>${product.name}</td>
                 <td>${BRL(product.price)}</td>
                 <td>${product.stock}</td>
                 <td class="actions-cell">
-                    <button class="action-btn-icon edit" data-id="${docSnap.id}" title="Editar produto">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                    </button>
-                    <button class="action-btn-icon delete" data-id="${docSnap.id}" title="Apagar produto">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
+                    <button class="action-btn-icon edit" data-id="${docSnap.id}" title="Editar produto">...</button>
+                    <button class="action-btn-icon delete" data-id="${docSnap.id}" title="Apagar produto">...</button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
@@ -68,28 +66,98 @@ const loadProducts = () => {
     });
 };
 
-const loadOrders = () => {
-    // ... (código existente inalterado)
-};
+// --- Listener de Evento Principal: Salvar Produto ---
+productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Salvando...';
+
+    try {
+        const form = e.target;
+        const name = form.name.value.trim();
+        const description = form.description.value.trim();
+        const category = form.category.value.trim();
+        
+        // ETAPA CRÍTICA: Converter e validar preço e stock.
+        const priceString = form.price.value.replace(',', '.').trim();
+        const price = parseFloat(priceString);
+        const stock = parseInt(form.stock.value, 10);
+
+        if (!name || !category) {
+            throw new Error('Nome e Categoria são campos obrigatórios.');
+        }
+        if (isNaN(price) || price < 0) {
+            throw new Error('O preço inserido é inválido.');
+        }
+        if (isNaN(stock) || stock < 0) {
+            throw new Error('A quantidade em stock é inválida.');
+        }
+
+        const files = imageUpload.files;
+        let imageUrls = [...existingImageUrls]; // Mantém imagens existentes ao editar
+
+        // Upload de novas imagens, se houver.
+        if (files.length > 0) {
+            showToast('Enviando imagens... Isso pode levar um momento.', 'info');
+            const uploadPromises = Array.from(files).map(async (file) => {
+                const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+                const storageRef = ref(storage, `products/${uniqueId}-${file.name}`);
+                await uploadBytes(storageRef, file);
+                return getDownloadURL(storageRef);
+            });
+            const newImageUrls = await Promise.all(uploadPromises);
+            imageUrls.push(...newImageUrls);
+        }
+
+        if (imageUrls.length === 0) {
+            throw new Error('O produto precisa de ter pelo menos uma imagem.');
+        }
+
+        // Monta o objeto final com os dados do produto.
+        const productData = {
+            name,
+            description,
+            price,
+            stock,
+            category,
+            imageUrls,
+        };
+
+        if (currentEditingProductId) {
+            // Atualiza um produto existente.
+            productData.updatedAt = serverTimestamp();
+            const productRef = doc(db, 'products', currentEditingProductId);
+            await updateDoc(productRef, productData);
+            showToast('Produto atualizado com sucesso!', 'success');
+        } else {
+            // Cria um novo produto.
+            productData.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'products'), productData);
+            showToast('Produto cadastrado com sucesso!', 'success');
+        }
+
+        // Limpa o formulário e o estado de edição.
+        productForm.reset();
+        imagePreviewContainer.innerHTML = '';
+        currentEditingProductId = null;
+        existingImageUrls = [];
+        
+    } catch (error) {
+        // ETAPA DE DIAGNÓSTICO: Exibe o erro exato na tela.
+        console.error('ERRO AO SALVAR PRODUTO:', error);
+        showToast(`Falha ao salvar: ${error.message}`, 'error');
+    } finally {
+        // Reativa o botão de salvar, independentemente do resultado.
+        submitButton.disabled = false;
+        submitButton.textContent = 'Salvar Produto';
+    }
+});
 
 
-// --- Listeners de Eventos ---
+// --- Outros Listeners ---
 logoutButton.addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = 'login.html');
 });
 
-imageUpload.addEventListener('change', (e) => {
-    // ... (código existente inalterado)
-});
-
-ordersTableBody.addEventListener('click', async (e) => {
-    // ... (código existente inalterado)
-});
-
-productsTableBody.addEventListener('click', async (e) => {
-    // ... (código existente inalterado)
-});
-
-productForm.addEventListener('submit', async (e) => {
-    // ... (código existente inalterado)
-});
+// Implementações futuras ou existentes para edição e exclusão podem ser adicionadas aqui.
