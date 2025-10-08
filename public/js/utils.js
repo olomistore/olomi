@@ -11,17 +11,29 @@ export function BRL(value) {
 }
 
 /**
- * Converte a URL de uma imagem original para a URL da imagem redimensionada.
+ * ✅ FUNÇÃO CORRIGIDA
+ * Converte a URL de uma imagem original para a URL da imagem redimensionada pela extensão do Firebase.
  * @param {string} originalUrl A URL da imagem original.
  * @returns {string} A URL da imagem redimensionada.
  */
 export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
+
+    // Divide a URL para separar a base dos parâmetros (como o token de acesso)
     const [baseUrl, params] = originalUrl.split('?');
+
+    // Encontra a posição do último ponto para identificar a extensão do ficheiro
     const lastDotIndex = baseUrl.lastIndexOf('.');
-    if (lastDotIndex === -1) return originalUrl;
+    if (lastDotIndex === -1) return originalUrl; // Retorna a original se não encontrar uma extensão
+
+    // Separa o nome base da extensão
     const baseName = baseUrl.substring(0, lastDotIndex);
-    const newBaseUrl = `${baseName}_400x400.webp`;
+    const extension = baseUrl.substring(lastDotIndex);
+
+    // Monta a nova URL com o sufixo da imagem redimensionada ANTES da extensão
+    const newBaseUrl = `${baseName}_400x400${extension}`;
+
+    // Junta a nova base com os parâmetros originais e retorna
     return params ? `${newBaseUrl}?${params}` : newBaseUrl;
 }
 
@@ -50,7 +62,6 @@ export function showToast(message, type = 'success') {
 }
 
 /**
- * ✅ FUNÇÃO ADICIONADA
  * Exibe um modal de confirmação e retorna uma promessa que resolve para true se confirmado.
  * @param {string} title - O título do modal.
  * @param {string} text - O texto de descrição do modal.
