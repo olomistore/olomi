@@ -1,15 +1,9 @@
-
-import { auth, db, storage } from './firebase.js'; // CORREÇÃO: Importar a instância de storage correta
+import { auth, db, storage } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
 import { collection, getDocs, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
-// CORREÇÃO: A linha abaixo foi removida pois `storage` já foi importado
-// import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation, getResizedImageUrl } from './utils.js';
 
-// --- Seletores de DOM ---
-// CORREÇÃO: A linha abaixo foi removida pois `storage` já é uma instância importada
-// const storage = getStorage(); 
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
@@ -20,21 +14,20 @@ const logoutButton = document.getElementById('logout');
 let currentEditingProductId = null;
 let existingImageUrls = [];
 
-// --- Autenticação e Verificação de Permissões ---
 onAuthStateChanged(auth, async (user) => {
-    console.log("UID do utilizador autenticado:", user.uid);
-
     if (!user) {
         window.location.href = 'login.html';
         return;
     }
     try {
+        console.log("Verificando permissões para o UID:", user.uid);
         const roleRef = doc(db, 'roles', user.uid);
         const roleSnap = await getDoc(roleRef);
         if (!roleSnap.exists() || !roleSnap.data().admin) {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
+            console.log("Permissões de administrador confirmadas.");
             loadProducts();
         }
     } catch (error) {
@@ -44,7 +37,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- Funções Principais ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("createdAt", "desc"));
@@ -62,8 +54,8 @@ const loadProducts = () => {
                 <td>${BRL(product.price)}</td>
                 <td>${product.stock}</td>
                 <td class="actions-cell">
-                    <button class="action-btn-icon edit" data-id="${docSnap.id}" title="Editar produto">...</button>
-                    <button class="action-btn-icon delete" data-id="${docSnap.id}" title="Apagar produto">...</button>
+                    <button class="action-btn-icon edit" data-id="${docSnap.id}">...</button>
+                    <button class="action-btn-icon delete" data-id="${docSnap.id}">...</button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
@@ -71,7 +63,6 @@ const loadProducts = () => {
     });
 };
 
-// --- Listener de Evento Principal: Salvar Produto ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = e.target.querySelector('button[type="submit"]');
@@ -83,53 +74,40 @@ productForm.addEventListener('submit', async (e) => {
         const name = form.name.value.trim();
         const description = form.description.value.trim();
         const category = form.category.value.trim();
-        
-        const priceString = form.price.value.replace(',', '.').trim();
-        const price = parseFloat(priceString);
+        const price = parseFloat(form.price.value.replace(',', '.').trim());
         const stock = parseInt(form.stock.value, 10);
 
-        if (!name || !category) {
-            throw new Error('Nome e Categoria são campos obrigatórios.');
-        }
-        if (isNaN(price) || price < 0) {
-            throw new Error('O preço inserido é inválido.');
-        }
-        if (isNaN(stock) || stock < 0) {
-            throw new Error('A quantidade em stock é inválida.');
+        if (!name || isNaN(price) || isNaN(stock)) {
+            throw new Error('Por favor, preencha todos os campos com valores válidos.');
         }
 
         const files = imageUpload.files;
         let imageUrls = [...existingImageUrls];
 
         if (files.length > 0) {
-            showToast('Enviando imagens... Isso pode levar um momento.', 'info');
+            showToast('Enviando imagens...', 'info');
             const uploadPromises = Array.from(files).map(async (file) => {
                 const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
                 const storageRef = ref(storage, `products/${uniqueId}-${file.name}`);
-                await uploadBytes(storageRef, file); // Esta chamada agora usará a instância autenticada
-                return getDownloadURL(storageRef);
+                console.log('Iniciando upload para:', storageRef.fullPath);
+                await uploadBytes(storageRef, file);
+                const downloadUrl = await getDownloadURL(storageRef);
+                console.log('Upload concluído, URL:', downloadUrl);
+                return downloadUrl;
             });
             const newImageUrls = await Promise.all(uploadPromises);
             imageUrls.push(...newImageUrls);
         }
 
         if (imageUrls.length === 0) {
-            throw new Error('O produto precisa de ter pelo menos uma imagem.');
+            throw new Error('O produto precisa de pelo menos uma imagem.');
         }
 
-        const productData = {
-            name,
-            description,
-            price,
-            stock,
-            category,
-            imageUrls,
-        };
+        const productData = { name, description, price, stock, category, imageUrls };
 
         if (currentEditingProductId) {
             productData.updatedAt = serverTimestamp();
-            const productRef = doc(db, 'products', currentEditingProductId);
-            await updateDoc(productRef, productData);
+            await updateDoc(doc(db, 'products', currentEditingProductId), productData);
             showToast('Produto atualizado com sucesso!', 'success');
         } else {
             productData.createdAt = serverTimestamp();
@@ -141,7 +119,7 @@ productForm.addEventListener('submit', async (e) => {
         imagePreviewContainer.innerHTML = '';
         currentEditingProductId = null;
         existingImageUrls = [];
-        
+
     } catch (error) {
         console.error('ERRO AO SALVAR PRODUTO:', error);
         showToast(`Falha ao salvar: ${error.message}`, 'error');
@@ -151,8 +129,6 @@ productForm.addEventListener('submit', async (e) => {
     }
 });
 
-
-// --- Outros Listeners ---
 logoutButton.addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = 'login.html');
 });
