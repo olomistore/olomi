@@ -18,6 +18,10 @@ let existingImageUrls = [];
 
 // --- Autenticação e Verificação de Permissões ---
 onAuthStateChanged(auth, async (user) => {
+    // ====================== PASSO DE VERIFICAÇÃO FINAL ======================
+    console.log("UID do utilizador autenticado:", user.uid);
+    // ====================================================================
+
     if (!user) {
         window.location.href = 'login.html';
         return;

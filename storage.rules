@@ -1,26 +1,19 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Regra para a pasta de produtos originais.
     match /products/{allPaths=**} {
-      // Qualquer pessoa pode ler as imagens dos produtos (necessário para o site).
+      // Apenas administradores autenticados podem escrever.
+      allow write: if request.auth != null && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
+      
+      // Qualquer pessoa pode ler.
       allow read: if true;
-
-      // Apenas utilizadores autenticados cuja UID exista na coleção 'roles'
-      // com o campo 'admin' igual a 'true' podem escrever (upload, delete).
-      allow write: if request.auth != null &&
-                      get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.admin == true;
     }
 
-    // Regra para a pasta de imagens otimizadas pela extensão.
     match /resized/{allPaths=**} {
-        // Qualquer pessoa pode ler as imagens otimizadas.
-        allow read: if true;
-
-        // Ninguém (exceto a própria extensão) pode escrever nesta pasta.
-        allow write: if false;
+      // A imagem redimensionada é pública.
+      allow read: if true;
+      // Ninguém, exceto a extensão, pode escrever aqui.
+      allow write: if false;
     }
-
   }
 }
