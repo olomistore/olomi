@@ -69,7 +69,7 @@ nav { display: flex; align-items: center; }
 .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
 .product-card { background-color: var(--cor-branco); border-radius: 8px; box-shadow: var(--sombra-padrao); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; }
 .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
-.product-image { width: 100%; height: 224px; object-fit: cover; }
+.product-image { width: 100%; height: 224px; object-fit: contain; }
 .card-content { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
 .product-title { font-family: var(--fonte-titulo); font-size: 1.25rem; margin-bottom: 0.5rem; }
 
