@@ -51,8 +51,8 @@ const loadProducts = () => {
                 <td>${BRL(product.price)}</td>
                 <td>${product.stock}</td>
                 <td class="actions-cell">
-                    <button class="action-btn-icon edit" data-id="${docSnap.id}">Editar</button>
-                    <button class="action-btn-icon delete" data-id="${docSnap.id}">Excluir</button>
+                    <button class="action-btn edit" data-id="${docSnap.id}">Editar</button>
+                    <button class="action-btn delete" data-id="${docSnap.id}">Excluir</button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
