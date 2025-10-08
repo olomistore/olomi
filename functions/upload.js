@@ -8,8 +8,7 @@ const os = require("os");
 const fs = require("fs");
 
 const storage = getStorage();
-// Deixa o SDK encontrar o bucket padrão automaticamente
-const bucket = storage.bucket();
+const bucket = storage.bucket(); // Deixa o SDK encontrar o bucket padrão
 
 exports.uploadFile = onRequest({ cors: true }, (req, res) => {
   cors(req, res, () => {
@@ -32,15 +31,9 @@ exports.uploadFile = onRequest({ cors: true }, (req, res) => {
       file.pipe(writeStream);
 
       const promise = new Promise((resolve, reject) => {
-        file.on("end", () => {
-          writeStream.end();
-        });
+        file.on("end", () => writeStream.end());
         writeStream.on("finish", () => {
-          uploads[fieldname] = {
-            filepath,
-            filename,
-            mimeType,
-          };
+          uploads[fieldname] = { filepath, filename, mimeType };
           resolve();
         });
         writeStream.on("error", reject);
@@ -59,30 +52,21 @@ exports.uploadFile = onRequest({ cors: true }, (req, res) => {
           logger.info(`Uploading ${filename} to ${destination}`);
           const [uploadedFile] = await bucket.upload(filepath, {
             destination,
-            metadata: {
-              contentType: mimeType,
-            },
+            metadata: { contentType: mimeType },
           });
 
-          logger.info(`Making ${filename} public.`);
-          try {
-            await uploadedFile.makePublic();
-          } catch (aclError) {
-            logger.error(`Failed to make ${filename} public:`, aclError);
-            // Esta é a mensagem de erro que você verá se o bucket estiver com controle de acesso "Uniforme"
-            throw new Error(
-              "File uploaded, but failed to set public access. Please check your Cloud Storage bucket's permissions. It might be set to 'Uniform' access control."
-            );
-          }
+          // MODIFICADO: Constrói o URL de download manualmente, que respeita as Regras de Segurança do Storage.
+          // Como suas regras permitem leitura pública (`allow read: if true;`), este URL funcionará.
+          const bucketName = bucket.name;
+          const encodedFilePath = encodeURIComponent(uploadedFile.name);
+          const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedFilePath}?alt=media`;
 
-          const publicUrl = uploadedFile.publicUrl();
-          publicUrls.push(publicUrl);
-          logger.info(`File ${filename} uploaded successfully. Public URL: ${publicUrl}`);
+          publicUrls.push(downloadUrl);
+          logger.info(`File ${filename} uploaded successfully. URL: ${downloadUrl}`);
           
           fs.unlinkSync(filepath);
         } catch (error) {
           logger.error(`Error processing file ${filename}:`, error);
-          // Retorna o erro específico que ocorreu
           return res.status(500).json({ error: error.message || "Failed to upload file." });
         }
       }

@@ -1,7 +1,7 @@
 import { auth, db, storage } from './firebase.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
 import { collection, getDocs, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
-import { ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation, getResizedImageUrl } from './utils.js';
 
 const productForm = document.getElementById('product-form');
@@ -86,17 +86,28 @@ productForm.addEventListener('submit', async (e) => {
 
         if (files.length > 0) {
             showToast('Enviando imagens...', 'info');
-            const uploadPromises = Array.from(files).map(async (file) => {
-                const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 9);
-                const storageRef = ref(storage, `products/${uniqueId}-${file.name}`);
-                console.log('Iniciando upload para:', storageRef.fullPath);
-                await uploadBytes(storageRef, file);
-                const downloadUrl = await getDownloadURL(storageRef);
-                console.log('Upload concluído, URL:', downloadUrl);
-                return downloadUrl;
+            
+            // Alterado: Usa a Cloud Function para upload, contornando o CORS.
+            const formData = new FormData();
+            Array.from(files).forEach((file) => {
+                formData.append('file', file); // A função espera 'file' como nome do campo
             });
-            const newImageUrls = await Promise.all(uploadPromises);
-            imageUrls.push(...newImageUrls);
+
+            // Substitua 'us-central1' pela região da sua função, se for diferente.
+            const functionUrl = 'https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile';
+            
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorResult = await response.json();
+                throw new Error(errorResult.error || 'Falha ao enviar imagem.');
+            }
+
+            const result = await response.json();
+            imageUrls.push(...result.imageUrls);
         }
 
         if (imageUrls.length === 0) {
