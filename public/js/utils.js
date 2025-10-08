@@ -11,29 +11,24 @@ export function BRL(value) {
 }
 
 /**
- * ✅ FUNÇÃO CORRIGIDA
- * Converte a URL de uma imagem original para a URL da imagem redimensionada pela extensão do Firebase.
+ * ✅ FUNÇÃO CORRIGIDA (DE NOVO)
+ * Converte a URL de uma imagem original para a URL da imagem redimensionada em .webp.
+ * Esta lógica assume que a extensão "Resize Images" está configurada para converter
+ * para o formato WebP, que é o padrão e o mais recomendado.
  * @param {string} originalUrl A URL da imagem original.
  * @returns {string} A URL da imagem redimensionada.
  */
 export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
-
-    // Divide a URL para separar a base dos parâmetros (como o token de acesso)
     const [baseUrl, params] = originalUrl.split('?');
-
-    // Encontra a posição do último ponto para identificar a extensão do ficheiro
     const lastDotIndex = baseUrl.lastIndexOf('.');
-    if (lastDotIndex === -1) return originalUrl; // Retorna a original se não encontrar uma extensão
+    if (lastDotIndex === -1) return originalUrl; // Retorna a original se não tiver extensão
 
-    // Separa o nome base da extensão
     const baseName = baseUrl.substring(0, lastDotIndex);
-    const extension = baseUrl.substring(lastDotIndex);
+    
+    // Gera a URL para a versão .webp redimensionada.
+    const newBaseUrl = `${baseName}_400x400.webp`;
 
-    // Monta a nova URL com o sufixo da imagem redimensionada ANTES da extensão
-    const newBaseUrl = `${baseName}_400x400${extension}`;
-
-    // Junta a nova base com os parâmetros originais e retorna
     return params ? `${newBaseUrl}?${params}` : newBaseUrl;
 }
 
@@ -88,41 +83,17 @@ export async function showConfirmation(title, text, confirmButtonText = 'Confirm
  * e permitindo que outras partes da aplicação "oiçam" as alterações.
  */
 export const cartStore = {
-    /**
-     * @private
-     * @type {Array<() => void>} 
-     */
     _listeners: [],
-
-    /**
-     * Adiciona um "ouvinte" que será chamado sempre que o carrinho for atualizado.
-     * @param {() => void} listener - A função a ser chamada na atualização.
-     */
     onChange(listener) {
         this._listeners.push(listener);
     },
-
-    /**
-     * Obtém os itens do carrinho a partir do localStorage.
-     * @returns {Array<object>} Os itens do carrinho.
-     */
     get() {
         return JSON.parse(localStorage.getItem('cart') || '[]');
     },
-
-    /**
-     * Salva os itens no carrinho no localStorage e notifica todos os "ouvintes".
-     * @param {Array<object>} cart - O array de itens do carrinho a ser salvo.
-     */
     set(cart) {
         localStorage.setItem('cart', JSON.stringify(cart));
-        // Notifica todos os listeners que o carrinho mudou
         this._listeners.forEach(listener => listener());
     },
-    
-    /**
-     * Limpa completamente o carrinho.
-     */
     clear() {
         this.set([]);
     }
