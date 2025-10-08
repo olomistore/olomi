@@ -8,7 +8,6 @@ const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
 const productsTableBody = document.querySelector('#products-table tbody');
-const ordersTableBody = document.querySelector('#orders-table tbody');
 const logoutButton = document.getElementById('logout');
 
 let currentEditingProductId = null;
@@ -20,14 +19,12 @@ onAuthStateChanged(auth, async (user) => {
         return;
     }
     try {
-        console.log("Verificando permissões para o UID:", user.uid);
         const roleRef = doc(db, 'roles', user.uid);
         const roleSnap = await getDoc(roleRef);
         if (!roleSnap.exists() || !roleSnap.data().admin) {
             showToast('Acesso negado. Apenas administradores.', 'error');
             setTimeout(() => window.location.href = 'index.html', 2000);
         } else {
-            console.log("Permissões de administrador confirmadas.");
             loadProducts();
         }
     } catch (error) {
@@ -54,8 +51,8 @@ const loadProducts = () => {
                 <td>${BRL(product.price)}</td>
                 <td>${product.stock}</td>
                 <td class="actions-cell">
-                    <button class="action-btn-icon edit" data-id="${docSnap.id}">...</button>
-                    <button class="action-btn-icon delete" data-id="${docSnap.id}">...</button>
+                    <button class="action-btn-icon edit" data-id="${docSnap.id}">✏️</button>
+                    <button class="action-btn-icon delete" data-id="${docSnap.id}">🗑️</button>
                 </td>
             `;
             productsTableBody.appendChild(tr);
@@ -86,26 +83,16 @@ productForm.addEventListener('submit', async (e) => {
 
         if (files.length > 0) {
             showToast('Enviando imagens...', 'info');
-            
-            // Alterado: Usa a Cloud Function para upload, contornando o CORS.
             const formData = new FormData();
-            Array.from(files).forEach((file) => {
-                formData.append('file', file); // A função espera 'file' como nome do campo
-            });
+            Array.from(files).forEach(file => formData.append('file', file));
 
-            // Substitua 'us-central1' pela região da sua função, se for diferente.
             const functionUrl = 'https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile';
-            
-            const response = await fetch(functionUrl, {
-                method: 'POST',
-                body: formData,
-            });
+            const response = await fetch(functionUrl, { method: 'POST', body: formData });
 
             if (!response.ok) {
                 const errorResult = await response.json();
                 throw new Error(errorResult.error || 'Falha ao enviar imagem.');
             }
-
             const result = await response.json();
             imageUrls.push(...result.imageUrls);
         }
@@ -126,10 +113,7 @@ productForm.addEventListener('submit', async (e) => {
             showToast('Produto cadastrado com sucesso!', 'success');
         }
 
-        productForm.reset();
-        imagePreviewContainer.innerHTML = '';
-        currentEditingProductId = null;
-        existingImageUrls = [];
+        resetForm();
 
     } catch (error) {
         console.error('ERRO AO SALVAR PRODUTO:', error);
@@ -137,6 +121,108 @@ productForm.addEventListener('submit', async (e) => {
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Salvar Produto';
+    }
+});
+
+function resetForm() {
+    productForm.reset();
+    imagePreviewContainer.innerHTML = '';
+    currentEditingProductId = null;
+    existingImageUrls = [];
+    productForm.querySelector('button[type="submit"]').textContent = 'Salvar Produto';
+    imageUpload.value = ''; // Limpa a seleção de arquivos
+}
+
+// --- FUNCIONALIDADE DE EDITAR E EXCLUIR RESTAURADA ---
+productsTableBody.addEventListener('click', async (e) => {
+    const target = e.target.closest('button');
+    if (!target) return;
+
+    const productId = target.dataset.id;
+
+    if (target.classList.contains('edit')) {
+        handleEditClick(productId);
+    }
+
+    if (target.classList.contains('delete')) {
+        handleDeleteClick(productId);
+    }
+});
+
+const handleEditClick = async (id) => {
+    try {
+        const productRef = doc(db, 'products', id);
+        const docSnap = await getDoc(productRef);
+
+        if (docSnap.exists()) {
+            const product = docSnap.data();
+            productForm.name.value = product.name;
+            productForm.description.value = product.description;
+            productForm.category.value = product.category;
+            productForm.price.value = product.price.toString().replace('.', ',');
+            productForm.stock.value = product.stock;
+
+            imagePreviewContainer.innerHTML = '';
+            existingImageUrls = product.imageUrls || [];
+            existingImageUrls.forEach(url => {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'image-preview';
+                imgContainer.innerHTML = `<img src="${getResizedImageUrl(url)}" alt="Preview"><button type="button" class="remove-image" data-url="${url}">&times;</button>`;
+                imagePreviewContainer.appendChild(imgContainer);
+            });
+            
+            currentEditingProductId = id;
+            productForm.scrollIntoView({ behavior: 'smooth' });
+            productForm.querySelector('button[type="submit"]').textContent = 'Atualizar Produto';
+        } else {
+            showToast('Produto não encontrado.', 'error');
+        }
+    } catch (error) {
+        console.error("Erro ao carregar produto para edição:", error);
+        showToast('Falha ao carregar produto.', 'error');
+    }
+};
+
+const handleDeleteClick = async (id) => {
+    const confirmed = await showConfirmation('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+
+    try {
+        const productRef = doc(db, 'products', id);
+        const docSnap = await getDoc(productRef);
+
+        if (docSnap.exists()) {
+            const product = docSnap.data();
+            if (product.imageUrls && product.imageUrls.length > 0) {
+                showToast('Excluindo imagens associadas...', 'info');
+                const deletePromises = product.imageUrls.map(url => {
+                    try {
+                        const imageRef = ref(storage, url);
+                        return deleteObject(imageRef);
+                    } catch (error) {
+                        console.error(`Falha ao criar referência para exclusão: ${url}`, error);
+                        return null; 
+                    }
+                }).filter(p => p !== null);
+                await Promise.all(deletePromises);
+            }
+        }
+        
+        await deleteDoc(productRef);
+        showToast('Produto excluído com sucesso!', 'success');
+
+    } catch (error) {
+        console.error("Erro ao excluir produto:", error);
+        showToast(`Falha ao excluir produto: ${error.message}`, 'error');
+    }
+};
+
+imagePreviewContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-image')) {
+        const urlToRemove = e.target.dataset.url;
+        existingImageUrls = existingImageUrls.filter(url => url !== urlToRemove);
+        e.target.closest('.image-preview').remove();
+        showToast('Imagem marcada para remoção. Salve para confirmar.', 'info');
     }
 });
 
