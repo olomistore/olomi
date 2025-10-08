@@ -1,7 +1,7 @@
 import { db } from './firebase.js';
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-// ✅ CORREÇÃO: A importação de getResizedImageUrl foi removida.
-import { BRL, cartStore, showToast } from './utils.js';
+// ✅ REATIVADO: A função para usar imagens otimizadas foi re-adicionada.
+import { BRL, cartStore, showToast, getResizedImageUrl } from './utils.js';
 
 // --- SELEÇÃO DOS ELEMENTOS ---
 const listEl = document.getElementById('products');
@@ -72,9 +72,9 @@ function render(list) {
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
 
-        // ✅ CORREÇÃO: Usa diretamente a URL da imagem original.
+        // ✅ REATIVADO: Usa a função para obter o URL da imagem otimizada.
         const imageUrl = (p.imageUrls && p.imageUrls.length > 0)
-            ? p.imageUrls[0]
+            ? getResizedImageUrl(p.imageUrls[0])
             : 'https://placehold.co/400x400/f39c12/fff?text=Olomi';
 
         const isOutOfStock = p.stock <= 0;
