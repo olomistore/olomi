@@ -11,47 +11,57 @@ export function BRL(value) {
 }
 
 /**
- * ✅ CORREÇÃO FINAL E DEFINITIVA
- * Converte a URL de uma imagem original para a URL da imagem otimizada pela extensão.
- * A lógica agora considera a pasta 'resized/' e o sufixo no nome do ficheiro,
- * com base na configuração da extensão (storage-resize-images.env).
+ * ✅ TENTATIVA FINAL: CORRIGE O PROBLEMA DO TOKEN DE ACESSO
+ * Converte a URL de uma imagem original para a URL da imagem otimizada.
+ * A causa do erro anterior era que a URL gerada não continha o token de acesso
+ * necessário para visualizar ficheiros não-públicos no Firebase Storage.
+ * Esta versão extrai o token da URL original e anexa-o à nova URL.
  * @param {string} originalUrl A URL da imagem original com token.
- * @returns {string} A URL da imagem otimizada, pronta para ser usada.
+ * @returns {string} A URL da imagem otimizada, com token, pronta para ser usada.
  */
 export function getResizedImageUrl(originalUrl) {
     if (!originalUrl) return '';
 
     try {
-        // 1. Isola a parte principal do URL, removendo o token de acesso.
-        const baseUrl = originalUrl.split('?')[0];
-
-        // 2. Extrai o caminho do ficheiro, que está codificado no URL.
-        // Ex: .../o/products%2Fproduto1%2Fimagem.jpg -> products%2Fproduto1%2Fimagem.jpg
-        const encodedPath = baseUrl.split('/o/')[1];
+        // 1. Divide a URL base dos parâmetros de query.
+        const urlParts = originalUrl.split('?');
+        const baseUrl = urlParts[0];
         
-        // 3. Descodifica o caminho para poder manipulá-lo como uma string normal.
-        // Ex: products%2Fproduto1%2Fimagem.jpg -> products/produto1/imagem.jpg
+        // 2. Extrai o token de acesso dos parâmetros.
+        const queryParams = new URLSearchParams(urlParts.length > 1 ? urlParts[1] : '');
+        const token = queryParams.get('token');
+
+        // Se não houver token, não podemos aceder à imagem redimensionada (privada).
+        if (!token) {
+            return originalUrl;
+        }
+
+        // 3. Extrai e descodifica o caminho do ficheiro.
+        const encodedPath = baseUrl.split('/o/')[1];
+        if (!encodedPath) return originalUrl; // URL inválida
         const decodedPath = decodeURIComponent(encodedPath);
 
-        // 4. Encontra a posição do último ponto para separar o nome da extensão.
+        // 4. Separa o nome do ficheiro da sua extensão.
         const lastDotIndex = decodedPath.lastIndexOf('.');
-        if (lastDotIndex === -1) return originalUrl; // Retorna original se não houver extensão.
+        if (lastDotIndex === -1) return originalUrl;
         const baseName = decodedPath.substring(0, lastDotIndex);
 
-        // 5. Monta o novo caminho, adicionando a pasta 'resized' e o sufixo no nome do ficheiro.
-        // Ex: resized/products/produto1/imagem_400x400.webp
+        // 5. Monta o novo caminho para a imagem redimensionada.
         const newPath = `resized/${baseName}_400x400.webp`;
-
-        // 6. Codifica o novo caminho para o formato de URL.
         const newEncodedPath = encodeURIComponent(newPath);
 
-        // 7. Monta a URL final, adicionando o parâmetro ?alt=media para visualização.
+        // 6. Reconstrói a URL final, incluindo o caminho para o bucket.
         const bucketUrl = baseUrl.split('/o/')[0];
-        return `${bucketUrl}/o/${newEncodedPath}?alt=media`;
+        let finalUrl = `${bucketUrl}/o/${newEncodedPath}?alt=media`;
+
+        // 7. Anexa o token de acesso original, que é a correção crucial.
+        finalUrl += `&token=${token}`;
+
+        return finalUrl;
 
     } catch (error) {
         console.error("Erro ao gerar URL de imagem otimizada:", error, originalUrl);
-        return originalUrl; // Em caso de qualquer erro, retorna a imagem original.
+        return originalUrl; // Retorna a original em caso de erro.
     }
 }
 
