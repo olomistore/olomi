@@ -4,7 +4,7 @@ import { collection, getDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, orde
 import { ref, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
 import { BRL, showToast, showConfirmation, getResizedImageUrl } from './utils.js';
 
-// --- ELEMENTOS DO DOM ---
+// --- DOM ELEMENTS ---
 const productForm = document.getElementById('product-form');
 const imageUpload = document.getElementById('image-upload');
 const imagePreviewContainer = document.getElementById('image-preview-container');
@@ -12,12 +12,33 @@ const productsTableBody = document.querySelector('#products-table tbody');
 const ordersTableBody = document.querySelector('#orders-table tbody');
 const logoutButton = document.getElementById('logout');
 
-// --- ESTADO DA APLICAÇÃO ---
+// --- APPLICATION STATE ---
 let currentEditingProductId = null;
 let existingImageUrls = [];
-let ordersLoaded = false; // Flag para carregar pedidos apenas uma vez
+let ordersLoaded = false;
 
-// --- AUTENTICAÇÃO E CONFIGURAÇÃO INICIAL ---
+/**
+ * Normalizes and translates order status to a consistent format for display.
+ * This function is the single source of truth for status display logic.
+ * @param {string} status - The status from Firestore (e.g., "Pending", "enviado", "Cancelled").
+ * @returns {{text: string, className: string}} - An object with the translated text and the correct CSS class.
+ */
+const formatStatus = (status) => {
+    const s = status ? status.toLowerCase() : '';
+    if (s === 'pending' || s === 'pendente') {
+        return { text: 'Pendente', className: 'pendente' };
+    }
+    if (s === 'enviado' || s === 'shipped') {
+        return { text: 'Enviado', className: 'enviado' };
+    }
+    if (s === 'cancelled' || s === 'cancelado') {
+        return { text: 'Cancelado', className: 'cancelado' };
+    }
+    // Fallback for any other unexpected status, ensures it's visible.
+    return { text: status || 'Desconhecido', className: 'unknown' };
+};
+
+// --- AUTHENTICATION & INITIAL SETUP ---
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -40,7 +61,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- LÓGICA DAS SEÇÕES RETRÁTEIS (ACCORDION) ---
+// --- COLLAPSIBLE SECTIONS LOGIC ---
 const setupCollapsibleSections = () => {
     const allSections = document.querySelectorAll('.collapsible-section');
     allSections.forEach(section => {
@@ -63,7 +84,7 @@ const setupCollapsibleSections = () => {
     });
 };
 
-// --- CARREGAMENTO DE DADOS ---
+// --- DATA LOADING ---
 const loadProducts = () => {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy("createdAt", "desc"));
@@ -108,6 +129,10 @@ const loadOrders = () => {
             const orderId = docSnap.id;
             const customer = order.customer || {};
             const address = customer.address || {};
+            
+            // CRITICAL: Use the normalized status to control logic and display
+            const formattedStatus = formatStatus(order.status);
+            const isActionable = formattedStatus.className === 'pendente';
 
             const summaryRow = document.createElement('tr');
             summaryRow.className = 'order-summary-row';
@@ -116,11 +141,11 @@ const loadOrders = () => {
                 <td>${orderId.substring(0, 8)}...</td>
                 <td>${customer.name || 'N/A'}</td>
                 <td>${order.createdAt.toDate().toLocaleDateString('pt-BR')}</td>
-                <td>${BRL(order.totalAmount)}</td>
-                <td><span class="status ${order.status.toLowerCase()}">${order.status}</span></td>
+                <td>${BRL(order.total)}</td>
+                <td><span class="status ${formattedStatus.className}">${formattedStatus.text}</span></td>
                 <td class="order-actions">
-                    <button class="action-btn ship" data-id="${orderId}" ${order.status !== 'Pendente' ? 'disabled' : ''}>Marcar Enviado</button>
-                    <button class="action-btn cancel" data-id="${orderId}" ${order.status !== 'Pendente' ? 'disabled' : ''}>Cancelar</button>
+                    <button class="action-btn ship" data-id="${orderId}" ${!isActionable ? 'disabled' : ''}>Marcar Enviado</button>
+                    <button class="action-btn cancel" data-id="${orderId}" ${!isActionable ? 'disabled' : ''}>Cancelar</button>
                 </td>
             `;
 
@@ -174,7 +199,7 @@ const loadOrders = () => {
 };
 
 
-// --- FORMULÁRIO DE PRODUTO ---
+// --- PRODUCT FORM ---
 productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = e.target.querySelector('button[type="submit"]');
@@ -248,7 +273,7 @@ function resetForm() {
     imageUpload.value = ''; 
 }
 
-// --- AÇÕES DA TABELA DE PRODUTOS ---
+// --- PRODUCT TABLE ACTIONS ---
 productsTableBody.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -329,7 +354,7 @@ const handleDeleteClick = async (id) => {
     }
 };
 
-// --- AÇÕES DA TABELA DE PEDIDOS ---
+// --- ORDER TABLE ACTIONS ---
 ordersTableBody.addEventListener('click', async (e) => {
     const actionBtn = e.target.closest('.action-btn');
     if (actionBtn) {
@@ -366,7 +391,7 @@ ordersTableBody.addEventListener('click', async (e) => {
     }
 });
 
-// --- OUTROS EVENTOS ---
+// --- OTHER EVENT LISTENERS ---
 imagePreviewContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-image')) {
         const urlToRemove = e.target.dataset.url;

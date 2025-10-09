@@ -1,121 +1,158 @@
-const { initializeApp } = require("firebase-admin/app");
-initializeApp();
-
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
-const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
-const { uploadFile } = require("./upload.js");
+const { getStorage } = require("firebase-admin/storage");
+const cors = require("cors")({ origin: true });
+const Busboy = require("busboy");
+const path = require("path");
+const os = require("os");
+const fs = require("fs");
 
-exports.uploadFile = uploadFile;
+// Initialize Firebase Admin SDK
+admin.initializeApp();
 
-/**
- * Cloud Function "Chamável" para criar um pedido.
- * Executa validações de segurança e de negócio no lado do servidor.
- *
- * @param {object} request - O objeto da requisição, contendo os dados enviados pelo cliente.
- * @returns {Promise<{orderId: string}>} - Retorna o ID do pedido criado.
- */
-exports.createorder = onCall({ cors: true }, async (request) => {
+// Get references to Firebase services
+const db = admin.firestore();
+const storage = getStorage();
+const bucket = storage.bucket();
 
-    // 1. Validação de Autenticação
-    if (!request.auth) {
-        logger.error("Tentativa de criação de pedido por utilizador não autenticado.");
-        throw new HttpsError('unauthenticated', 'Você precisa estar autenticado para fazer um pedido.');
+// --- CREATE ORDER (v1 Callable Function) ---
+exports.createOrder = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError(
+            "unauthenticated",
+            "Você precisa estar logado para criar um pedido."
+        );
     }
 
-    const userId = request.auth.uid;
-    const items = request.data.items;
-    const customer = request.data.customer; // --- MODIFICAÇÃO ---
+    const { items, customer } = data;
 
-    // 2. Validação de Input
-    if (!items || !Array.isArray(items) || items.length === 0) {
-        throw new HttpsError('invalid-argument', 'O carrinho está vazio ou os dados do pedido são inválidos.');
+    if (!items || items.length === 0 || !customer) {
+        throw new functions.https.HttpsError(
+            "invalid-argument",
+            "O pedido deve conter itens e informações do cliente."
+        );
     }
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    if (!customer || !customer.name || !customer.address || !customer.phone) {
-        throw new HttpsError('invalid-argument', 'Os dados do cliente estão em falta ou são inválidos.');
-    }
-    // --- FIM DA MODIFICAÇÃO ---
 
+    return db.runTransaction(async (transaction) => {
+        let total = 0;
+        const productUpdates = [];
 
-    const db = getFirestore();
-    let totalAmount = 0;
+        for (const item of items) {
+            const productRef = db.collection("products").doc(item.id);
+            const productDoc = await transaction.get(productRef);
 
-    try {
-        const orderDetails = await db.runTransaction(async (transaction) => {
-            const productRefs = items.map(item => db.collection('products').doc(item.id));
-            const productDocs = await transaction.getAll(...productRefs);
-
-            const itemsForOrder = [];
-            const stockUpdates = [];
-
-            for (let i = 0; i < productDocs.length; i++) {
-                const productDoc = productDocs[i];
-                const item = items[i];
-
-                if (!productDoc.exists) {
-                    throw new HttpsError('not-found', `Produto com ID ${item.id} não encontrado.`);
-                }
-
-                const productData = productDoc.data();
-                const requestedQty = Number(item.qty);
-
-                if (isNaN(requestedQty) || requestedQty <= 0) {
-                     throw new HttpsError('invalid-argument', `Quantidade inválida para o produto ${productData.name}.`);
-                }
-                if (productData.stock < requestedQty) {
-                    throw new HttpsError('failed-precondition', `Stock insuficiente para o produto: ${productData.name}.`);
-                }
-
-                totalAmount += (productData.price * requestedQty);
-                
-                itemsForOrder.push({
-                    id: productDoc.id,
-                    name: productData.name,
-                    price: productData.price,
-                    qty: requestedQty,
-                    imageUrl: productData.imageUrls && productData.imageUrls.length > 0 ? productData.imageUrls[0] : null
-                });
-
-                stockUpdates.push({
-                    ref: productDoc.ref,
-                    newStock: productData.stock - requestedQty
-                });
+            if (!productDoc.exists) {
+                throw new functions.https.HttpsError(
+                    "not-found",
+                    `Produto com ID ${item.id} não encontrado.`
+                );
             }
 
-            stockUpdates.forEach(update => {
-                transaction.update(update.ref, { stock: update.newStock });
-            });
+            const productData = productDoc.data();
+            const newStock = productData.stock - item.qty;
 
-            const orderRef = db.collection('orders').doc();
-            
-            // --- INÍCIO DA MODIFICAÇÃO ---
-            const newOrder = {
-                userId: userId,
-                customer: customer, // Adiciona os dados do cliente
-                items: itemsForOrder,
-                total: totalAmount,
-                status: 'Pendente',
-                createdAt: Timestamp.now()
-            };
-            // --- FIM DA MODIFICAÇÃO ---
-            transaction.set(orderRef, newOrder);
+            if (newStock < 0) {
+                throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    `Estoque insuficiente para o produto: ${productData.name}. Disponível: ${productData.stock}, Pedido: ${item.qty}`
+                );
+            }
 
-            // Retorna os detalhes completos do pedido
-            return { orderId: orderRef.id, ...newOrder };
+            total += productData.price * item.qty;
+            productUpdates.push({ ref: productRef, data: { stock: newStock } });
+        }
+
+        productUpdates.forEach((update) => {
+            transaction.update(update.ref, update.data);
         });
 
-        logger.info(`Pedido ${orderDetails.orderId} criado com sucesso para o utilizador ${userId}.`);
-        // Retorna os detalhes completos, que o frontend agora espera
-        return orderDetails;
+        const orderRef = db.collection("orders").doc();
+        transaction.set(orderRef, {
+            items,
+            customer,
+            total,
+            status: "Pendente", // Standardize new orders to Portuguese
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            userId: context.auth.uid,
+        });
 
-    } catch (error) {
-        logger.error(`Erro ao criar pedido para o utilizador ${userId}:`, error);
+        return { orderId: orderRef.id, message: "Pedido criado com sucesso!" };
+    }).catch(error => {
+        console.error("Erro na transação de criação de pedido:", error);
+        throw new functions.https.HttpsError(
+            "internal",
+            "Ocorreu um erro ao processar seu pedido.",
+            error
+        );
+    });
+});
 
-        if (error instanceof HttpsError) {
-            throw error;
-        } else {
-            throw new HttpsError('internal', 'Ocorreu um erro interno ao processar o seu pedido.');
+// --- UPLOAD FILE (v2 onRequest Function) ---
+// Re-integrating the uploadFile function that was accidentally deleted.
+exports.uploadFile = onRequest({ cors: true }, (req, res) => {
+    cors(req, res, () => {
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Method Not Allowed" });
         }
-    }
+
+        const busboy = Busboy({ headers: req.headers });
+        const uploads = {};
+        const tmpdir = os.tmpdir();
+        const fileWrites = [];
+        const publicUrls = [];
+
+        busboy.on("file", (fieldname, file, info) => {
+            const { filename, mimeType } = info;
+            logger.info(`Processing file: ${filename}, mimeType: ${mimeType}`);
+
+            const filepath = path.join(tmpdir, filename);
+            const writeStream = fs.createWriteStream(filepath);
+            file.pipe(writeStream);
+
+            const promise = new Promise((resolve, reject) => {
+                file.on("end", () => writeStream.end());
+                writeStream.on("finish", () => {
+                    uploads[fieldname] = { filepath, filename, mimeType };
+                    resolve();
+                });
+                writeStream.on("error", reject);
+            });
+            fileWrites.push(promise);
+        });
+
+        busboy.on("finish", async () => {
+            await Promise.all(fileWrites);
+
+            for (const fieldname in uploads) {
+                const { filepath, filename, mimeType } = uploads[fieldname];
+                const destination = `products/${Date.now()}_${filename}`;
+
+                try {
+                    logger.info(`Uploading ${filename} to ${destination}`);
+                    const [uploadedFile] = await bucket.upload(filepath, {
+                        destination,
+                        metadata: { contentType: mimeType },
+                    });
+
+                    const bucketName = bucket.name;
+                    const encodedFilePath = encodeURIComponent(uploadedFile.name);
+                    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedFilePath}?alt=media`;
+
+                    publicUrls.push(downloadUrl);
+                    logger.info(`File ${filename} uploaded successfully. URL: ${downloadUrl}`);
+                    
+                    fs.unlinkSync(filepath);
+                } catch (error) {
+                    logger.error(`Error processing file ${filename}:`, error);
+                    return res.status(500).json({ error: error.message || "Failed to upload file." });
+                }
+            }
+
+            res.status(200).json({ imageUrls: publicUrls });
+        });
+
+        busboy.end(req.rawBody);
+    });
 });
