@@ -89,7 +89,7 @@ const loadProducts = () => {
             const product = docSnap.data();
             const tr = document.createElement('tr');
             const imageUrl = (product.imageUrls && product.imageUrls.length > 0)
-                ? getResizedImageUrl(product.imageUrls[0]) // ✅ USA IMAGEM OTIMIZADA
+                ? getResizedImageUrl(product.imageUrls[0])
                 : 'https://placehold.co/100x100/f39c12/fff?text=Olomi';
             tr.innerHTML = `
                 <td><img src="${imageUrl}" alt="${product.name}" width="50"></td>
@@ -106,6 +106,7 @@ const loadProducts = () => {
     });
 };
 
+// --- ✅ CORREÇÃO FINAL E CIRÚRGICA ---
 const loadOrders = () => {
     const q = query(collection(db, 'orders'), orderBy("createdAt", "desc"));
     onSnapshot(q, (snapshot) => {
@@ -118,6 +119,7 @@ const loadOrders = () => {
             const order = docSnap.data();
             const formattedStatus = formatStatus(order.status);
             const isActionable = formattedStatus.className === 'pendente';
+
             const summaryRow = document.createElement('tr');
             summaryRow.className = 'order-summary-row';
             summaryRow.innerHTML = `
@@ -132,28 +134,71 @@ const loadOrders = () => {
                 </td>
             `;
             ordersTableBody.appendChild(summaryRow);
-            // ... (código dos detalhes do pedido omitido por brevidado)
+
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'order-details-row';
+            detailsRow.style.display = 'none';
+
+            // CORREÇÃO: Acessa o endereço através de order.customer.address
+            const address = order.customer?.address;
+            const addressHtml = address
+                ? `<p><strong>Endereço de Entrega:</strong><br>
+                    ${address.street || ''}, ${address.number || ''}${address.complement ? ` - ${address.complement}` : ''}<br>
+                    ${address.neighborhood || ''}, ${address.city || ''} - ${address.state || ''}<br>
+                    CEP: ${address.cep || ''}</p>`
+                : '<p><strong>Endereço de Entrega:</strong> Não informado</p>';
+
+            const phoneHtml = order.customer?.phone
+                ? `<p><strong>Contato:</strong> ${order.customer.phone}</p>`
+                : '<p><strong>Contato:</strong> Não informado</p>';
+
+            const itemsHtml = (order.items && order.items.length > 0)
+                ? order.items.map(item => `
+                    <tr>
+                        <td><img src="${getResizedImageUrl(item.imageUrl) || 'https://placehold.co/100x100/f39c12/fff?text=Olomi'}" alt="${item.name || ''}" width="40"></td>
+                        <td>${item.name || 'Item sem nome'}</td>
+                        <td>${item.qty || 0}</td>
+                        <td>${BRL(item.price || 0)}</td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="4">Nenhum item neste pedido.</td></tr>';
+
+            detailsRow.innerHTML = `
+                <td colspan="6">
+                    <div class="order-details-container">
+                        ${addressHtml}
+                        ${phoneHtml}
+                        <table class="order-items-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th></th>
+                                    <th>Qtd</th>
+                                    <th>Preço</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            `;
+            ordersTableBody.appendChild(detailsRow);
         });
     });
 };
 
-// --- ✨ NOVO: LÓGICA DE PRÉ-VISUALIZAÇÃO DE IMAGEM ---
+// --- LÓGICA DE PRÉ-VISUALIZAÇÃO DE IMAGEM ---
 imageUpload.addEventListener('change', (e) => {
-    // 1. Limpa apenas as pré-visualizações de seleções ANTERIORES, mantendo as imagens já salvas.
     imagePreviewContainer.querySelectorAll('.new-preview').forEach(el => el.remove());
-
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    // 2. Cria e exibe uma pré-visualização para cada novo arquivo selecionado.
     Array.from(files).forEach(file => {
         const container = document.createElement('div');
-        container.className = 'image-preview new-preview'; // Marca como uma nova pré-visualização
-
+        container.className = 'image-preview new-preview';
         const img = document.createElement('img');
-        img.src = URL.createObjectURL(file); // Gera uma URL local para a imagem
-        
-        // A URL do objeto é revogada automaticamente pelo navegador quando a página é descarregada.
+        img.src = URL.createObjectURL(file);
         container.appendChild(img);
         imagePreviewContainer.appendChild(container);
     });
@@ -181,17 +226,16 @@ productForm.addEventListener('submit', async (e) => {
         }
 
         const files = imageUpload.files;
-        let imageUrls = [...existingImageUrls]; // Começa com as imagens já existentes
+        let imageUrls = [...existingImageUrls];
 
-        // Se novos arquivos foram selecionados, faz o upload deles.
         if (files.length > 0) {
             showToast('Enviando imagens...', 'info');
             const formData = new FormData();
             Array.from(files).forEach(file => formData.append('file', file));
 
-            const response = await fetch('https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile', { 
-                method: 'POST', 
-                body: formData 
+            const response = await fetch('https://us-central1-olomi-7816a.cloudfunctions.net/uploadFile', {
+                method: 'POST',
+                body: formData
             });
 
             if (!response.ok) {
@@ -231,7 +275,7 @@ productForm.addEventListener('submit', async (e) => {
 
 function resetForm() {
     productForm.reset();
-    imagePreviewContainer.innerHTML = ''; // Limpa todas as pré-visualizações
+    imagePreviewContainer.innerHTML = '';
     currentEditingProductId = null;
     existingImageUrls = [];
     productForm.querySelector('button[type="submit"]').textContent = 'Salvar Produto';
@@ -259,12 +303,11 @@ const handleEditClick = async (id) => {
             productForm.price.value = product.price.toString().replace('.', ',');
             productForm.stock.value = product.stock;
 
-            imagePreviewContainer.innerHTML = ''; // Limpa a área antes de adicionar as imagens existentes
+            imagePreviewContainer.innerHTML = '';
             existingImageUrls = product.imageUrls || [];
             existingImageUrls.forEach(url => {
                 const imgContainer = document.createElement('div');
                 imgContainer.className = 'image-preview';
-                // ✅ USA IMAGEM OTIMIZADA para as imagens existentes
                 imgContainer.innerHTML = `<img src="${getResizedImageUrl(url)}" alt="Preview"><button type="button" class="remove-image" data-url="${url}">&times;</button>`;
                 imagePreviewContainer.appendChild(imgContainer);
             });
@@ -310,7 +353,7 @@ const handleDeleteClick = async (id) => {
     }
 };
 
-// --- AÇÕES DA TABELA DE PEDIDOS (Lógica existente) ---
+// --- AÇÕES DA TABELA DE PEDIDOS ---
 ordersTableBody.addEventListener('click', async (e) => {
     const actionBtn = e.target.closest('.action-btn');
     if (actionBtn) {
@@ -331,7 +374,7 @@ ordersTableBody.addEventListener('click', async (e) => {
         const summaryRow = e.target.closest('.order-summary-row');
         if (summaryRow) {
             const detailsRow = summaryRow.nextElementSibling;
-            if (detailsRow) {
+            if (detailsRow && detailsRow.classList.contains('order-details-row')) {
                 summaryRow.classList.toggle('details-open');
                 detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
             }
